@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cooking PAPA</title>
+    
+    <!-- 📱 手機主畫面 (PWA) Logo 設定 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Cooking PAPA">
+    <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23FFF3E0' width='100' height='100'/><text x='50' y='55' font-size='45' text-anchor='middle' dominant-baseline='middle'>👨🏻‍🍳</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23FFF3E0' width='100' height='100'/><text x='50' y='55' font-size='45' text-anchor='middle' dominant-baseline='middle'>👨🏻‍🍳</text></svg>">
+    <meta name="theme-color" content="#fafafa">
+    
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Lucide Icons -->
@@ -25,7 +34,7 @@
 </head>
 <body class="text-gray-900 font-sans min-h-screen bg-gray-50 pb-16">
 
-    <!-- 自家製提示/確認視窗 (Custom Modal) 解決預覽環境阻擋 alert/confirm/prompt 嘅問題 -->
+    <!-- 自家製提示/確認視窗 (Custom Modal) -->
     <div id="custom-modal" class="fixed inset-0 bg-black/60 z-[70] hidden flex-col items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center border border-gray-100">
             <h3 id="custom-modal-title" class="text-lg font-bold mb-3 text-gray-900">提示</h3>
@@ -118,12 +127,15 @@
         <main id="view-home" class="view-section active">
             <!-- IG 個人檔案頭部 -->
             <div class="px-4 py-6 flex items-center gap-6">
-                <!-- App Logo 頭像 -->
-                <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border border-gray-200 overflow-hidden flex-shrink-0 p-1 bg-gradient-to-tr from-yellow-400 via-orange-500 to-pink-500">
+                <!-- App Logo 頭像 (點擊可更改) -->
+                <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border border-gray-200 overflow-hidden flex-shrink-0 p-1 bg-gradient-to-tr from-yellow-400 via-orange-500 to-pink-500 cursor-pointer hover:opacity-80 transition" onclick="document.getElementById('avatar-upload').click()" title="點擊更改頭像">
                     <div class="w-full h-full rounded-full bg-white p-0.5">
-                        <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23FFF3E0' width='100' height='100'/><text x='50' y='55' font-size='45' text-anchor='middle' dominant-baseline='middle'>👨🏻‍🍳</text></svg>" class="w-full h-full rounded-full object-cover bg-orange-50" alt="Cooking PAPA Logo">
+                        <img id="home-avatar-img" src="" class="w-full h-full rounded-full object-cover bg-orange-50" alt="Cooking PAPA Logo">
                     </div>
                 </div>
+                <!-- 隱藏的上載按鈕 -->
+                <input type="file" id="avatar-upload" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)">
+                
                 <!-- 統計資料 -->
                 <div class="flex-1 flex justify-around text-center">
                     <div class="flex flex-col"><span class="font-bold text-lg" id="stat-dishes">0</span><span class="text-xs text-gray-600">菜式</span></div>
@@ -234,7 +246,7 @@
                 <!-- 雲端同步狀態 -->
                 <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
                     <h3 class="font-bold text-gray-900 flex items-center gap-2 mb-2"><i data-lucide="cloud-download" class="w-5 h-5 text-blue-500"></i> 雲端數據狀態</h3>
-                    <p class="text-sm text-gray-600 mb-4 font-medium">目前使用無帳號自動同步模式。數據會自動備份到雲端，並與此瀏覽器綁定。</p>
+                    <p class="text-sm text-gray-600 mb-4 font-medium">目前使用無帳號自動同步模式。資料變更會實時（立刻）上傳。若需強制刷新最新雲端版本，請點擊下方按鈕。</p>
                     <button onclick="forceSync()" class="w-full text-sm bg-blue-50 text-blue-600 font-bold py-2 rounded-lg hover:bg-blue-100 transition border border-blue-100 mb-2">從雲端重新載入數據</button>
                 </div>
 
@@ -250,6 +262,11 @@
                     <h3 class="font-bold text-blue-900 flex items-center gap-2 mb-2"><i data-lucide="wand-2" class="w-5 h-5 text-blue-500"></i> 測試功能</h3>
                     <p class="text-xs text-blue-700 mb-3">一鍵載入幾個示範食譜，方便預覽排版。</p>
                     <button onclick="loadDemoData()" class="w-full bg-blue-500 text-white text-sm font-bold py-2 rounded-lg hover:bg-blue-600 transition shadow-sm">載入示範食譜</button>
+                </div>
+
+                <!-- 版本資訊 -->
+                <div class="text-center mt-8 pb-4">
+                    <p class="text-xs text-gray-400 font-bold tracking-widest">Cooking PAPA v1.1.0</p>
                 </div>
             </div>
         </main>
@@ -291,7 +308,7 @@
         <button id="nav-btn-favorites" onclick="navigate('favorites')" class="hover:scale-110 transition text-gray-400"><i data-lucide="heart" class="w-6 h-6"></i></button>
         <!-- 底部頭像縮圖 -->
         <button id="nav-btn-profile" class="w-6 h-6 rounded-full border-2 border-transparent overflow-hidden hover:scale-110 transition" onclick="navigate('profile')">
-             <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23FFF3E0' width='100' height='100'/><text x='50' y='55' font-size='40' text-anchor='middle' dominant-baseline='middle'>👨🏻‍🍳</text></svg>" class="w-full h-full object-cover bg-orange-50">
+             <img id="nav-avatar-img" src="" class="w-full h-full object-cover bg-orange-50">
         </button>
     </nav>
 
@@ -324,6 +341,17 @@
         // 常用標籤庫
         let commonTags = JSON.parse(localStorage.getItem('cookingPapaTags')) || ['快手菜', '晚餐', '健康', '甜品', '氣炸鍋'];
         let activeTagInputId = 'input-tags';
+
+        // 頭像管理 (預設使用內置 SVG Emoji)
+        const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23FFF3E0' width='100' height='100'/><text x='50' y='55' font-size='45' text-anchor='middle' dominant-baseline='middle'>👨🏻‍🍳</text></svg>";
+        window.userAvatar = localStorage.getItem('cookingPapaAvatar') || defaultAvatar;
+
+        function updateAvatarDisplays() {
+            const homeAv = document.getElementById('home-avatar-img');
+            const navAv = document.getElementById('nav-avatar-img');
+            if(homeAv) homeAv.src = window.userAvatar;
+            if(navAv) navAv.src = window.userAvatar;
+        }
 
         // --- 自家製提示框邏輯 (Custom Modal) ---
         let modalConfirmCallback = null;
@@ -389,7 +417,7 @@
         window.promptAddCommonTag = promptAddCommonTag;
         window.forceSync = () => { 
             refreshCurrentView();
-            customAlert("已成功從雲端重新載入數據！✅"); 
+            customAlert("已成功從雲端強制重新載入最新數據！✅"); 
         };
         window.saveApiKey = () => {
             const key = document.getElementById('setting-api-key').value;
@@ -397,6 +425,22 @@
             customAlert("API 金鑰已儲存！");
         };
         window.loadDemoData = loadDemoData;
+
+        // 處理頭像上載
+        window.handleAvatarUpload = function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                resizeImage(file, (imgData) => {
+                    window.userAvatar = imgData;
+                    localStorage.setItem('cookingPapaAvatar', imgData);
+                    updateAvatarDisplays();
+                    if (document.querySelector('.view-section.active').id === 'view-recipe') {
+                        refreshCurrentView(); // 喺貼文頁面上載時即時更新
+                    }
+                    customAlert("頭像更新成功！");
+                });
+            }
+        };
 
         // --- 2. 自動登入邏輯 ---
         const initAuth = async () => {
@@ -444,6 +488,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             initAuth();
+            updateAvatarDisplays(); // 載入頭像
             document.getElementById('setting-api-key').value = localStorage.getItem('geminiApiKey') || "";
             navigate('home');
         });
@@ -467,6 +512,7 @@
             else if (activeView === 'view-favorites') renderFavorites();
             else if (activeView === 'view-search') performSearch();
             renderCommonTags();
+            updateAvatarDisplays();
             lucide.createIcons();
         }
 
@@ -706,7 +752,7 @@
                     <div class="flex items-center justify-between p-3 border-b border-gray-50">
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-8 rounded-full border border-gray-200 overflow-hidden bg-orange-50">
-                                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23FFF3E0' width='100' height='100'/><text x='50' y='55' font-size='40' text-anchor='middle' dominant-baseline='middle'>👨🏻‍🍳</text></svg>" class="w-full h-full object-cover">
+                                <img src="${window.userAvatar}" class="w-full h-full object-cover">
                             </div>
                             <div>
                                 <span class="font-bold text-sm text-gray-900 block leading-tight">cooking_papa</span>
@@ -841,7 +887,7 @@
             closeEditModal();
         }
 
-        // AI 生成 (加入自動重試機制)
+        // AI 生成 (智能切換模型版)
         window.generateAI = async function() {
             const dishName = document.getElementById('input-dish').value.trim();
             if(!dishName) return customAlert("請先輸入菜式名稱！");
@@ -849,9 +895,10 @@
             document.getElementById('ai-loading').classList.remove('hidden');
             document.getElementById('ai-loading').classList.add('flex');
 
-            // 優先使用 localStorage，否則留空交由 Canvas 系統自動注入
             const apiKey = localStorage.getItem('geminiApiKey') || "";
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            // 如果用戶有輸入 API (GitHub 環境)，使用標準模型；如果在 Canvas 預覽環境，使用預覽模型
+            const modelName = apiKey ? "gemini-1.5-flash" : "gemini-2.5-flash-preview-09-2025";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
             
             const payload = {
                 contents: [{ parts: [{ text: `請提供「${dishName}」的食譜。要求：一個特色口味名稱、材料清單、烹飪步驟。` }] }],
@@ -882,7 +929,7 @@
                 document.getElementById('input-steps').value = recipeData.steps || "";
             } catch (error) {
                 console.error("AI 錯誤:", error);
-                customAlert("未能連接 AI 大廚！\n\n如果已經部署至 GitHub，請確保在「設定與備份」中輸入了有效的 API 金鑰。");
+                customAlert(`未能連接 AI 大廚！\n錯誤代碼：${error.message}\n\n如果已經部署至 GitHub，請確保在「設定與備份」中輸入了有效的 API 金鑰。`);
             } finally {
                 document.getElementById('ai-loading').classList.add('hidden');
                 document.getElementById('ai-loading').classList.remove('flex');
