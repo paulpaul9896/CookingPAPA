@@ -29,18 +29,42 @@
     <div id="edit-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex-col items-center justify-end sm:justify-center">
         <div class="bg-white w-full max-w-lg sm:rounded-2xl rounded-t-2xl p-6 shadow-2xl">
             <h3 class="text-lg font-bold text-gray-900 mb-4 text-center border-b pb-3">編輯貼文內容</h3>
-            <div class="space-y-4 max-h-[70vh] overflow-y-auto">
+            <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
                 <div>
                     <label class="block text-xs font-bold text-gray-500 mb-1">款式 / 口味</label>
-                    <input type="text" id="edit-flavor" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 outline-none">
+                    <input type="text" id="edit-flavor" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div class="flex gap-3">
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">份量 (人)</label>
+                        <input type="number" id="edit-serving" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 outline-none focus:ring-1 focus:ring-blue-500">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">評分</label>
+                        <select id="edit-rating" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 outline-none focus:ring-1 focus:ring-blue-500">
+                            <option value="5">⭐⭐⭐⭐⭐ 完美</option>
+                            <option value="4">⭐⭐⭐⭐ 不錯</option>
+                            <option value="3">⭐⭐⭐ 普通</option>
+                            <option value="2">⭐⭐ 有待改善</option>
+                            <option value="1">⭐ 中伏</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">標籤 (用逗號分隔)</label>
+                    <input type="text" id="edit-tags" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 outline-none focus:ring-1 focus:ring-blue-500" placeholder="例如: 晚餐, 氣炸鍋">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-500 mb-1">材料</label>
-                    <textarea id="edit-ingredients" rows="3" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 outline-none"></textarea>
+                    <textarea id="edit-ingredients" rows="3" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 outline-none focus:ring-1 focus:ring-blue-500"></textarea>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-500 mb-1">步驟</label>
-                    <textarea id="edit-steps" rows="4" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 outline-none"></textarea>
+                    <textarea id="edit-steps" rows="4" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 outline-none focus:ring-1 focus:ring-blue-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">參考連結 (選填)</label>
+                    <input type="url" id="edit-reference" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 outline-none focus:ring-1 focus:ring-blue-500" placeholder="例如 YouTube 影片網址...">
                 </div>
                 <div class="flex gap-3 pt-4 border-t">
                     <button onclick="closeEditModal()" class="flex-1 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition">取消</button>
@@ -63,8 +87,8 @@
             <i data-lucide="chevron-down" class="w-4 h-4 text-gray-900"></i>
         </div>
         <div class="flex items-center gap-4 text-gray-900">
-            <i data-lucide="plus-square" class="w-6 h-6 cursor-pointer hover:text-gray-500 transition" onclick="navigate('add')"></i>
-            <i data-lucide="menu" class="w-6 h-6 cursor-pointer hover:text-gray-500 transition" onclick="navigate('profile')"></i>
+            <button onclick="navigate('add')" class="hover:text-gray-500 transition"><i data-lucide="plus-square" class="w-6 h-6"></i></button>
+            <button onclick="navigate('profile')" class="hover:text-gray-500 transition"><i data-lucide="menu" class="w-6 h-6"></i></button>
         </div>
     </header>
 
@@ -147,6 +171,23 @@
                         <i data-lucide="sparkles" class="w-4 h-4"></i> AI 幫手寫食譜
                     </button>
                 </div>
+                <!-- 評分、份量、標籤 -->
+                <div class="flex gap-3 mt-2">
+                    <input type="number" id="input-serving" class="flex-1 text-sm py-2 border-b border-gray-100 placeholder-gray-400 outline-none" placeholder="👥 份量 (人)">
+                    <select id="input-rating" class="flex-1 text-sm py-2 border-b border-gray-100 text-gray-600 outline-none bg-white">
+                        <option value="5" selected>⭐⭐⭐⭐⭐ 完美</option>
+                        <option value="4">⭐⭐⭐⭐ 不錯</option>
+                        <option value="3">⭐⭐⭐ 普通</option>
+                        <option value="2">⭐⭐ 有待改善</option>
+                        <option value="1">⭐ 中伏</option>
+                    </select>
+                </div>
+                <div>
+                    <input type="text" id="input-tags" class="w-full text-sm py-3 border-b border-gray-100 placeholder-gray-400 outline-none" placeholder="🏷️ 標籤 (用逗號分隔，例如: 快手菜, 晚餐)">
+                </div>
+                <div>
+                    <input type="url" id="input-reference" class="w-full text-sm py-3 border-b border-gray-100 placeholder-gray-400 outline-none" placeholder="🔗 原始食譜連結 (例如 YouTube, 網誌... 選填)">
+                </div>
                 <div>
                     <textarea id="input-ingredients" required rows="4" class="w-full text-sm py-2 border-b border-gray-100 placeholder-gray-400 outline-none resize-none" placeholder="輸入材料..."></textarea>
                 </div>
@@ -189,19 +230,19 @@
 
     <!-- 底部導航欄 (IG 風格) -->
     <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around p-3 z-20 pb-5 max-w-3xl left-1/2 -translate-x-1/2">
-        <i data-lucide="home" class="w-6 h-6 text-gray-900 cursor-pointer hover:scale-110 transition" onclick="navigate('home')"></i>
-        <i data-lucide="search" class="w-6 h-6 text-gray-900 cursor-pointer hover:scale-110 transition"></i>
-        <i data-lucide="plus-square" class="w-6 h-6 text-gray-900 cursor-pointer hover:scale-110 transition" onclick="navigate('add')"></i>
-        <i data-lucide="heart" class="w-6 h-6 text-gray-900 cursor-pointer hover:scale-110 transition"></i>
+        <button onclick="navigate('home')" class="hover:scale-110 transition"><i data-lucide="home" class="w-6 h-6 text-gray-900"></i></button>
+        <button class="hover:scale-110 transition"><i data-lucide="search" class="w-6 h-6 text-gray-900"></i></button>
+        <button onclick="navigate('add')" class="hover:scale-110 transition"><i data-lucide="plus-square" class="w-6 h-6 text-gray-900"></i></button>
+        <button class="hover:scale-110 transition"><i data-lucide="heart" class="w-6 h-6 text-gray-900"></i></button>
         <!-- 底部頭像縮圖 -->
-        <div class="w-6 h-6 rounded-full border border-gray-300 overflow-hidden cursor-pointer hover:scale-110 transition" onclick="navigate('profile')">
+        <button class="w-6 h-6 rounded-full border border-gray-300 overflow-hidden hover:scale-110 transition" onclick="navigate('profile')">
              <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23FFF3E0' width='100' height='100'/><text x='50' y='55' font-size='40' text-anchor='middle' dominant-baseline='middle'>👨🏻‍🍳</text></svg>" class="w-full h-full object-cover bg-orange-50">
-        </div>
+        </button>
     </nav>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- 1. Firebase 雲端初始化 ---
@@ -223,8 +264,9 @@
         let db = []; 
         let currentDishId = null;
         let currentFlavorId = null;
+        let isFirstLoad = true; 
 
-        // 綁定到 window
+        // 綁定到 window (防止按鈕失效)
         window.navigate = navigate;
         window.saveNewRecipe = saveNewRecipe;
         window.saveRecord = saveRecord;
@@ -233,6 +275,7 @@
         window.openEditModal = openEditModal;
         window.closeEditModal = closeEditModal;
         window.saveEdit = saveEdit;
+        window.toggleFavorite = toggleFavorite;
         window.forceSync = () => { 
             refreshCurrentView();
             alert("已成功從雲端重新載入數據！✅"); 
@@ -249,10 +292,8 @@
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     try {
-                        // 嘗試使用預設的 token 登入
                         await signInWithCustomToken(auth, __initial_auth_token);
                     } catch (tokenError) {
-                        // 如果出現 custom-token-mismatch (使用了自己的 Firebase Config)，則攔截並使用匿名登入
                         console.warn("自訂 Firebase Config 導致 Token 不匹配，切換至匿名登入...");
                         await signInAnonymously(auth);
                     }
@@ -261,7 +302,6 @@
                 }
             } catch(e) { 
                 console.error("自動登入發生錯誤：", e); 
-                alert("無法連接帳號！請確保你已在 Firebase Console 的 Authentication 開啟「匿名登入 (Anonymous)」。\n\n系統訊息：" + e.message);
             }
         };
 
@@ -270,17 +310,21 @@
         onAuthStateChanged(auth, (user) => {
             currentUser = user;
             if (user) {
-                // 停止舊的監聽
                 if (unsubscribeSnapshot) unsubscribeSnapshot();
-                
                 const recipesRef = collection(dbFirestore, 'artifacts', appId, 'users', user.uid, 'recipes');
                 unsubscribeSnapshot = onSnapshot(recipesRef, (snapshot) => {
                     db = [];
                     snapshot.forEach(docSnap => { db.push({ id: docSnap.id, ...docSnap.data() }); });
-                    refreshCurrentView();
+                    
+                    if (isFirstLoad && db.length === 0) {
+                        isFirstLoad = false;
+                        loadDemoData(false); 
+                    } else {
+                        isFirstLoad = false;
+                        refreshCurrentView();
+                    }
                 }, (error) => { 
                     console.error("雲端讀取失敗", error); 
-                    alert("讀取食譜失敗！請檢查 Firebase Firestore 權限是否已設定為「測試模式 (Test mode)」。\n\n系統訊息：" + error.message);
                 });
             }
         });
@@ -372,8 +416,28 @@
             let mainImage = 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?auto=format&fit=crop&w=800&q=80';
             if (flavor.records && flavor.records.length > 0 && flavor.records[0].image) mainImage = flavor.records[0].image;
 
+            // 處理參考連結
+            const referenceHtml = flavor.reference ? `
+                <div class="mt-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                    <p class="font-bold text-xs uppercase text-gray-500 mb-1 border-b pb-1 flex items-center gap-1"><i data-lucide="link" class="w-3 h-3"></i> 參考來源</p>
+                    <a href="${flavor.reference}" target="_blank" class="text-blue-500 text-xs hover:underline break-all mt-2 block">${flavor.reference}</a>
+                </div>
+            ` : '';
+
+            // 處理標籤
+            const tagsArr = flavor.tags || [];
+            const tagsHtml = tagsArr.length > 0 ? tagsArr.map(t => `<span class="text-blue-600 mr-1">#${t}</span>`).join('') : '';
+
+            // 處理評分與份量
+            const starsHtml = '⭐'.repeat(flavor.rating || 5);
+            const servingHtml = flavor.serving ? `👥 ${flavor.serving} 人份量` : '👥 未記錄份量';
+
+            // 愛心狀態
+            const heartIconClass = flavor.isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-900';
+
             document.getElementById('posts-container').innerHTML = `
                 <div class="bg-white pb-6 mb-4">
+                    <!-- 頂部資訊列 -->
                     <div class="flex items-center justify-between p-3 border-b border-gray-50">
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-8 rounded-full border border-gray-200 overflow-hidden bg-orange-50">
@@ -385,28 +449,37 @@
                             </div>
                         </div>
                         <div class="flex gap-4">
-                            <i data-lucide="edit-2" class="w-5 h-5 text-gray-500 cursor-pointer hover:text-blue-500" onclick="openEditModal()"></i>
-                            <i data-lucide="trash-2" class="w-5 h-5 text-red-500 cursor-pointer hover:text-red-700" onclick="deleteCurrentRecipe()"></i>
+                            <!-- 加入 button 標籤確保 click 事件不受 Lucide 影響 -->
+                            <button onclick="openEditModal()" class="hover:text-blue-500 text-gray-500"><i data-lucide="edit-2" class="w-5 h-5"></i></button>
+                            <button onclick="deleteCurrentRecipe()" class="hover:text-red-700 text-red-500"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                         </div>
                     </div>
                     
+                    <!-- 圖片 -->
                     <div class="w-full bg-gray-100">
                         <img src="${mainImage}" class="w-full aspect-square object-cover">
                     </div>
 
+                    <!-- 互動列 -->
                     <div class="p-3 flex justify-between items-center">
                         <div class="flex gap-4">
-                            <i data-lucide="heart" class="w-6 h-6 text-red-500 fill-red-500 cursor-pointer"></i>
-                            <i data-lucide="message-circle" class="w-6 h-6 text-gray-900 cursor-pointer"></i>
-                            <i data-lucide="send" class="w-6 h-6 text-gray-900 cursor-pointer"></i>
+                            <button onclick="toggleFavorite()"><i data-lucide="heart" class="w-6 h-6 ${heartIconClass} transition-colors"></i></button>
+                            <button><i data-lucide="message-circle" class="w-6 h-6 text-gray-900"></i></button>
+                            <button><i data-lucide="send" class="w-6 h-6 text-gray-900"></i></button>
                         </div>
-                        <i data-lucide="bookmark" class="w-6 h-6 text-gray-900 fill-gray-900 cursor-pointer"></i>
+                        <button><i data-lucide="bookmark" class="w-6 h-6 text-gray-900 fill-gray-900"></i></button>
                     </div>
 
+                    <!-- 貼文內容 -->
                     <div class="px-4 text-sm text-gray-900">
+                        <div class="text-xs text-gray-500 mb-2 font-bold flex gap-3">
+                            <span>${servingHtml}</span>
+                            <span>${starsHtml}</span>
+                        </div>
                         <p class="mb-2">
                             <span class="font-bold mr-1">cooking_papa</span>
-                            <span class="font-bold text-blue-600">#${dish.name}</span> <span class="text-gray-600">(${flavor.name})</span>
+                            <span class="font-bold text-gray-800">【${dish.name} - ${flavor.name}】</span>
+                            ${tagsHtml}
                         </p>
                         
                         <div class="mt-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
@@ -418,19 +491,23 @@
                             <p class="font-bold text-xs uppercase text-gray-500 mb-1 border-b pb-1">🍳 步驟 Steps</p>
                             <p class="whitespace-pre-line text-gray-700 mt-2 leading-relaxed">${flavor.steps}</p>
                         </div>
+
+                        ${referenceHtml}
                     </div>
 
+                    <!-- 製作記錄 -->
                     <div class="px-4 mt-6">
                         <h4 class="font-bold text-sm text-gray-900 mb-3 flex items-center gap-2 border-t pt-4">
-                            <i data-lucide="camera" class="w-4 h-4"></i> 製作記錄
+                            <i data-lucide="camera" class="w-4 h-4"></i> 製作記錄相簿
                         </h4>
                         <div class="space-y-4">
                             ${(flavor.records || []).map(r => `
                                 <div class="bg-white border border-gray-200 rounded-lg p-3 relative shadow-sm">
-                                    <button onclick="deleteRecord('${r.id}')" class="absolute top-2 right-2 text-gray-400 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                                    <!-- 刪除記錄按鈕 -->
+                                    <button onclick="deleteRecord('${r.id}')" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10 p-1 bg-white rounded-full shadow-sm"><i data-lucide="x" class="w-4 h-4"></i></button>
                                     <span class="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded">${r.date}</span>
                                     <p class="text-xs text-gray-700 mt-2">${r.note || '無備註'}</p>
-                                    ${r.image ? `<img src="${r.image}" class="mt-2 w-full h-32 object-cover rounded-md">` : ''}
+                                    ${r.image ? `<img src="${r.image}" class="mt-2 w-full h-32 object-cover rounded-md border border-gray-100">` : ''}
                                 </div>
                             `).join('')}
                             
@@ -445,13 +522,30 @@
             `;
         }
 
-        // 編輯、AI、儲存等邏輯保留
+        // --- 功能操作 ---
+
+        // 愛心收藏功能
+        async function toggleFavorite() {
+            const dish = db.find(d => d.id === currentDishId);
+            const flavor = dish.flavors.find(f => f.id === currentFlavorId);
+            flavor.isFavorite = !flavor.isFavorite; // 反轉狀態
+            await syncToCloud(dish);
+            renderPost(currentDishId, currentFlavorId); // 重新渲染更新圖示
+            lucide.createIcons();
+        }
+
+        // 編輯邏輯
         function openEditModal() {
             const dish = db.find(d => d.id === currentDishId);
             const flavor = dish.flavors.find(f => f.id === currentFlavorId);
             document.getElementById('edit-flavor').value = flavor.name;
             document.getElementById('edit-ingredients').value = flavor.ingredients;
             document.getElementById('edit-steps').value = flavor.steps;
+            document.getElementById('edit-reference').value = flavor.reference || '';
+            document.getElementById('edit-serving').value = flavor.serving || '';
+            document.getElementById('edit-rating').value = flavor.rating || '5';
+            document.getElementById('edit-tags').value = (flavor.tags || []).join(', ');
+            
             document.getElementById('edit-modal').classList.remove('hidden');
             document.getElementById('edit-modal').classList.add('flex');
         }
@@ -464,13 +558,22 @@
         async function saveEdit() {
             const dish = db.find(d => d.id === currentDishId);
             const flavor = dish.flavors.find(f => f.id === currentFlavorId);
-            flavor.name = document.getElementById('edit-flavor').value;
+            
+            flavor.name = document.getElementById('edit-flavor').value.trim();
             flavor.ingredients = document.getElementById('edit-ingredients').value;
             flavor.steps = document.getElementById('edit-steps').value;
+            flavor.reference = document.getElementById('edit-reference').value.trim();
+            flavor.serving = document.getElementById('edit-serving').value.trim();
+            flavor.rating = parseInt(document.getElementById('edit-rating').value);
+            
+            const tagsRaw = document.getElementById('edit-tags').value;
+            flavor.tags = tagsRaw.split(',').map(t => t.trim()).filter(t => t.length > 0);
+
             await syncToCloud(dish);
             closeEditModal();
         }
 
+        // AI 生成
         window.generateAI = async function() {
             const dishName = document.getElementById('input-dish').value.trim();
             if(!dishName) return alert("請先輸入菜式名稱！");
@@ -489,11 +592,7 @@
 
             try {
                 const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const result = await response.json();
                 const recipeData = JSON.parse(result.candidates[0].content.parts[0].text);
                 
@@ -501,8 +600,7 @@
                 document.getElementById('input-ingredients').value = recipeData.ingredients || "";
                 document.getElementById('input-steps').value = recipeData.steps || "";
             } catch (error) {
-                console.error("AI 錯誤:", error);
-                alert("未能連接 AI 大廚！\n\n原因可能是：\n1. 預覽環境網絡限制。\n2. API 金鑰無效或配額已滿。\n\n建議將程式碼部署至 GitHub 後再試。");
+                alert("未能連接 AI 大廚！建議將程式碼部署至 GitHub 後再試。");
             } finally {
                 document.getElementById('ai-loading').classList.add('hidden');
                 document.getElementById('ai-loading').classList.remove('flex');
@@ -510,8 +608,8 @@
         }
 
         // --- 8. 載入示範數據 ---
-        async function loadDemoData() {
-            if (!currentUser) return alert("請先登入！");
+        async function loadDemoData(showAlert = true) {
+            if (!currentUser) return;
             
             const demoData = [
                 {
@@ -523,6 +621,11 @@
                         name: '蘋果甘甜味',
                         ingredients: '牛肉片 300g\n洋蔥 1個\n紅蘿蔔 1條\n薯仔 1個\n日式咖哩磚 3-4塊\n蘋果 半個 (磨蓉)',
                         steps: '1. 洋蔥、紅蘿蔔、薯仔切件。\n2. 熱鑊落油，炒香洋蔥至軟身。\n3. 加入牛肉片炒至變色。\n4. 加入紅蘿蔔、薯仔炒勻。\n5. 加入清水蓋過食材，大火滾起後轉細火煮15分鐘。\n6. 熄火，加入咖哩磚拌勻至溶化。\n7. 加入蘋果蓉，開細火煮多5分鐘至濃稠即可。',
+                        reference: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                        serving: '4',
+                        rating: 5,
+                        tags: ['家常菜', '晚餐', '小朋友最愛'],
+                        isFavorite: true,
                         records: [{
                             id: 'r_demo_1',
                             date: new Date().toLocaleDateString(),
@@ -540,6 +643,11 @@
                         name: '惹味蒜香',
                         ingredients: '大蝦 10隻\n蒜蓉 3大湯匙\n牛油 20g\n蔥花 適量\n生抽 1茶匙\n黑椒 少許',
                         steps: '1. 大蝦剪去鬚腳，挑去腸。\n2. 熱鑊落少少油，煎香大蝦兩面至轉色。\n3. 加入牛油同蒜蓉爆香。\n4. 加入生抽同黑椒炒勻。\n5. 灑上蔥花即成。',
+                        reference: '',
+                        serving: '2',
+                        rating: 4,
+                        tags: ['海鮮', '快手菜'],
+                        isFavorite: false,
                         records: [{
                             id: 'r_demo_2',
                             date: new Date().toLocaleDateString(),
@@ -554,14 +662,14 @@
                 for (const dish of demoData) {
                     await syncToCloud(dish);
                 }
-                alert('示範數據已成功載入！返去首頁睇吓啦！');
+                if (showAlert) alert('示範數據已成功載入！返去首頁睇吓啦！');
                 navigate('home');
             } catch (error) {
-                console.error("載入失敗：", error);
-                alert('載入失敗！\n系統訊息：' + error.message + '\n\n請確保你已在 Firebase 建立 Firestore Database 並設定為「測試模式 (Test mode)」。');
+                if (showAlert) alert('載入失敗！請確保你已在 Firebase 建立 Firestore Database 並設定為「測試模式 (Test mode)」。');
             }
         }
 
+        // 圖片處理
         function resizeImage(file, callback) {
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -599,7 +707,7 @@
         }
 
         async function deleteRecord(recordId) {
-            if(!confirm('確定要刪除這筆記錄嗎？')) return;
+            if(!confirm('確定要刪除這筆相片記錄嗎？')) return;
             const dish = db.find(d => d.id === currentDishId);
             const flavor = dish.flavors.find(f => f.id === currentFlavorId);
             flavor.records = flavor.records.filter(r => r.id !== recordId);
@@ -607,7 +715,7 @@
         }
 
         async function deleteCurrentRecipe() {
-            if(!confirm('確定要刪除這個食譜嗎？')) return;
+            if(!confirm('警告：確定要刪除整篇食譜嗎？此操作無法還原。')) return;
             const dish = db.find(d => d.id === currentDishId);
             dish.flavors = dish.flavors.filter(f => f.id !== currentFlavorId);
             if(dish.flavors.length === 0) {
@@ -622,11 +730,28 @@
             event.preventDefault();
             const dishName = document.getElementById('input-dish').value.trim();
             const flavorName = document.getElementById('input-flavor').value.trim();
+            const reference = document.getElementById('input-reference').value.trim();
             const ingredients = document.getElementById('input-ingredients').value;
             const steps = document.getElementById('input-steps').value;
+            const serving = document.getElementById('input-serving').value.trim();
+            const rating = parseInt(document.getElementById('input-rating').value);
+            
+            const tagsRaw = document.getElementById('input-tags').value;
+            const tagsArr = tagsRaw.split(',').map(t => t.trim()).filter(t => t.length > 0);
 
             let dish = db.find(d => d.name.toLowerCase() === dishName.toLowerCase());
-            const newFlavor = { id: 'f' + Date.now(), name: flavorName, ingredients: ingredients, steps: steps, records: [] };
+            const newFlavor = { 
+                id: 'f' + Date.now(), 
+                name: flavorName, 
+                ingredients: ingredients, 
+                steps: steps, 
+                reference: reference,
+                serving: serving,
+                rating: rating,
+                tags: tagsArr,
+                isFavorite: false,
+                records: [] 
+            };
 
             if (dish) {
                 dish.flavors.push(newFlavor);
