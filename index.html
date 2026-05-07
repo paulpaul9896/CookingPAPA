@@ -35,11 +35,11 @@
 </head>
 <body class="text-gray-900 font-sans min-h-screen bg-gray-50 pb-16">
 
-    <!-- 自家製提示/確認視窗 (Custom Modal) -->
+    <!-- 自家製提示/確認視窗 (Custom Modal) 解決預覽環境阻擋 alert/confirm/prompt 嘅問題 -->
     <div id="custom-modal" class="fixed inset-0 bg-black/60 z-[70] hidden flex-col items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center border border-gray-100">
             <h3 id="custom-modal-title" class="text-lg font-bold mb-3 text-gray-900">提示</h3>
-            <p id="custom-modal-msg" class="text-sm text-gray-600 mb-5 whitespace-pre-line"></p>
+            <p id="custom-modal-msg" class="text-sm text-gray-600 mb-5 whitespace-pre-line break-all max-h-48 overflow-y-auto"></p>
             <input type="text" id="custom-modal-input" class="hidden w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-1 focus:ring-blue-500 mb-4 text-sm" placeholder="">
             <div class="flex gap-3 justify-center">
                 <button id="custom-modal-cancel" class="hidden flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl font-bold text-gray-700 transition">取消</button>
@@ -62,7 +62,7 @@
                     <input type="text" id="edit-serving" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 outline-none focus:ring-1 focus:ring-blue-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-2">評分</label>
+                    <label class="block text-xs font-bold text-gray-500 mb-2">⭐ 評分</label>
                     <input type="hidden" id="edit-rating" value="4">
                     <div class="grid grid-cols-2 gap-2 text-xs">
                         <button type="button" onclick="setRating('edit-rating', 1)" id="btn-rating-edit-rating-1" class="py-2 rounded-lg border border-gray-200 text-gray-600 font-bold transition bg-white">🤢 中伏</button>
@@ -270,7 +270,7 @@
 
                 <!-- 版本資訊 -->
                 <div class="text-center mt-8 pb-4">
-                    <p class="text-xs text-gray-400 font-bold tracking-widest">Cooking PAPA v1.2.0</p>
+                    <p class="text-xs text-gray-400 font-bold tracking-widest">Cooking PAPA v1.3.0</p>
                 </div>
             </div>
         </main>
@@ -439,7 +439,7 @@
                     localStorage.setItem('cookingPapaAvatar', imgData);
                     updateAvatarDisplays();
                     if (document.querySelector('.view-section.active').id === 'view-recipe') {
-                        refreshCurrentView(); // 喺貼文頁面上載時即時更新
+                        refreshCurrentView(); 
                     }
                     customAlert("頭像更新成功！");
                 });
@@ -507,7 +507,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             initAuth();
-            updateAvatarDisplays(); // 載入頭像
+            updateAvatarDisplays(); 
             document.getElementById('setting-api-key').value = localStorage.getItem('geminiApiKey') || "";
             navigate('home');
         });
@@ -544,7 +544,7 @@
             navIds.forEach(id => {
                 const btn = document.getElementById('nav-btn-' + id);
                 if(btn) {
-                    if(id === viewId || (viewId === 'recipe' && id === 'home')) { // 食譜詳情頁當作首頁高亮
+                    if(id === viewId || (viewId === 'recipe' && id === 'home')) { 
                         if(id === 'profile') {
                             btn.classList.add('border-gray-900');
                             btn.classList.remove('border-transparent');
@@ -568,7 +568,6 @@
             else if (viewId === 'recipe' && dishId && flavorId) { currentDishId = dishId; currentFlavorId = flavorId; renderPost(dishId, flavorId); }
             else if (viewId === 'add') { 
                 document.getElementById('recipe-form').reset(); 
-                // 重設 Add form 的 rating UI 到 4
                 window.setRating('input-rating', 4);
                 activeTagInputId = 'input-tags';
                 renderCommonTags();
@@ -762,10 +761,10 @@
 
             // 處理評分與份量
             const ratingTexts = {
-                1: "⭐ 中伏 🤢",
-                2: "⭐⭐ 試一次就夠 🤐",
-                3: "⭐⭐⭐ 得閒整下 🙂",
-                4: "⭐⭐⭐⭐ 要著兩條褲 🤤"
+                1: "🤢 中伏",
+                2: "🤐 試一次就夠",
+                3: "🙂 得閒整下",
+                4: "🤤 要著兩條褲"
             };
             const starsHtml = ratingTexts[flavor.rating || 4];
             const servingHtml = flavor.serving ? `👥 ${flavor.serving}` : '👥 未記錄份量';
@@ -812,7 +811,7 @@
                     <div class="px-4 text-sm text-gray-900">
                         <div class="text-xs text-gray-500 mb-2 font-bold flex gap-3">
                             <span>${servingHtml}</span>
-                            <span class="text-yellow-600">${starsHtml}</span>
+                            <span class="text-blue-600">${starsHtml}</span>
                         </div>
                         <p class="mb-2">
                             <span class="font-bold mr-1">cooking_papa</span>
@@ -917,7 +916,7 @@
             closeEditModal();
         }
 
-        // AI 生成 (智能切換模型版 + 防止空格 Error)
+        // AI 生成 (智能切換模型版 + 精準錯誤偵測)
         window.generateAI = async function() {
             const dishName = document.getElementById('input-dish').value.trim();
             if(!dishName) return customAlert("請先輸入菜式名稱！");
@@ -925,7 +924,7 @@
             document.getElementById('ai-loading').classList.remove('hidden');
             document.getElementById('ai-loading').classList.add('flex');
 
-            // 自動移除多餘空格及換行，避免 URL 出現 404
+            // 自動移除多餘空格及換行，避免 URL 出錯
             const apiKey = (localStorage.getItem('geminiApiKey') || "").trim();
             
             // 如果用戶有輸入 API (GitHub 環境)，使用標準模型；如果在 Canvas 預覽環境，使用預覽模型
@@ -938,22 +937,19 @@
                 generationConfig: { responseMimeType: "application/json" }
             };
 
-            const fetchWithRetry = async (url, options, maxRetries = 3) => {
-                let delays = [1000, 2000, 4000];
-                for (let i = 0; i < maxRetries; i++) {
-                    try {
-                        const response = await fetch(url, options);
-                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                        return await response.json();
-                    } catch (e) {
-                        if (i === maxRetries - 1) throw e;
-                        await new Promise(res => setTimeout(res, delays[i]));
-                    }
-                }
-            };
-
             try {
-                const result = await fetchWithRetry(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const response = await fetch(url, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(payload) 
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText); // 直接將 Google 傳回嘅錯誤文字拋出
+                }
+
+                const result = await response.json();
                 const recipeData = JSON.parse(result.candidates[0].content.parts[0].text);
                 
                 document.getElementById('input-flavor').value = recipeData.flavor || "原味";
@@ -961,7 +957,18 @@
                 document.getElementById('input-steps').value = recipeData.steps || "";
             } catch (error) {
                 console.error("AI 錯誤:", error);
-                customAlert(`未能連接 AI 大廚！\n錯誤代碼：${error.message}\n\n如果已經部署至 GitHub，請確保在「設定與備份」中輸入了有效的 API 金鑰（並確保冇複製多餘的空格）。`);
+                
+                // 分析錯誤訊息
+                let friendlyMsg = "";
+                if(error.message.includes("leaked") || error.message.includes("API key not valid")) {
+                    friendlyMsg = "你輸入嘅 API 金鑰無效，或者因為曾被公開而被 Google 停用咗！\n\n請去 Google AI Studio 申請一條新嘅金鑰，並於「設定與備份」重新輸入。";
+                } else if(error.message.includes("User location is not supported")) {
+                    friendlyMsg = "Google 偵測到你喺受限制嘅地區（例如香港）。\n\n請確保你已經開啟 VPN，並且設定為「全局模式 (Global Proxy)」。";
+                } else {
+                    friendlyMsg = `未知錯誤：\n${error.message}\n\n請確保金鑰正確及已開啟 VPN。`;
+                }
+                
+                customAlert(`未能連接 AI 大廚！\n\n${friendlyMsg}`);
             } finally {
                 document.getElementById('ai-loading').classList.add('hidden');
                 document.getElementById('ai-loading').classList.remove('flex');
