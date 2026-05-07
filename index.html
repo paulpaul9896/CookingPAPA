@@ -270,7 +270,7 @@
 
                 <!-- 版本資訊 -->
                 <div class="text-center mt-8 pb-4">
-                    <p class="text-xs text-gray-400 font-bold tracking-widest">Cooking PAPA v1.3.0</p>
+                    <p class="text-xs text-gray-400 font-bold tracking-widest">Cooking PAPA v1.3.1</p>
                 </div>
             </div>
         </main>
@@ -424,7 +424,14 @@
             customAlert("已成功從雲端強制重新載入最新數據！✅"); 
         };
         window.saveApiKey = () => {
-            const key = document.getElementById('setting-api-key').value;
+            const key = document.getElementById('setting-api-key').value.trim();
+            
+            // 防呆機制：檢查是否入錯 Firebase Key
+            if (key === firebaseConfig.apiKey) {
+                customAlert("⚠️ 錯誤：你輸入咗 Firebase 嘅金鑰！\n\nFirebase 同 Gemini AI 係兩套獨立系統，請前往 Google AI Studio (aistudio.google.com) 申請一條全新嘅 Gemini API 金鑰。");
+                return;
+            }
+            
             localStorage.setItem('geminiApiKey', key);
             customAlert("API 金鑰已儲存！");
         };
@@ -916,7 +923,7 @@
             closeEditModal();
         }
 
-        // AI 生成 (智能切換模型版 + 精準錯誤偵測)
+        // AI 生成 (智能切換模型版 + 精準錯誤偵測 + 防呆機制)
         window.generateAI = async function() {
             const dishName = document.getElementById('input-dish').value.trim();
             if(!dishName) return customAlert("請先輸入菜式名稱！");
@@ -924,11 +931,19 @@
             document.getElementById('ai-loading').classList.remove('hidden');
             document.getElementById('ai-loading').classList.add('flex');
 
-            // 自動移除多餘空格及換行，避免 URL 出錯
+            // 自動移除多餘空格及換行
             const apiKey = (localStorage.getItem('geminiApiKey') || "").trim();
             
-            // 修正：改用 gemini-1.5-flash-latest 以解決 404 Not Found 錯誤
-            const modelName = apiKey ? "gemini-1.5-flash-latest" : "gemini-2.5-flash-preview-09-2025";
+            // 防呆：如果唔小心入錯 Firebase 條 key
+            if (apiKey === firebaseConfig.apiKey) {
+                document.getElementById('ai-loading').classList.add('hidden');
+                document.getElementById('ai-loading').classList.remove('flex');
+                customAlert("⚠️ 錯誤：你輸入咗 Firebase 嘅金鑰！\n\n請前往 Google AI Studio (aistudio.google.com) 申請一條專屬嘅 Gemini API 金鑰。");
+                return;
+            }
+
+            // 使用最穩定標準版 gemini-1.5-flash
+            const modelName = apiKey ? "gemini-1.5-flash" : "gemini-2.5-flash-preview-09-2025";
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
             
             const payload = {
@@ -937,19 +952,30 @@
                 generationConfig: { responseMimeType: "application/json" }
             };
 
+            const fetchWithRetry = async (url, options, maxRetries = 3) => {
+                let delays = [1000, 2000, 4000];
+                for (let i = 0; i < maxRetries; i++) {
+                    try {
+                        const response = await fetch(url, options);
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            throw new Error(errorText); 
+                        }
+                        return await response.json();
+                    } catch (e) {
+                        if (i === maxRetries - 1) throw e;
+                        await new Promise(res => setTimeout(res, delays[i]));
+                    }
+                }
+            };
+
             try {
-                const response = await fetch(url, { 
+                const result = await fetchWithRetry(url, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' }, 
                     body: JSON.stringify(payload) 
                 });
                 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(errorText); // 直接將 Google 傳回嘅錯誤文字拋出
-                }
-
-                const result = await response.json();
                 const recipeData = JSON.parse(result.candidates[0].content.parts[0].text);
                 
                 document.getElementById('input-flavor').value = recipeData.flavor || "原味";
@@ -962,8 +988,10 @@
                 let friendlyMsg = "";
                 if(error.message.includes("leaked") || error.message.includes("API key not valid")) {
                     friendlyMsg = "你輸入嘅 API 金鑰無效，或者因為曾被公開而被 Google 停用咗！\n\n請去 Google AI Studio 申請一條新嘅金鑰，並於「設定與備份」重新輸入。";
-                } else if(error.message.includes("User location is not supported")) {
+                } else if(error.message.includes("User location is not supported") || error.message.includes("403")) {
                     friendlyMsg = "Google 偵測到你喺受限制嘅地區（例如香港）。\n\n請確保你已經開啟 VPN，並且設定為「全局模式 (Global Proxy)」。";
+                } else if(error.message.includes("404")) {
+                    friendlyMsg = "搵唔到 AI 模型 (404)！\n\n如果錯誤持續，請確認你申請的 API 金鑰是否具備存取權限。";
                 } else {
                     friendlyMsg = `未知錯誤：\n${error.message}\n\n請確保金鑰正確及已開啟 VPN。`;
                 }
