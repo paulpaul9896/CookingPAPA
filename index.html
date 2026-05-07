@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cooking PAPA</title>
+    
+    <!-- 📱 手機主畫面 (PWA) Logo 設定 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Cooking PAPA">
+    <!-- 指向你將會上載去 GitHub 嘅 logo.png -->
+    <link rel="icon" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
+    <meta name="theme-color" content="#fafafa">
+    
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { background-color: #fafafa; } /* IG 淺色背景 */
+        /* 視圖切換動畫 */
+        .view-section { display: none; animation: fadeIn 0.2s ease-out; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* IG 風格標題字體 */
+        .ig-title { font-family: 'Brush Script MT', 'cursive', sans-serif; font-size: 1.5rem; }
+        /* 隱藏原生滾動條 */
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="text-gray-900 font-sans min-h-screen bg-gray-50 pb-16">
+
+<!-- Toast Notification -->
+<div id="toast-notification" style="position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#1f2937;color:#fff;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:all 0.3s ease;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.3)"></div>
+
+    <!-- 自家製提示/確認視窗 (Custom Modal) 解決預覽環境阻擋 alert/confirm/prompt 嘅問題 -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/60 z-[70] hidden flex-col items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center border border-gray-100">
+            <h3 id="custom-modal-title" class="text-lg font-bold mb-3 text-gray-900">提示</h3>
+            <p id="custom-modal-msg" class="text-sm text-gray-600 mb-5 whitespace-pre-line break-all max-h-48 overflow-y-auto"></p>
+            <input type="text" id="custom-modal-input" class="hidden w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-1 focus:ring-blue-500 mb-4 text-sm" placeholder="">
+            <div class="flex gap-3 justify-center">
+                <button id="custom-modal-cancel" class="hidden flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl font-bold text-gray-700 transition">取消</button>
+                <button id="custom-modal-confirm" class="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 rounded-xl font-bold text-white transition shadow-sm">確定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 編輯視窗 (Modal) -->
+    <div id="edit-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex-col items-center justify-end sm:justify-center">
+        <div class="bg-white w-full max-w-lg sm:rounded-2xl rounded-t-2xl p-6 shadow-2xl">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 text-center border-b pb-3">編輯貼文內容</h3>
+            <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">款式 / 口味</label>
+                    <input type="text" id="edit-flavor" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">份量 (例如：2人 或 6吋)</label>
+                    <input type="text" id="edit-serving" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-2">⭐ 評分</label>
+                    <input type="hidden" id="edit-rating" value="4">
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <button type="button" onclick="setRating('edit-rating', 1)" id="btn-rating-edit-rating-1" class="py-2 rounded-lg border border-gray-200 text-gray-600 font-bold transition bg-white">🤢 中伏</button>
+                        <button type="button" onclick="setRating('edit-rating', 2)" id="btn-rating-edit-rating-2" class="py-2 rounded-lg border border-gray-200 text-gray-600 font-bold transition bg-white">🤐 試一次就夠</button>
+                        <button type="button" onclick="setRating('edit-rating', 3)" id="btn-rating-edit-rating-3" class="py-2 rounded-lg border border-gray-200 text-gray-600 font-bold transition bg-white">🙂 得閒整下</button>
+                        <button type="button" onclick="setRating('edit-rating', 4)" id="btn-rating-edit-rating-4" class="py-2 rounded-lg border-blue-500 bg-blue-500 text-white font-bold transition">🤤 要著兩條褲</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">標籤 (用逗號分隔)</label>
+                    <input type="text" id="edit-tags" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 outline-none focus:ring-1 focus:ring-blue-500" placeholder="例如: 晚餐, 氣炸鍋">
+                    <!-- 常用標籤區 (編輯) -->
+                    <div class="mt-2">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-[10px] font-bold text-gray-400">常用標籤</span>
+                        </div>
+                        <div id="common-tags-edit" class="flex flex-wrap gap-1"></div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">材料</label>
+                    <textarea id="edit-ingredients" rows="3" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 outline-none focus:ring-1 focus:ring-blue-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">步驟</label>
+                    <textarea id="edit-steps" rows="4" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 outline-none focus:ring-1 focus:ring-blue-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">參考連結 (選填)</label>
+                    <input type="url" id="edit-reference" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 outline-none focus:ring-1 focus:ring-blue-500" placeholder="例如 YouTube 影片網址...">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">烹飪時間（分鐘，選填）</label>
+                    <input type="number" id="edit-cooktime" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 outline-none focus:ring-1 focus:ring-blue-500" placeholder="例如: 30">
+                </div>
+                <div class="flex gap-3 pt-4 border-t">
+                    <button onclick="closeEditModal()" class="flex-1 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition">取消</button>
+                    <button onclick="saveEdit()" class="flex-1 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-bold transition">儲存修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI 載入中畫面 -->
+    <div id="ai-loading" class="fixed inset-0 bg-black/60 z-50 hidden flex-col items-center justify-center">
+        <i data-lucide="loader-2" class="w-10 h-10 text-white animate-spin mb-4"></i>
+        <p class="text-white font-bold text-sm">AI 大廚構思緊食譜...</p>
+    </div>
+
+    <!-- 頂部導航欄 (IG 風格) -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-20 px-4 py-3 flex justify-between items-center max-w-3xl mx-auto w-full">
+        <div class="flex items-center gap-2 cursor-pointer" onclick="navigate('home')">
+            <h1 class="ig-title font-bold text-gray-900">Cooking PAPA</h1>
+            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-900"></i>
+        </div>
+        <div class="flex items-center gap-4 text-gray-900">
+            <button onclick="navigate('add')" class="hover:text-gray-500 transition"><i data-lucide="plus-square" class="w-6 h-6"></i></button>
+            <button onclick="navigate('profile')" class="hover:text-gray-500 transition"><i data-lucide="menu" class="w-6 h-6"></i></button>
+        </div>
+    </header>
+
+    <div class="max-w-3xl mx-auto bg-white min-h-[80vh] border-x border-gray-100 shadow-sm">
+        
+        <!-- 視圖 1：首頁 / 個人檔案 (網格) -->
+        <main id="view-home" class="view-section active">
+            <!-- IG 個人檔案頭部 -->
+            <div class="px-4 py-6 flex items-center gap-6">
+                <!-- App Logo 頭像 (點擊可更改) -->
+                <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border border-gray-200 overflow-hidden flex-shrink-0 p-1 bg-gradient-to-tr from-yellow-400 via-orange-500 to-pink-500 cursor-pointer hover:opacity-80 transition" onclick="document.getElementById('avatar-upload').click()" title="點擊更改頭像">
+                    <div class="w-full h-full rounded-full bg-white p-0.5">
+                        <img id="home-avatar-img" src="" class="w-full h-full rounded-full object-cover bg-orange-50" alt="Cooking PAPA Logo">
+                    </div>
+                </div>
+                <!-- 隱藏的上載按鈕 -->
+                <input type="file" id="avatar-upload" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)">
+                
+                <!-- 統計資料 -->
+                <div class="flex-1 flex justify-around text-center">
+                    <div class="flex flex-col"><span class="font-bold text-lg" id="stat-dishes">0</span><span class="text-xs text-gray-600">菜式</span></div>
+                    <div class="flex flex-col"><span class="font-bold text-lg" id="stat-flavors">0</span><span class="text-xs text-gray-600">口味</span></div>
+                    <div class="flex flex-col"><span class="font-bold text-lg" id="stat-records">0</span><span class="text-xs text-gray-600">記錄</span></div>
+                </div>
+            </div>
+            <div class="px-4 pb-4">
+                <h2 class="font-bold text-sm">爸爸大廚 cooking_papa</h2>
+                <p class="text-sm text-gray-600 mt-1 whitespace-pre-line">紀錄為屋企人煮嘅每一餐😋🍽️
+                ☁️ 雲端同步已開啟</p>
+                <div class="mt-4 flex gap-2">
+                    <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-black font-bold text-sm py-1.5 rounded-lg transition" onclick="navigate('profile')">雲端備份設定</button>
+                    <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-black font-bold text-sm py-1.5 rounded-lg transition" onclick="navigate('add')">分享新食譜</button>
+                </div>
+            </div>
+
+            <!-- 分頁 Tab -->
+            <div class="flex border-t border-gray-200 mt-2">
+                <div class="flex-1 text-center py-3 border-t-[1px] border-black -mt-[1px] cursor-pointer">
+                    <i data-lucide="grid" class="mx-auto w-5 h-5 text-gray-900"></i>
+                </div>
+                <div class="flex-1 text-center py-3 cursor-pointer">
+                    <i data-lucide="bookmark" class="mx-auto w-5 h-5 text-gray-400"></i>
+                </div>
+            </div>
+
+            <!-- 網格 (IG Grid) -->
+            <div id="dishes-grid" class="grid grid-cols-3 gap-0.5">
+                <!-- 動態生成 -->
+            </div>
+        </main>
+
+        <!-- 視圖 2：食譜詳情 (IG Post 風格) -->
+        <main id="view-recipe" class="view-section">
+            <div class="flex items-center gap-3 p-3 border-b border-gray-100 bg-white sticky top-0 z-10">
+                <button onclick="navigate('home')" class="text-gray-900 hover:text-gray-500 transition"><i data-lucide="arrow-left"></i></button>
+                <h2 class="font-bold text-gray-900 text-sm uppercase tracking-wide">食譜貼文</h2>
+            </div>
+            <div id="posts-container" class="pb-10">
+                <!-- 動態生成 Post -->
+            </div>
+        </main>
+
+        <!-- 視圖 3：新增食譜表單 -->
+        <main id="view-add" class="view-section p-4 bg-white min-h-[70vh]">
+            <div class="flex items-center justify-between mb-6 pb-2 border-b border-gray-100">
+                <button onclick="navigate('home')" class="text-gray-900"><i data-lucide="x"></i></button>
+                <h2 class="font-bold text-gray-900">新增食譜</h2>
+                <button form="recipe-form" type="submit" class="text-blue-500 font-bold hover:text-blue-600 transition">分享</button>
+            </div>
+            
+            <form id="recipe-form" onsubmit="saveNewRecipe(event)" class="space-y-4">
+                <div class="flex gap-4 border-b border-gray-100 pb-4 items-start">
+                    <div class="w-16 h-16 bg-gray-100 border border-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 text-gray-400">
+                        <i data-lucide="camera" class="w-6 h-6"></i>
+                    </div>
+                    <div class="flex-1">
+                        <input type="text" id="input-dish" required class="w-full text-sm py-1 border-none placeholder-gray-400 focus:ring-0 outline-none" placeholder="菜式名稱 (例如：巴斯克蛋糕)...">
+                        <input type="text" id="input-flavor" required class="w-full text-sm py-1 border-none placeholder-gray-400 focus:ring-0 outline-none mt-1" placeholder="口味 (例如：原味)...">
+                    </div>
+                </div>
+                <div class="pt-2">
+                    <button type="button" onclick="generateAI()" class="w-full bg-blue-50 text-blue-600 text-sm font-bold py-2 rounded-lg flex items-center justify-center gap-1 hover:bg-blue-100 transition shadow-sm">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i> AI 幫手寫食譜
+                    </button>
+                </div>
+                
+                <div class="mt-4">
+                    <input type="text" id="input-serving" class="w-full text-sm py-2 border-b border-gray-100 placeholder-gray-400 outline-none" placeholder="👥 份量 (例如: 2人 或 6吋)">
+                <div class="mt-2">
+                    <input type="number" id="input-cooktime" class="w-full text-sm py-2 border-b border-gray-100 placeholder-gray-400 outline-none" placeholder="⏱️ 烹飪時間（分鐘，選填，例如: 30）">
+                </div>
+                </div>
+
+                <div class="mt-4">
+                    <label class="block text-xs font-bold text-gray-500 mb-2">⭐ 評分</label>
+                    <input type="hidden" id="input-rating" value="4">
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <button type="button" onclick="setRating('input-rating', 1)" id="btn-rating-input-rating-1" class="py-2 rounded-lg border border-gray-200 text-gray-600 font-bold transition bg-white">🤢 中伏</button>
+                        <button type="button" onclick="setRating('input-rating', 2)" id="btn-rating-input-rating-2" class="py-2 rounded-lg border border-gray-200 text-gray-600 font-bold transition bg-white">🤐 試一次就夠</button>
+                        <button type="button" onclick="setRating('input-rating', 3)" id="btn-rating-input-rating-3" class="py-2 rounded-lg border border-gray-200 text-gray-600 font-bold transition bg-white">🙂 得閒整下</button>
+                        <button type="button" onclick="setRating('input-rating', 4)" id="btn-rating-input-rating-4" class="py-2 rounded-lg border-blue-500 bg-blue-500 text-white font-bold transition">🤤 要著兩條褲</button>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <input type="text" id="input-tags" class="w-full text-sm py-3 border-b border-gray-100 placeholder-gray-400 outline-none" placeholder="🏷️ 標籤 (用逗號分隔，例如: 快手菜, 晚餐)">
+                    <!-- 常用標籤區 (新增) -->
+                    <div class="mt-2">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-[10px] font-bold text-gray-400">常用標籤</span>
+                        </div>
+                        <div id="common-tags-add" class="flex flex-wrap gap-1"></div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <input type="url" id="input-reference" class="w-full text-sm py-3 border-b border-gray-100 placeholder-gray-400 outline-none" placeholder="🔗 原始食譜連結 (例如 YouTube, 網誌... 選填)">
+                </div>
+                <div class="mt-4">
+                    <textarea id="input-ingredients" required rows="4" class="w-full text-sm py-2 border-b border-gray-100 placeholder-gray-400 outline-none resize-none" placeholder="🛒 輸入材料..."></textarea>
+                </div>
+                <div class="mt-4">
+                    <textarea id="input-steps" required rows="6" class="w-full text-sm py-2 border-b border-gray-100 placeholder-gray-400 outline-none resize-none" placeholder="🍳 輸入烹飪步驟..."></textarea>
+                </div>
+            </form>
+        </main>
+
+        <!-- 視圖 4：雲端備份設定 (Profile) -->
+        <main id="view-profile" class="view-section p-4 bg-white min-h-[70vh]">
+            <div class="flex items-center gap-3 mb-6 pb-2 border-b border-gray-100">
+                <button onclick="navigate('home')" class="text-gray-900"><i data-lucide="arrow-left"></i></button>
+                <h2 class="font-bold text-gray-900">設定與備份</h2>
+            </div>
+            <div class="space-y-6">
+                <!-- 雲端同步狀態 -->
+                <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    <h3 class="font-bold text-gray-900 flex items-center gap-2 mb-2"><i data-lucide="cloud-download" class="w-5 h-5 text-blue-500"></i> 雲端數據狀態</h3>
+                    <p class="text-sm text-gray-600 mb-4 font-medium">目前使用無帳號自動同步模式。資料變更會實時（立刻）上傳。若需強制刷新最新雲端版本，請點擊下方按鈕。</p>
+                    <button onclick="forceSync()" class="w-full text-sm bg-blue-50 text-blue-600 font-bold py-2 rounded-lg hover:bg-blue-100 transition border border-blue-100 mb-2">從雲端重新載入數據</button>
+                </div>
+
+                <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    <h3 class="font-bold text-gray-900 flex items-center gap-2 mb-2"><i data-lucide="key" class="w-5 h-5 text-yellow-500"></i> API 金鑰管理</h3>
+                    <p class="text-xs text-gray-500 mb-3">若部署至 GitHub，請輸入你的 Gemini API Key 以使用 AI 食譜生成功能。<br><span class="text-green-600 font-bold">✅ 目前使用：gemini-2.5-flash（最新穩定免費模型）</span></p>
+                    <input type="password" id="setting-api-key" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg outline-none focus:border-blue-500 mb-2" placeholder="輸入 API 金鑰...">
+                    <button onclick="saveApiKey()" class="w-full bg-gray-900 text-white text-sm font-bold py-2 rounded-lg hover:bg-gray-700 transition">儲存金鑰</button>
+                </div>
+
+                <!-- 載入示範數據 (開發用) -->
+                <div class="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                    <h3 class="font-bold text-blue-900 flex items-center gap-2 mb-2"><i data-lucide="wand-2" class="w-5 h-5 text-blue-500"></i> 測試功能</h3>
+                    <p class="text-xs text-blue-700 mb-3">一鍵載入幾個示範食譜，方便預覽排版。</p>
+                    <button onclick="loadDemoData()" class="w-full bg-blue-500 text-white text-sm font-bold py-2 rounded-lg hover:bg-blue-600 transition shadow-sm">載入示範食譜</button>
+                </div>
+
+                <!-- 版本資訊 -->
+                <div class="text-center mt-8 pb-4">
+                    <p class="text-xs text-gray-400 font-bold tracking-widest">Cooking PAPA v2.0 ✨</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- 視圖 5：搜尋頁面 (Search) -->
+        <main id="view-search" class="view-section bg-white min-h-[80vh]">
+            <div class="sticky top-0 bg-white z-10 px-4 py-3 border-b border-gray-100 flex items-center gap-3">
+                <div class="relative flex-1">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                    <input type="text" id="search-input" oninput="performSearch()" class="w-full bg-gray-100 border-none rounded-xl py-2 pl-9 pr-4 outline-none text-sm focus:ring-1 focus:ring-blue-500" placeholder="搜尋菜式名、口味或標籤...">
+                </div>
+                <button onclick="navigate('home')" class="text-sm font-bold text-gray-900 whitespace-nowrap">取消</button>
+            </div>
+            
+            <div id="search-results" class="grid grid-cols-3 gap-0.5 mt-0.5">
+                <div class="col-span-3 py-10 text-center text-gray-400 text-sm">請輸入關鍵字開始搜尋🔍</div>
+            </div>
+        </main>
+
+        <!-- 視圖 6：收藏頁面 (Favorites) -->
+        <main id="view-favorites" class="view-section bg-white min-h-[80vh]">
+            <div class="sticky top-0 bg-white z-10 px-4 py-3 border-b border-gray-100 flex items-center gap-3">
+                <button onclick="navigate('home')" class="text-gray-900"><i data-lucide="arrow-left"></i></button>
+                <h2 class="font-bold text-gray-900">我的收藏 ❤️</h2>
+            </div>
+            
+            <div id="favorites-grid" class="grid grid-cols-3 gap-0.5 mt-0.5">
+                <!-- 動態生成收藏列表 -->
+            </div>
+        </main>
+
+    </div>
+
+    <!-- 底部導航欄 (IG 風格) -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around p-3 z-20 pb-5 max-w-3xl left-1/2 -translate-x-1/2">
+        <button id="nav-btn-home" onclick="navigate('home')" class="hover:scale-110 transition text-gray-900"><i data-lucide="home" class="w-6 h-6"></i></button>
+        <button id="nav-btn-search" onclick="navigate('search')" class="hover:scale-110 transition text-gray-400"><i data-lucide="search" class="w-6 h-6"></i></button>
+        <button id="nav-btn-add" onclick="navigate('add')" class="hover:scale-110 transition text-gray-400"><i data-lucide="plus-square" class="w-6 h-6"></i></button>
+        <button id="nav-btn-favorites" onclick="navigate('favorites')" class="hover:scale-110 transition text-gray-400"><i data-lucide="heart" class="w-6 h-6"></i></button>
+        <!-- 底部頭像縮圖 -->
+        <button id="nav-btn-profile" class="w-6 h-6 rounded-full border-2 border-transparent overflow-hidden hover:scale-110 transition" onclick="navigate('profile')">
+             <img id="nav-avatar-img" src="" class="w-full h-full object-cover bg-orange-50">
+        </button>
+    </nav>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- 1. Firebase 雲端初始化 ---
+        const firebaseConfig = {
+          apiKey: "REMOVED_FIREBASE_API_KEY",
+          authDomain: "cooking-papa-51c66.firebaseapp.com",
+          projectId: "cooking-papa-51c66",
+          storageBucket: "cooking-papa-51c66.firebasestorage.app",
+          messagingSenderId: "410761551111",
+          appId: "1:410761551111:web:dc11932400d524615739a2",
+          measurementId: "G-3B1ZTPXBZE"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const dbFirestore = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'cooking-papa-app';
+        
+        let currentUser = null;
+        let db = []; 
+        let currentDishId = null;
+        let currentFlavorId = null;
+        let isFirstLoad = true; 
+
+        // 常用標籤庫
+        let commonTags = JSON.parse(localStorage.getItem('cookingPapaTags')) || ['快手菜', '晚餐', '健康', '甜品', '氣炸鍋'];
+        let activeTagInputId = 'input-tags';
+
+        // 頭像管理 (預設使用內置 SVG Emoji)
+        const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23FFF3E0' width='100' height='100'/><text x='50' y='55' font-size='45' text-anchor='middle' dominant-baseline='middle'>👨🏻‍🍳</text></svg>";
+        window.userAvatar = localStorage.getItem('cookingPapaAvatar') || defaultAvatar;
+
+        function updateAvatarDisplays() {
+            const homeAv = document.getElementById('home-avatar-img');
+            const navAv = document.getElementById('nav-avatar-img');
+            if(homeAv) homeAv.src = window.userAvatar;
+            if(navAv) navAv.src = window.userAvatar;
+        }
+
+        // --- 自家製提示框邏輯 (Custom Modal) ---
+        let modalConfirmCallback = null;
+
+        function showModal(opts) {
+            document.getElementById('custom-modal-title').innerText = opts.title || '提示';
+            document.getElementById('custom-modal-msg').innerText = opts.msg || '';
+            
+            const inputEl = document.getElementById('custom-modal-input');
+            if (opts.type === 'prompt') {
+                inputEl.classList.remove('hidden');
+                inputEl.value = opts.defaultText || '';
+                inputEl.placeholder = opts.placeholder || '';
+            } else {
+                inputEl.classList.add('hidden');
+            }
+
+            const cancelBtn = document.getElementById('custom-modal-cancel');
+            if (opts.type === 'confirm' || opts.type === 'prompt') {
+                cancelBtn.classList.remove('hidden');
+            } else {
+                cancelBtn.classList.add('hidden');
+            }
+
+            modalConfirmCallback = opts.onConfirm || null;
+            
+            document.getElementById('custom-modal').classList.remove('hidden');
+            document.getElementById('custom-modal').classList.add('flex');
+        }
+
+        document.getElementById('custom-modal-cancel').onclick = () => {
+            document.getElementById('custom-modal').classList.add('hidden');
+            document.getElementById('custom-modal').classList.remove('flex');
+        };
+
+        document.getElementById('custom-modal-confirm').onclick = () => {
+            document.getElementById('custom-modal').classList.add('hidden');
+            document.getElementById('custom-modal').classList.remove('flex');
+            if (modalConfirmCallback) {
+                const inputVal = document.getElementById('custom-modal-input').value;
+                modalConfirmCallback(inputVal);
+            }
+        };
+
+        window.customAlert = (msg) => showModal({ type: 'alert', msg: msg });
+        window.customConfirm = (msg, onConfirm) => showModal({ type: 'confirm', msg: msg, onConfirm: onConfirm });
+        window.customPrompt = (msg, placeholder, onConfirm) => showModal({ type: 'prompt', msg: msg, placeholder: placeholder, onConfirm: onConfirm });
+
+
+        // Toast 通知系統
+        window.showToast = function(msg, duration=2500) {
+            const t = document.getElementById('toast-notification');
+            t.textContent = msg;
+            t.style.opacity = '1';
+            t.style.transform = 'translateX(-50%) translateY(0)';
+            clearTimeout(window._toastTimeout);
+            window._toastTimeout = setTimeout(() => {
+                t.style.opacity = '0';
+                t.style.transform = 'translateX(-50%) translateY(20px)';
+            }, duration);
+        };
+
+        // 綁定到 window (防止按鈕失效)
+        window.navigate = navigate;
+        window.saveNewRecipe = saveNewRecipe;
+        window.saveRecord = saveRecord;
+        window.deleteRecord = deleteRecord;
+        window.deleteCurrentRecipe = deleteCurrentRecipe;
+        window.openEditModal = openEditModal;
+        window.closeEditModal = closeEditModal;
+        window.saveEdit = saveEdit;
+        window.toggleFavorite = toggleFavorite;
+        window.performSearch = performSearch;
+        window.appendTag = appendTag;
+        window.removeCommonTag = removeCommonTag;
+        window.promptAddCommonTag = promptAddCommonTag;
+        window.forceSync = () => { 
+            refreshCurrentView();
+            customAlert("已成功從雲端強制重新載入最新數據！✅"); 
+        };
+        window.saveApiKey = () => {
+            const key = document.getElementById('setting-api-key').value.trim();
+            
+            // 防呆機制：檢查是否入錯 Firebase Key
+            if (key === firebaseConfig.apiKey) {
+                customAlert("⚠️ 錯誤：你輸入咗 Firebase 嘅金鑰！\n\nFirebase 同 Gemini AI 係兩套獨立系統，請前往 Google AI Studio (aistudio.google.com) 申請一條全新嘅 Gemini API 金鑰。");
+                return;
+            }
+            
+            localStorage.setItem('geminiApiKey', key);
+            customAlert("API 金鑰已儲存！");
+        };
+        window.loadDemoData = loadDemoData;
+
+        // 處理頭像上載
+        window.handleAvatarUpload = function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                resizeImage(file, (imgData) => {
+                    window.userAvatar = imgData;
+                    localStorage.setItem('cookingPapaAvatar', imgData);
+                    updateAvatarDisplays();
+                    if (document.querySelector('.view-section.active').id === 'view-recipe') {
+                        refreshCurrentView(); 
+                    }
+                    customAlert("頭像更新成功！");
+                });
+            }
+        };
+
+        // --- 處理評分按鈕點擊 ---
+        window.setRating = function(inputId, value) {
+            document.getElementById(inputId).value = value;
+            for(let i=1; i<=4; i++) {
+                const btn = document.getElementById(`btn-rating-${inputId}-${i}`);
+                if(i === value) {
+                    btn.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
+                    btn.classList.remove('bg-white', 'text-gray-600', 'border-gray-200');
+                } else {
+                    btn.classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
+                    btn.classList.add('bg-white', 'text-gray-600', 'border-gray-200');
+                }
+            }
+        };
+
+        // --- 2. 自動登入邏輯 ---
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } catch (tokenError) {
+                        console.warn("自訂 Firebase Config 導致 Token 不匹配，切換至匿名登入...");
+                        await signInAnonymously(auth);
+                    }
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch(e) { 
+                console.error("自動登入發生錯誤：", e); 
+            }
+        };
+
+        let unsubscribeSnapshot = null;
+
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (user) {
+                if (unsubscribeSnapshot) unsubscribeSnapshot();
+                const recipesRef = collection(dbFirestore, 'artifacts', appId, 'users', user.uid, 'recipes');
+                unsubscribeSnapshot = onSnapshot(recipesRef, (snapshot) => {
+                    db = [];
+                    snapshot.forEach(docSnap => { db.push({ id: docSnap.id, ...docSnap.data() }); });
+                    
+                    if (isFirstLoad && db.length === 0) {
+                        isFirstLoad = false;
+                        loadDemoData(false); 
+                    } else {
+                        isFirstLoad = false;
+                        refreshCurrentView();
+                    }
+                }, (error) => { 
+                    console.error("雲端讀取失敗", error); 
+                    customAlert("雲端連線失敗，請檢查網絡連線。");
+                });
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            initAuth();
+            updateAvatarDisplays(); 
+            document.getElementById('setting-api-key').value = localStorage.getItem('geminiApiKey') || "";
+            navigate('home');
+        });
+
+        async function syncToCloud(dishData) {
+            if (!currentUser) return;
+            const docRef = doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'recipes', dishData.id);
+            await setDoc(docRef, dishData);
+        }
+
+        async function deleteFromCloud(dishId) {
+            if (!currentUser) return;
+            const docRef = doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'recipes', dishId);
+            await deleteDoc(docRef);
+        }
+
+        function refreshCurrentView() {
+            const activeView = document.querySelector('.view-section.active').id;
+            if (activeView === 'view-home') renderHome();
+            else if (activeView === 'view-recipe' && currentDishId && currentFlavorId) renderPost(currentDishId, currentFlavorId);
+            else if (activeView === 'view-favorites') renderFavorites();
+            else if (activeView === 'view-search') performSearch();
+            renderCommonTags();
+            updateAvatarDisplays();
+            lucide.createIcons();
+        }
+
+        function navigate(viewId, dishId = null, flavorId = null) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active');
+            
+            // 更新底部導航欄高亮顯示
+            const navIds = ['home', 'search', 'add', 'favorites', 'profile'];
+            navIds.forEach(id => {
+                const btn = document.getElementById('nav-btn-' + id);
+                if(btn) {
+                    if(id === viewId || (viewId === 'recipe' && id === 'home')) { 
+                        if(id === 'profile') {
+                            btn.classList.add('border-gray-900');
+                            btn.classList.remove('border-transparent');
+                        } else {
+                            btn.classList.add('text-gray-900');
+                            btn.classList.remove('text-gray-400');
+                        }
+                    } else {
+                        if(id === 'profile') {
+                            btn.classList.remove('border-gray-900');
+                            btn.classList.add('border-transparent');
+                        } else {
+                            btn.classList.remove('text-gray-900');
+                            btn.classList.add('text-gray-400');
+                        }
+                    }
+                }
+            });
+
+            if (viewId === 'home') { currentDishId = null; currentFlavorId = null; renderHome(); }
+            else if (viewId === 'recipe' && dishId && flavorId) { currentDishId = dishId; currentFlavorId = flavorId; renderPost(dishId, flavorId); }
+            else if (viewId === 'add') { 
+                document.getElementById('recipe-form').reset(); 
+                window.setRating('input-rating', 4);
+                activeTagInputId = 'input-tags';
+                renderCommonTags();
+            }
+            else if (viewId === 'search') {
+                document.getElementById('search-input').value = '';
+                performSearch();
+            }
+            else if (viewId === 'favorites') { renderFavorites(); }
+
+            lucide.createIcons();
+            window.scrollTo(0,0);
+        }
+
+        // --- 標籤管理系統 ---
+        function renderCommonTags() {
+            const addContainer = document.getElementById('common-tags-add');
+            const editContainer = document.getElementById('common-tags-edit');
+            
+            const html = commonTags.map(tag => `
+                <div class="flex items-center bg-blue-50 text-blue-600 px-2 py-1 rounded-md text-[11px] font-bold">
+                    <span class="cursor-pointer hover:underline" onclick="appendTag('${tag}')">${tag}</span>
+                    <button type="button" onclick="removeCommonTag('${tag}')" class="ml-1 text-blue-400 hover:text-blue-700">
+                        <i data-lucide="x" class="w-3 h-3"></i>
+                    </button>
+                </div>
+            `).join('') + `
+                <button type="button" onclick="promptAddCommonTag()" class="text-[11px] font-bold text-gray-500 bg-gray-100 border border-gray-200 px-2 py-1 rounded-md hover:bg-gray-200">
+                    + 新增
+                </button>
+            `;
+
+            if(addContainer) addContainer.innerHTML = html;
+            if(editContainer) editContainer.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function appendTag(tag) {
+            const input = document.getElementById(activeTagInputId);
+            let currentTags = input.value.split(',').map(t => t.trim()).filter(t => t);
+            if(!currentTags.includes(tag)) {
+                currentTags.push(tag);
+                input.value = currentTags.join(', ');
+            }
+        }
+
+        function removeCommonTag(tag) {
+            commonTags = commonTags.filter(t => t !== tag);
+            localStorage.setItem('cookingPapaTags', JSON.stringify(commonTags));
+            renderCommonTags();
+        }
+
+        function promptAddCommonTag() {
+            customPrompt("輸入新的常用標籤：\n(例如：減肥餐, 帶飯)", "輸入標籤...", (newTag) => {
+                if(newTag && newTag.trim() && !commonTags.includes(newTag.trim())) {
+                    commonTags.push(newTag.trim());
+                    localStorage.setItem('cookingPapaTags', JSON.stringify(commonTags));
+                    renderCommonTags();
+                }
+            });
+        }
+
+        // --- 搜尋功能 ---
+        function performSearch() {
+            const keyword = document.getElementById('search-input').value.toLowerCase().trim();
+            const grid = document.getElementById('search-results');
+            
+            if(!keyword) {
+                grid.innerHTML = '<div class="col-span-3 py-10 text-center text-gray-400 text-sm">請輸入關鍵字開始搜尋🔍</div>';
+                return;
+            }
+
+            let results = [];
+            db.forEach(dish => {
+                (dish.flavors || []).forEach(flavor => {
+                    const dishMatch = dish.name.toLowerCase().includes(keyword);
+                    const flavorMatch = flavor.name.toLowerCase().includes(keyword);
+                    const tagsMatch = (flavor.tags || []).some(t => t.toLowerCase().includes(keyword));
+                    
+                    if(dishMatch || flavorMatch || tagsMatch) {
+                        let coverImg = 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?auto=format&fit=crop&w=800&q=80';
+                        if (flavor.records && flavor.records.length > 0 && flavor.records[0].image) coverImg = flavor.records[0].image;
+                        results.push({ dishId: dish.id, flavorId: flavor.id, imgSrc: coverImg });
+                    }
+                });
+            });
+
+            if(results.length === 0) {
+                grid.innerHTML = '<div class="col-span-3 py-10 text-center text-gray-400 text-sm">搵唔到相關食譜 😢</div>';
+                return;
+            }
+
+            grid.innerHTML = results.reverse().map(post => `
+                <div class="aspect-square cursor-pointer group relative overflow-hidden bg-gray-100" onclick="navigate('recipe', '${post.dishId}', '${post.flavorId}')">
+                    <img src="${post.imgSrc}" class="w-full h-full object-cover">
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        // --- 收藏列表 (Favorites) ---
+        function renderFavorites() {
+            const grid = document.getElementById('favorites-grid');
+            let results = [];
+            
+            db.forEach(dish => {
+                (dish.flavors || []).forEach(flavor => {
+                    if(flavor.isFavorite) {
+                        let coverImg = 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?auto=format&fit=crop&w=800&q=80';
+                        if (flavor.records && flavor.records.length > 0 && flavor.records[0].image) coverImg = flavor.records[0].image;
+                        results.push({ dishId: dish.id, flavorId: flavor.id, imgSrc: coverImg });
+                    }
+                });
+            });
+
+            if(results.length === 0) {
+                grid.innerHTML = '<div class="col-span-3 py-10 text-center text-gray-400 text-sm">仲未有收藏嘅食譜 💔<br>去貼文度撳吓心心啦！</div>';
+                return;
+            }
+
+            grid.innerHTML = results.reverse().map(post => `
+                <div class="aspect-square cursor-pointer group relative overflow-hidden bg-gray-100" onclick="navigate('recipe', '${post.dishId}', '${post.flavorId}')">
+                    <img src="${post.imgSrc}" class="w-full h-full object-cover">
+                    <div class="absolute top-2 right-2 bg-white/80 p-1 rounded-full shadow-sm"><i data-lucide="heart" class="w-4 h-4 text-red-500 fill-red-500"></i></div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        // 渲染 IG Grid
+        function renderHome() {
+            const grid = document.getElementById('dishes-grid');
+            grid.innerHTML = '';
+            
+            let totalDishes = db.length;
+            let totalFlavors = 0;
+            let totalRecords = 0;
+            let allPosts = [];
+
+            db.forEach(dish => {
+                totalFlavors += (dish.flavors || []).length;
+                (dish.flavors || []).forEach(flavor => {
+                    totalRecords += (flavor.records || []).length;
+                    let coverImg = 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?auto=format&fit=crop&w=800&q=80';
+                    if (flavor.records && flavor.records.length > 0 && flavor.records[0].image) coverImg = flavor.records[0].image;
+                    allPosts.push({ dishId: dish.id, flavorId: flavor.id, imgSrc: coverImg });
+                });
+            });
+
+            document.getElementById('stat-dishes').innerText = totalDishes;
+            document.getElementById('stat-flavors').innerText = totalFlavors;
+            document.getElementById('stat-records').innerText = totalRecords;
+
+            if (allPosts.length === 0) {
+                grid.innerHTML = '<div class="col-span-3 py-10 text-center text-gray-400 text-sm">尚未發佈任何食譜貼文<br>撳下面 + 號開始分享啦！</div>';
+                return;
+            }
+
+            allPosts.reverse().forEach(post => {
+                grid.innerHTML += `
+                    <div class="aspect-square cursor-pointer group relative overflow-hidden bg-gray-100" onclick="navigate('recipe', '${post.dishId}', '${post.flavorId}')">
+                        <img src="${post.imgSrc}" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white">
+                            <i data-lucide="heart" class="w-6 h-6 fill-white"></i>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // 渲染單個貼文
+        function renderPost(dishId, flavorId) {
+            const dish = db.find(d => d.id === dishId);
+            const flavor = dish?.flavors.find(f => f.id === flavorId);
+            if (!flavor) return;
+
+            let mainImage = 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?auto=format&fit=crop&w=800&q=80';
+            if (flavor.records && flavor.records.length > 0 && flavor.records[0].image) mainImage = flavor.records[0].image;
+
+            // 處理參考連結
+            const referenceHtml = flavor.reference ? `
+                <div class="mt-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                    <p class="font-bold text-xs uppercase text-gray-500 mb-1 border-b pb-1 flex items-center gap-1"><i data-lucide="link" class="w-3 h-3"></i> 參考來源</p>
+                    <a href="${flavor.reference}" target="_blank" class="text-blue-500 text-xs hover:underline break-all mt-2 block">${flavor.reference}</a>
+                </div>
+            ` : '';
+
+            // 處理標籤
+            const tagsArr = flavor.tags || [];
+            const tagsHtml = tagsArr.length > 0 ? tagsArr.map(t => `<span class="text-blue-600 mr-1">#${t}</span>`).join('') : '';
+
+            // 處理評分與份量
+            const ratingTexts = {
+                1: "🤢 中伏",
+                2: "🤐 試一次就夠",
+                3: "🙂 得閒整下",
+                4: "🤤 要著兩條褲"
+            };
+            const starsHtml = ratingTexts[flavor.rating || 4];
+            const servingHtml = flavor.serving ? `👥 ${flavor.serving}` : '👥 未記錄份量';
+            const cooktimeHtml = flavor.cooktime ? `<span class="text-blue-600">⏱️ ${flavor.cooktime}分鐘</span>` : '';
+
+            // 愛心狀態
+            const heartIconClass = flavor.isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-900';
+
+            document.getElementById('posts-container').innerHTML = `
+                <div class="bg-white pb-6 mb-4">
+                    <!-- 頂部資訊列 -->
+                    <div class="flex items-center justify-between p-3 border-b border-gray-50">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full border border-gray-200 overflow-hidden bg-orange-50">
+                                <img src="${window.userAvatar}" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <span class="font-bold text-sm text-gray-900 block leading-tight">cooking_papa</span>
+                                <span class="text-[10px] text-gray-500 block leading-tight">爸爸大廚</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <!-- 加入 button 標籤確保 click 事件不受 Lucide 影響 -->
+                            <button onclick="openEditModal()" class="hover:text-blue-500 text-gray-500"><i data-lucide="edit-2" class="w-5 h-5"></i></button>
+                            <button onclick="deleteCurrentRecipe()" class="hover:text-red-700 text-red-500"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                        </div>
+                    </div>
+                    
+                    <!-- 圖片 -->
+                    <div class="w-full bg-gray-100">
+                        <img src="${mainImage}" class="w-full aspect-square object-cover">
+                    </div>
+
+                    <!-- 互動列 -->
+                    <div class="p-3 flex justify-between items-center">
+                        <div class="flex gap-4">
+                            <button onclick="toggleFavorite()"><i data-lucide="heart" class="w-6 h-6 ${heartIconClass} transition-colors"></i></button>
+                            <button><i data-lucide="message-circle" class="w-6 h-6 text-gray-900"></i></button>
+                            <button><i data-lucide="send" class="w-6 h-6 text-gray-900"></i></button>
+                        </div>
+                        <button><i data-lucide="bookmark" class="w-6 h-6 text-gray-900 fill-gray-900"></i></button>
+                    </div>
+
+                    <!-- 貼文內容 -->
+                    <div class="px-4 text-sm text-gray-900">
+                        <div class="text-xs text-gray-500 mb-2 font-bold flex gap-3">
+                            <span>${servingHtml}</span>
+                            <span class="text-blue-600">${starsHtml}</span>
+                            ${cooktimeHtml}
+                        </div>
+                        <p class="mb-2">
+                            <span class="font-bold mr-1">cooking_papa</span>
+                            <span class="font-bold text-gray-800">【${dish.name} - ${flavor.name}】</span>
+                            ${tagsHtml}
+                        </p>
+                        
+                        <div class="mt-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                            <p class="font-bold text-xs uppercase text-gray-500 mb-1 border-b pb-1">🛒 材料 Ingredients</p>
+                            <p class="whitespace-pre-line text-gray-700 mt-2">${flavor.ingredients}</p>
+                        </div>
+                        
+                        <div class="mt-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                            <p class="font-bold text-xs uppercase text-gray-500 mb-1 border-b pb-1">🍳 步驟 Steps</p>
+                            <p class="whitespace-pre-line text-gray-700 mt-2 leading-relaxed">${flavor.steps}</p>
+                        </div>
+
+                        ${referenceHtml}
+                    </div>
+
+                    <!-- 製作記錄 -->
+                    <div class="px-4 mt-6">
+                        <h4 class="font-bold text-sm text-gray-900 mb-3 flex items-center gap-2 border-t pt-4">
+                            <i data-lucide="camera" class="w-4 h-4"></i> 製作記錄相簿
+                        </h4>
+                        <div class="space-y-4">
+                            ${(flavor.records || []).map(r => `
+                                <div class="bg-white border border-gray-200 rounded-lg p-3 relative shadow-sm">
+                                    <!-- 刪除記錄按鈕 -->
+                                    <button onclick="deleteRecord('${r.id}')" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10 p-1 bg-white rounded-full shadow-sm"><i data-lucide="x" class="w-4 h-4"></i></button>
+                                    <span class="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded">${r.date}</span>
+                                    <p class="text-xs text-gray-700 mt-2">${r.note || '無備註'}</p>
+                                    ${r.image ? `<img src="${r.image}" class="mt-2 w-full h-32 object-cover rounded-md border border-gray-100">` : ''}
+                                </div>
+                            `).join('')}
+                            
+                            <div class="border border-dashed border-gray-300 rounded-lg p-3 text-center bg-gray-50">
+                                <input type="file" id="record-image" accept="image/*" class="text-xs mb-2 w-full text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-600">
+                                <input type="text" id="record-note" class="w-full text-xs py-1.5 px-2 bg-white rounded border border-gray-200 focus:ring-1 focus:ring-blue-500 mb-2 outline-none" placeholder="寫低今次心得...">
+                                <button onclick="saveRecord()" class="w-full bg-blue-500 text-white text-xs font-bold py-1.5 rounded hover:bg-blue-600 transition">新增相片記錄</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- 功能操作 ---
+
+        // 愛心收藏功能
+        async function toggleFavorite() {
+            const dish = db.find(d => d.id === currentDishId);
+            const flavor = dish.flavors.find(f => f.id === currentFlavorId);
+            flavor.isFavorite = !flavor.isFavorite; // 反轉狀態
+            await syncToCloud(dish);
+            renderPost(currentDishId, currentFlavorId); // 重新渲染更新圖示
+            lucide.createIcons();
+        }
+
+        // 編輯邏輯
+        function openEditModal() {
+            const dish = db.find(d => d.id === currentDishId);
+            const flavor = dish.flavors.find(f => f.id === currentFlavorId);
+            document.getElementById('edit-flavor').value = flavor.name;
+            document.getElementById('edit-ingredients').value = flavor.ingredients;
+            document.getElementById('edit-steps').value = flavor.steps;
+            document.getElementById('edit-reference').value = flavor.reference || '';
+            document.getElementById('edit-serving').value = flavor.serving || '';
+            const editCookEl = document.getElementById('edit-cooktime');
+            if (editCookEl) editCookEl.value = flavor.cooktime || '';
+            
+            // 更新 UI 中的評分按鈕
+            window.setRating('edit-rating', flavor.rating || 4);
+            
+            document.getElementById('edit-tags').value = (flavor.tags || []).join(', ');
+            
+            activeTagInputId = 'edit-tags';
+            renderCommonTags();
+
+            document.getElementById('edit-modal').classList.remove('hidden');
+            document.getElementById('edit-modal').classList.add('flex');
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+            document.getElementById('edit-modal').classList.remove('flex');
+        }
+
+        async function saveEdit() {
+            const dish = db.find(d => d.id === currentDishId);
+            const flavor = dish.flavors.find(f => f.id === currentFlavorId);
+            
+            flavor.name = document.getElementById('edit-flavor').value.trim();
+            flavor.ingredients = document.getElementById('edit-ingredients').value;
+            flavor.steps = document.getElementById('edit-steps').value;
+            flavor.reference = document.getElementById('edit-reference').value.trim();
+            flavor.serving = document.getElementById('edit-serving').value.trim();
+            const editCooktimeEl = document.getElementById('edit-cooktime');
+            if (editCooktimeEl) flavor.cooktime = editCooktimeEl.value.trim();
+            flavor.rating = parseInt(document.getElementById('edit-rating').value);
+            
+            const tagsRaw = document.getElementById('edit-tags').value;
+            flavor.tags = tagsRaw.split(',').map(t => t.trim()).filter(t => t.length > 0);
+
+            await syncToCloud(dish);
+            closeEditModal();
+        }
+
+        // AI 生成 (智能切換模型版 + 精準錯誤偵測 + 防呆機制)
+        window.generateAI = async function() {
+            const dishName = document.getElementById('input-dish').value.trim();
+            if(!dishName) return customAlert("請先輸入菜式名稱！");
+            
+            document.getElementById('ai-loading').classList.remove('hidden');
+            document.getElementById('ai-loading').classList.add('flex');
+
+            // 自動移除多餘空格及換行
+            const apiKey = (localStorage.getItem('geminiApiKey') || "").trim();
+            
+            // 防呆：如果唔小心入錯 Firebase 條 key
+            if (apiKey === firebaseConfig.apiKey) {
+                document.getElementById('ai-loading').classList.add('hidden');
+                document.getElementById('ai-loading').classList.remove('flex');
+                customAlert("⚠️ 錯誤：你輸入咗 Firebase 嘅金鑰！\n\n請前往 Google AI Studio (aistudio.google.com) 申請一條專屬嘅 Gemini API 金鑰。");
+                return;
+            }
+
+            // ✅ FIXED: gemini-1.5-flash 已被 Google 永久關閉，改用 gemini-2.5-flash
+            const MODEL_NAME = "gemini-2.5-flash";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: `請用廣東話提供「${dishName}」的完整食譜，包括口味、材料、步驟、烹飪時間、標籤同營養估算。` }] }],
+                systemInstruction: { parts: [{ text: `你係一位香港家常廚師。必須只輸出以下格式的純 JSON（唔好有任何其他文字或 markdown）：{"flavor":"口味名稱（廣東話）","ingredients":"每種材料一行，格式：材料名 份量","steps":"每個步驟一行，用 1. 2. 3. 等編號","cooktime":"整數，烹飪分鐘數","tags":["標籤1","標籤2","標籤3"],"nutrition":{"熱量":"約XXXkcal","蛋白質":"XXg","碳水":"XXg","脂肪":"XXg"}}` }] },
+                generationConfig: { 
+                    responseMimeType: "application/json",
+                    thinkingConfig: { thinkingBudget: 0 }
+                }
+            };
+
+            const fetchWithRetry = async (url, options, maxRetries = 3) => {
+                let delays = [1000, 2000, 4000];
+                for (let i = 0; i < maxRetries; i++) {
+                    try {
+                        const response = await fetch(url, options);
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            throw new Error(errorText); 
+                        }
+                        return await response.json();
+                    } catch (e) {
+                        if (i === maxRetries - 1) throw e;
+                        await new Promise(res => setTimeout(res, delays[i]));
+                    }
+                }
+            };
+
+            try {
+                const result = await fetchWithRetry(url, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(payload) 
+                });
+                
+                const recipeData = JSON.parse(result.candidates[0].content.parts[0].text);
+                
+                document.getElementById('input-flavor').value = recipeData.flavor || "原味";
+                document.getElementById('input-ingredients').value = recipeData.ingredients || "";
+                document.getElementById('input-steps').value = recipeData.steps || "";
+                // New fields from enhanced AI response
+                if (recipeData.tags && Array.isArray(recipeData.tags)) {
+                    document.getElementById('input-tags').value = recipeData.tags.join(', ');
+                }
+                // Store nutrition for display
+                window._lastAiNutrition = recipeData.nutrition || null;
+            } catch (error) {
+                console.error("AI 錯誤:", error);
+                
+                // 分析錯誤訊息
+                let friendlyMsg = "";
+                if(error.message.includes("API_KEY_INVALID") || error.message.includes("expired") || error.message.includes("API key not valid") || error.message.includes("leaked")) {
+                    friendlyMsg = "你嘅 API 金鑰無效！\n\n請喺 aistudio.google.com 申請一條新嘅 Gemini API 金鑰，然後喺「設定與備份」重新輸入。\n\n⚠️ 注意：確保使用 Gemini API Key，而非 Firebase Key。";
+                } else if(error.message.includes("RESOURCE_EXHAUSTED") || error.message.includes("429")) {
+                    friendlyMsg = "API 免費配額用完！\n\n請稍等一陣（約1分鐘）後再試，或前往 Google AI Studio 查看用量。";
+                } else if(error.message.includes("User location is not supported") || error.message.includes("PERMISSION_DENIED") || error.message.includes("403")) {
+                    friendlyMsg = "Google 偵測到你喺受限制嘅地區。\n\n請確保 VPN 已開啟並設定為「全局模式 (Global Proxy)」後再試。";
+                } else if(error.message.includes("404")) {
+                    friendlyMsg = "搵唔到 AI 模型 (404)！\n\n請確認 API 金鑰已啟用 Gemini API 功能。";
+                } else {
+                    friendlyMsg = `未知錯誤：\n${error.message.substring(0,300)}\n\n建議：確保 VPN 已開啟並設為全局模式。`;
+                }
+                
+                customAlert(`未能連接 AI 大廚！\n\n${friendlyMsg}`);
+            } finally {
+                document.getElementById('ai-loading').classList.add('hidden');
+                document.getElementById('ai-loading').classList.remove('flex');
+            }
+        }
+
+        // --- 8. 載入示範數據 ---
+        async function loadDemoData(showAlert = true) {
+            if (!currentUser) return;
+            
+            const demoData = [
+                {
+                    id: 'd_demo_1',
+                    name: '日式咖哩牛肉飯',
+                    cover: null,
+                    flavors: [{
+                        id: 'f_demo_1',
+                        name: '蘋果甘甜味',
+                        ingredients: '牛肉片 300g\n洋蔥 1個\n紅蘿蔔 1條\n薯仔 1個\n日式咖哩磚 3-4塊\n蘋果 半個 (磨蓉)',
+                        steps: '1. 洋蔥、紅蘿蔔、薯仔切件。\n2. 熱鑊落油，炒香洋蔥至軟身。\n3. 加入牛肉片炒至變色。\n4. 加入紅蘿蔔、薯仔炒勻。\n5. 加入清水蓋過食材，大火滾起後轉細火煮15分鐘。\n6. 熄火，加入咖哩磚拌勻至溶化。\n7. 加入蘋果蓉，開細火煮多5分鐘至濃稠即可。',
+                        reference: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                        serving: '4人',
+                        rating: 4,
+                        cooktime: '35',
+                        tags: ['家常菜', '晚餐', '小朋友最愛'],
+                        isFavorite: true,
+                        records: [{
+                            id: 'r_demo_1',
+                            date: new Date().toLocaleDateString(),
+                            image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=800&q=80',
+                            note: '加咗蘋果蓉真係甜好多，小朋友好鍾意食！'
+                        }]
+                    }]
+                },
+                {
+                    id: 'd_demo_2',
+                    name: '巴斯克蛋糕',
+                    cover: null,
+                    flavors: [{
+                        id: 'f_demo_2',
+                        name: '原味',
+                        ingredients: '忌廉芝士 250g\n淡忌廉 150g\n白砂糖 60g\n雞蛋 2隻\n低筋麵粉 10g',
+                        steps: '1. 忌廉芝士軟化，加糖拌勻。\n2. 雞蛋分次加入。\n3. 倒入淡忌廉。\n4. 篩入麵粉。\n5. 模具鋪牛油紙，倒入麵糊。\n6. 220度焗25分鐘。',
+                        reference: '',
+                        serving: '6吋',
+                        rating: 3,
+                        cooktime: '30',
+                        tags: ['甜品', '蛋糕', '烘焙'],
+                        isFavorite: false,
+                        records: [{
+                            id: 'r_demo_2',
+                            date: new Date().toLocaleDateString(),
+                            image: 'https://images.unsplash.com/photo-1606890737304-57a1ca8a5b62?auto=format&fit=crop&w=800&q=80',
+                            note: '表面焦糖化得唔夠，下次要加高溫度。'
+                        }]
+                    }]
+                }
+            ];
+
+            try {
+                for (const dish of demoData) {
+                    await syncToCloud(dish);
+                }
+                if (showAlert) customAlert('示範數據已成功載入！返去首頁睇吓啦！');
+                navigate('home');
+            } catch (error) {
+                if (showAlert) customAlert('載入失敗！請確保你已在 Firebase 建立 Firestore Database 並設定為「測試模式 (Test mode)」。');
+            }
+        }
+
+        // 圖片處理
+        function resizeImage(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width, height = img.height;
+                    if (width > height) { if (width > 800) { height *= 800 / width; width = 800; } } 
+                    else { if (height > 800) { width *= 800 / height; height = 800; } }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    callback(canvas.toDataURL('image/jpeg', 0.6));
+                }
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
+        async function saveRecord() {
+            const fileInput = document.getElementById('record-image');
+            const note = document.getElementById('record-note').value;
+            const file = fileInput.files[0];
+
+            const addObj = async (imgData) => {
+                const dish = db.find(d => d.id === currentDishId);
+                const flavor = dish.flavors.find(f => f.id === currentFlavorId);
+                flavor.records = flavor.records || [];
+                flavor.records.push({ id: 'r' + Date.now(), date: new Date().toLocaleDateString(), image: imgData, note: note });
+                await syncToCloud(dish);
+                fileInput.value = ''; document.getElementById('record-note').value = '';
+            };
+
+            if (file) resizeImage(file, addObj); else addObj(null);
+        }
+
+        async function deleteRecord(recordId) {
+            customConfirm('確定要刪除這筆相片記錄嗎？', async () => {
+                const dish = db.find(d => d.id === currentDishId);
+                const flavor = dish.flavors.find(f => f.id === currentFlavorId);
+                flavor.records = flavor.records.filter(r => r.id !== recordId);
+                await syncToCloud(dish);
+                refreshCurrentView(); 
+            });
+        }
+
+        async function deleteCurrentRecipe() {
+            customConfirm('警告：確定要刪除整篇食譜嗎？此操作無法還原。', async () => {
+                const dish = db.find(d => d.id === currentDishId);
+                dish.flavors = dish.flavors.filter(f => f.id !== currentFlavorId);
+                if(dish.flavors.length === 0) {
+                    await deleteFromCloud(currentDishId);
+                } else {
+                    await syncToCloud(dish);
+                }
+                navigate('home');
+            });
+        }
+
+        async function saveNewRecipe(event) {
+            event.preventDefault();
+            const dishName = document.getElementById('input-dish').value.trim();
+            const flavorName = document.getElementById('input-flavor').value.trim();
+            const reference = document.getElementById('input-reference').value.trim();
+            const ingredients = document.getElementById('input-ingredients').value;
+            const steps = document.getElementById('input-steps').value;
+            const serving = document.getElementById('input-serving').value.trim();
+            const cooktimeEl = document.getElementById('input-cooktime');
+            const cooktime = cooktimeEl ? cooktimeEl.value.trim() : '';
+            const rating = parseInt(document.getElementById('input-rating').value);
+            
+            const tagsRaw = document.getElementById('input-tags').value;
+            const tagsArr = tagsRaw.split(',').map(t => t.trim()).filter(t => t.length > 0);
+
+            let dish = db.find(d => d.name.toLowerCase() === dishName.toLowerCase());
+            const newFlavor = { 
+                id: 'f' + Date.now(), 
+                name: flavorName, 
+                ingredients: ingredients, 
+                steps: steps, 
+                reference: reference,
+                serving: serving,
+                cooktime: cooktime,
+                rating: rating,
+                tags: tagsArr,
+                isFavorite: false,
+                records: [] 
+            };
+
+            if (dish) {
+                dish.flavors.push(newFlavor);
+                await syncToCloud(dish);
+                navigate('recipe', dish.id, newFlavor.id);
+            } else {
+                const newDishId = 'd' + Date.now();
+                const newDish = { id: newDishId, name: dishName, cover: null, flavors: [newFlavor] };
+                await syncToCloud(newDish);
+                setTimeout(() => navigate('recipe', newDishId, newFlavor.id), 500);
+            }
+        }
+    </script>
+</body>
+</html>
