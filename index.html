@@ -927,8 +927,8 @@
             // 自動移除多餘空格及換行，避免 URL 出錯
             const apiKey = (localStorage.getItem('geminiApiKey') || "").trim();
             
-            // 如果用戶有輸入 API (GitHub 環境)，使用標準模型；如果在 Canvas 預覽環境，使用預覽模型
-            const modelName = apiKey ? "gemini-1.5-flash" : "gemini-2.5-flash-preview-09-2025";
+            // 修正：改用 gemini-1.5-flash-latest 以解決 404 Not Found 錯誤
+            const modelName = apiKey ? "gemini-1.5-flash-latest" : "gemini-2.5-flash-preview-09-2025";
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
             
             const payload = {
