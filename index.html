@@ -104,12 +104,13 @@
                     </div>
                 </div>
                 
-                <!-- 3欄：份量、時間、卡路里 -->
-                <div class="grid grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1.5 ml-1">份量 / 吋尺</label>
-                        <input type="text" id="edit-serving" placeholder="如: 2人" class="w-full px-3 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm">
-                    </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">份量 / 吋尺</label>
+                    <input type="text" id="edit-serving" placeholder="如: 2人" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white text-sm">
+                </div>
+
+                <!-- 2欄：時間、卡路里 -->
+                <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1.5 ml-1">時間(分)</label>
                         <input type="number" id="edit-cooktime" placeholder="分鐘" class="w-full px-3 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm">
@@ -342,6 +343,8 @@
                         <input type="text" id="input-dish" required class="w-full text-base py-1.5 border-b border-gray-100 outline-none focus:border-blue-400 transition-colors" placeholder="菜式名稱">
                         <input type="text" id="input-flavor" required class="w-full text-sm py-1.5 border-b border-gray-100 outline-none focus:border-blue-400 transition-colors" placeholder="口味及風格">
                         
+                        <input type="text" id="input-serving" class="w-full text-sm py-1.5 border-b border-gray-100 outline-none focus:border-blue-400 transition-colors" placeholder="份量 (如: 2人 或 6吋)">
+                        
                         <div class="flex flex-wrap gap-1.5 mt-2">
                             <button type="button" onclick="appendFlavor('input-flavor', '減肥餐')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">減肥餐</button>
                             <button type="button" onclick="appendFlavor('input-flavor', '兒童至愛')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">兒童至愛</button>
@@ -356,12 +359,8 @@
                     <i data-lucide="sparkles" class="w-4 h-4"></i> AI 智能生成食譜
                 </button>
                 
-                <!-- 3欄位 (份量, 時間, 卡路里) -->
-                <div class="grid grid-cols-3 gap-3 text-left">
-                    <div class="space-y-1">
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1">份量 / 吋尺</label>
-                        <input type="text" id="input-serving" class="w-full text-sm py-2.5 px-3 bg-gray-50 rounded-xl border border-transparent outline-none focus:bg-white focus:border-blue-200 transition-colors" placeholder="如: 6吋">
-                    </div>
+                <!-- 2欄位 (時間, 卡路里) -->
+                <div class="grid grid-cols-2 gap-3 text-left">
                     <div class="space-y-1">
                         <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1">時間(分)</label>
                         <input type="number" id="input-cooktime" class="w-full text-sm py-2.5 px-3 bg-gray-50 rounded-xl border border-transparent outline-none focus:bg-white focus:border-blue-200 transition-colors" placeholder="分鐘">
@@ -394,7 +393,7 @@
             </form>
         </main>
 
-        <!-- 視圖 4：設定頁面 -->
+        <!-- 視圖 4：設定頁面 (含帳號登入) -->
         <main id="view-profile" class="view-section p-8 bg-white min-h-[70vh] text-left">
             <h2 class="font-bold text-2xl mb-8 text-gray-900">帳號與設定</h2>
             
@@ -426,7 +425,7 @@
                 </div>
 
                 <div class="text-center pt-12">
-                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.11.0 ✨</p>
+                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.11.1 ✨</p>
                 </div>
             </div>
         </main>
