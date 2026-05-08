@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cooking PAPA</title>
     
-    <!-- 📱 手機主畫面 (PWA) Logo 設定 -->
+    <!-- 📱 手機主畫面 (PWA) 設定 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Cooking PAPA">
@@ -13,74 +13,82 @@
     <link rel="apple-touch-icon" href="logo.png">
     <meta name="theme-color" content="#fafafa">
     
-    <!-- 引入 Google Fonts -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Noto+Sans+HK:wght@400;700&display=swap" rel="stylesheet">
     
-    <!-- 引入 Tailwind CSS -->
+    <!-- Tailwind & Icons -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { 
             background-color: #fafafa; 
             -webkit-tap-highlight-color: transparent; 
             font-family: 'Noto Sans HK', sans-serif;
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             overflow-x: hidden;
         }
         .view-section { display: none; animation: fadeIn 0.2s ease-out; }
         .view-section.active { display: block; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.99); }
-            to { opacity: 1; transform: scale(1); }
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .ig-title { font-family: 'Dancing Script', cursive; font-size: 1.6rem; }
         ::-webkit-scrollbar { display: none; }
         
-        /* 手勢操作區域 */
-        #view-recipe { touch-action: pan-y; min-height: 100vh; }
-        
-        /* 按鈕點擊效果 */
+        /* 滾動容器優化 */
+        .scroll-container { 
+            overflow-y: auto; 
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* 按鈕反饋 */
         button:active { transform: scale(0.96); opacity: 0.8; }
         
         /* 圖片網格比例 */
         .grid-img-container { position: relative; width: 100%; padding-top: 100%; overflow: hidden; background-color: #f3f4f6; }
         .grid-img-container img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-
-        /* 導航按鈕置中修正 */
-        nav button { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
     </style>
 </head>
 <body class="text-gray-900 min-h-screen pb-24">
 
     <!-- Toast 通知系統 -->
-    <div id="toast-notification" style="position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-20px);background:rgba(0,0,0,0.85);color:#fff;padding:10px 20px;border-radius:12px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);pointer-events:none;white-space:nowrap;box-shadow:0 10px 25px rgba(0,0,0,0.2)"></div>
+    <div id="toast-notification" style="position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-20px);background:rgba(0,0,0,0.85);color:#fff;padding:10px 20px;border-radius:12px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:all 0.3s ease;pointer-events:none;white-space:nowrap;box-shadow:0 10px 25px rgba(0,0,0,0.2)"></div>
 
-    <!-- 自家製彈窗 (Modal) -->
-    <div id="custom-modal" class="fixed inset-0 bg-black/60 z-[70] hidden flex-col items-center justify-center p-4">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center overflow-hidden">
-            <h3 id="custom-modal-title" class="text-lg font-bold mb-2 text-gray-900">提示</h3>
-            <p id="custom-modal-msg" class="text-sm text-gray-500 mb-6 whitespace-pre-line leading-relaxed px-2 text-center"></p>
-            <input type="text" id="custom-modal-input" class="hidden w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 mb-4 text-sm transition-all">
+    <!-- 自家製彈窗 -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/60 z-[100] hidden flex-col items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center">
+            <h3 id="custom-modal-title" class="text-lg font-bold mb-2 text-gray-900 font-bold">提示</h3>
+            <p id="custom-modal-msg" class="text-sm text-gray-600 mb-6 whitespace-pre-line px-2 leading-relaxed text-center"></p>
+            <input type="text" id="custom-modal-input" class="hidden w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 mb-4 text-sm">
             <div class="flex gap-3">
                 <button id="custom-modal-cancel" class="hidden flex-1 py-3 bg-gray-100 rounded-2xl font-bold text-gray-600 transition">取消</button>
-                <button id="custom-modal-confirm" class="flex-1 py-3 bg-blue-500 rounded-2xl font-bold text-white shadow-lg shadow-blue-500/30 transition">確定</button>
+                <button id="custom-modal-confirm" class="flex-1 py-3 bg-blue-500 rounded-2xl font-bold text-white shadow-lg transition">確定</button>
             </div>
         </div>
     </div>
 
     <!-- 編輯貼文視窗 -->
-    <div id="edit-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex-col items-center justify-end sm:justify-center">
-        <div class="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl overflow-y-auto max-h-[92vh]">
+    <div id="edit-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex flex-col items-center justify-end sm:justify-center">
+        <div class="absolute inset-0" onclick="closeEditModal()"></div>
+        <div class="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl relative z-10 flex flex-col">
             <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6 sm:hidden"></div>
-            <h3 class="text-lg font-bold mb-6 text-center text-gray-900">編輯食譜貼文</h3>
-            <div class="space-y-5">
+            <h3 class="text-lg font-bold mb-4 text-center">編輯食譜貼文</h3>
+            
+            <div class="space-y-5 scroll-container max-h-[75vh] pr-1">
                 <div class="text-left">
                     <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">口味及風格</label>
-                    <input type="text" id="edit-flavor" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all text-sm">
+                    <input type="text" id="edit-flavor" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/10 text-sm">
+                    <div class="flex flex-wrap gap-1.5 mt-2 ml-1">
+                        <button type="button" onclick="appendFlavor('edit-flavor', '減肥餐')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">減肥餐</button>
+                        <button type="button" onclick="appendFlavor('edit-flavor', '兒童至愛')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">兒童至愛</button>
+                        <button type="button" onclick="appendFlavor('edit-flavor', '快手15分鐘')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">快手15分鐘</button>
+                        <button type="button" onclick="appendFlavor('edit-flavor', '惹味大排檔')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">惹味大排檔</button>
+                        <button type="button" onclick="appendFlavor('edit-flavor', '清淡健康')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">清淡健康</button>
+                        <button type="button" onclick="appendFlavor('edit-flavor', '高蛋白增肌')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">高蛋白增肌</button>
+                        <button type="button" onclick="appendFlavor('edit-flavor', '生酮飲食')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">生酮飲食</button>
+                        <button type="button" onclick="appendFlavor('edit-flavor', '打卡必備')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">打卡必備</button>
+                        <button type="button" onclick="appendFlavor('edit-flavor', '地道港式')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">地道港式</button>
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="text-left">
@@ -96,23 +104,23 @@
                     <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">評分</label>
                     <input type="hidden" id="edit-rating">
                     <div class="grid grid-cols-2 gap-2 text-[10px]">
-                        <button type="button" onclick="setRating('edit-rating', 1)" id="btn-rating-edit-rating-1" class="py-2.5 rounded-xl border bg-white font-bold transition-all">🤢 中伏</button>
-                        <button type="button" onclick="setRating('edit-rating', 2)" id="btn-rating-edit-rating-2" class="py-2.5 rounded-xl border bg-white font-bold transition-all">🤐 試一次</button>
-                        <button type="button" onclick="setRating('edit-rating', 3)" id="btn-rating-edit-rating-3" class="py-2.5 rounded-xl border bg-white font-bold transition-all">🙂 得閒整</button>
-                        <button type="button" onclick="setRating('edit-rating', 4)" id="btn-rating-edit-rating-4" class="py-2.5 rounded-xl border bg-white font-bold transition-all">🤤 要著兩條褲</button>
+                        <button type="button" onclick="setRating('edit-rating', 1)" id="btn-rating-edit-rating-1" class="py-2.5 rounded-xl border bg-white font-bold">🤢 中伏</button>
+                        <button type="button" onclick="setRating('edit-rating', 2)" id="btn-rating-edit-rating-2" class="py-2.5 rounded-xl border bg-white font-bold">🤐 試一次</button>
+                        <button type="button" onclick="setRating('edit-rating', 3)" id="btn-rating-edit-rating-3" class="py-2.5 rounded-xl border bg-white font-bold">🙂 得閒整</button>
+                        <button type="button" onclick="setRating('edit-rating', 4)" id="btn-rating-edit-rating-4" class="py-2.5 rounded-xl border bg-white font-bold">🤤 要著兩條褲</button>
                     </div>
                 </div>
                 <div class="text-left">
                     <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">材料 Ingredients</label>
-                    <textarea id="edit-ingredients" rows="3" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white text-sm resize-none"></textarea>
+                    <textarea id="edit-ingredients" rows="4" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white text-sm resize-none"></textarea>
                 </div>
                 <div class="text-left">
                     <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">步驟 Steps</label>
-                    <textarea id="edit-steps" rows="4" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white text-sm resize-none"></textarea>
+                    <textarea id="edit-steps" rows="5" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white text-sm resize-none"></textarea>
                 </div>
-                <div class="flex gap-3 pt-4 border-t border-gray-50">
+                <div class="flex gap-3 pt-4 border-t border-gray-50 pb-4">
                     <button onclick="closeEditModal()" class="flex-1 py-3 bg-gray-100 rounded-2xl font-bold text-gray-600 transition">取消</button>
-                    <button onclick="saveEdit()" class="flex-1 py-3 bg-blue-500 text-white rounded-2xl font-bold shadow-lg shadow-blue-500/20 transition">儲存</button>
+                    <button onclick="saveEdit()" class="flex-1 py-3 bg-blue-500 text-white rounded-2xl font-bold shadow-lg transition">儲存修改</button>
                 </div>
             </div>
         </div>
@@ -120,10 +128,9 @@
 
     <!-- AI 載入中 -->
     <div id="ai-loading" class="fixed inset-0 bg-black/70 z-[100] hidden flex-col items-center justify-center p-6">
-        <div class="bg-white p-8 rounded-[2rem] flex flex-col items-center shadow-2xl text-center">
+        <div class="bg-white p-8 rounded-[2.5rem] flex flex-col items-center shadow-2xl text-center">
             <i data-lucide="sparkles" class="w-10 h-10 text-blue-500 animate-bounce mb-4"></i>
             <p class="text-sm font-bold text-gray-800">AI 大廚正在構思食譜...</p>
-            <p class="text-[10px] text-gray-400 mt-2">正在與 Gemini 2.5 進行腦力激盪</p>
         </div>
     </div>
 
@@ -143,7 +150,7 @@
         
         <!-- 視圖 1：首頁 (個人檔案) -->
         <main id="view-home" class="view-section active">
-            <div class="px-5 py-8 flex items-center gap-6 sm:gap-12">
+            <div class="px-5 py-8 flex items-center gap-6 sm:gap-12 text-left">
                 <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full p-1 bg-gradient-to-tr from-yellow-400 via-orange-500 to-fuchsia-600 flex-shrink-0 cursor-pointer shadow-md" onclick="document.getElementById('avatar-upload').click()">
                     <div class="w-full h-full rounded-full bg-white p-0.5">
                         <img id="home-avatar-img" src="" class="w-full h-full rounded-full object-cover bg-orange-50">
@@ -152,31 +159,24 @@
                 <input type="file" id="avatar-upload" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)">
                 
                 <div class="flex-1 flex justify-around text-center">
-                    <div class="flex flex-col"><span class="font-bold text-lg" id="stat-dishes">0</span><span class="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">菜式</span></div>
-                    <div class="flex flex-col"><span class="font-bold text-lg" id="stat-flavors">0</span><span class="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">口味</span></div>
-                    <div class="flex flex-col"><span class="font-bold text-lg" id="stat-records">0</span><span class="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">記錄</span></div>
+                    <div class="flex flex-col"><span class="font-bold text-lg" id="stat-dishes">0</span><span class="text-[10px] text-gray-400 font-bold uppercase">菜式</span></div>
+                    <div class="flex flex-col"><span class="font-bold text-lg" id="stat-flavors">0</span><span class="text-[10px] text-gray-400 font-bold uppercase">口味</span></div>
+                    <div class="flex flex-col"><span class="font-bold text-lg" id="stat-records">0</span><span class="text-[10px] text-gray-400 font-bold uppercase">記錄</span></div>
                 </div>
             </div>
             
             <div class="px-6 pb-6 text-left">
-                <h2 class="font-bold text-sm tracking-tight text-gray-900">爸爸大廚 cooking_papa</h2>
+                <h2 id="display-name" class="font-bold text-sm tracking-tight text-gray-900">爸爸大廚 cooking_papa</h2>
                 <p class="text-[13px] text-gray-600 mt-1 whitespace-pre-line leading-relaxed">紀錄為屋企人煮嘅每一餐😋🍽️</p>
-                
-                <!-- 修正對齊後的按鈕容器 -->
                 <div class="mt-5 flex gap-3 w-full">
                     <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-black font-bold text-[12px] py-2.5 rounded-xl transition" onclick="navigate('profile')">設定與備份</button>
                     <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-black font-bold text-[12px] py-2.5 rounded-xl transition" onclick="navigate('add')">分享新食譜</button>
                 </div>
             </div>
 
-            <!-- Tab 工具列 -->
             <div class="flex border-t border-gray-100 mt-2">
-                <div class="flex-1 flex justify-center py-4 border-t border-black -mt-[1px]">
-                    <i data-lucide="grid" class="w-5 h-5 text-gray-900"></i>
-                </div>
-                <div class="flex-1 flex justify-center py-4 text-gray-300">
-                    <i data-lucide="bookmark" class="w-5 h-5"></i>
-                </div>
+                <div class="flex-1 flex justify-center py-4 border-t border-black -mt-[1px]"><i data-lucide="grid" class="w-5 h-5"></i></div>
+                <div class="flex-1 flex justify-center py-4 text-gray-300"><i data-lucide="bookmark" class="w-5 h-5"></i></div>
             </div>
 
             <div id="dishes-grid" class="grid grid-cols-3 gap-0.5 bg-gray-100"></div>
@@ -184,10 +184,10 @@
 
         <!-- 視圖 2：食譜貼文詳情 -->
         <main id="view-recipe" class="view-section">
-            <div id="posts-container" class="pb-12"></div>
+            <div id="posts-container" class="pb-12 text-left"></div>
         </main>
 
-        <!-- 視圖 3：新增食譜表單 -->
+        <!-- 視圖 3：新增食譜 -->
         <main id="view-add" class="view-section p-6 bg-white min-h-[70vh]">
             <div class="flex items-center justify-between mb-8 pb-3 border-b border-gray-100">
                 <button onclick="navigate('home')" class="p-1"><i data-lucide="x" class="w-6 h-6"></i></button>
@@ -201,34 +201,34 @@
                         <i data-lucide="camera" class="w-8 h-8"></i>
                     </div>
                     <div class="flex-1 space-y-3">
-                        <input type="text" id="input-dish" required class="w-full text-base py-1.5 border-b border-gray-100 outline-none focus:border-blue-400 transition-colors" placeholder="菜式名稱 (例如：生炒骨)">
-                        <input type="text" id="input-flavor" required class="w-full text-sm py-1.5 border-b border-gray-100 outline-none focus:border-blue-400 transition-colors" placeholder="口味及風格 (例如：大排檔風味)">
+                        <input type="text" id="input-dish" required class="w-full text-base py-1.5 border-b border-gray-100 outline-none focus:border-blue-400 transition-colors" placeholder="菜式名稱">
+                        <input type="text" id="input-flavor" required class="w-full text-sm py-1.5 border-b border-gray-100 outline-none focus:border-blue-400 transition-colors" placeholder="口味及風格">
                         
                         <div class="flex flex-wrap gap-1.5 mt-2">
-                            <button type="button" onclick="appendFlavor('input-flavor', '減肥餐')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold">減肥餐</button>
-                            <button type="button" onclick="appendFlavor('input-flavor', '兒童至愛')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold">兒童至愛</button>
-                            <button type="button" onclick="appendFlavor('input-flavor', '惹味大排檔')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold">惹味</button>
+                            <button type="button" onclick="appendFlavor('input-flavor', '減肥餐')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">減肥餐</button>
+                            <button type="button" onclick="appendFlavor('input-flavor', '兒童至愛')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">兒童至愛</button>
+                            <button type="button" onclick="appendFlavor('input-flavor', '快手15分鐘')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">快手15分鐘</button>
+                            <button type="button" onclick="appendFlavor('input-flavor', '惹味大排檔')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">惹味大排檔</button>
+                            <button type="button" onclick="appendFlavor('input-flavor', '清淡健康')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">清淡健康</button>
+                            <button type="button" onclick="appendFlavor('input-flavor', '高蛋白增肌')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">高蛋白增肌</button>
+                            <button type="button" onclick="appendFlavor('input-flavor', '生酮飲食')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">生酮飲食</button>
+                            <button type="button" onclick="appendFlavor('input-flavor', '打卡必備')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">打卡必備</button>
+                            <button type="button" onclick="appendFlavor('input-flavor', '地道港式')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">地道港式</button>
                         </div>
                     </div>
                 </div>
 
-                <button type="button" onclick="generateAI()" class="w-full bg-blue-500 text-white text-sm font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-blue-500/20 transition-all hover:bg-blue-600 active:scale-95">
+                <button type="button" onclick="generateAI()" class="w-full bg-blue-500 text-white text-sm font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
                     <i data-lucide="sparkles" class="w-4 h-4"></i> AI 智能生成食譜
                 </button>
                 
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1">份量</label>
-                        <input type="text" id="input-serving" class="w-full text-sm py-2 px-3 bg-gray-50 rounded-xl border border-transparent outline-none focus:bg-white focus:border-blue-200" placeholder="2人 / 6吋">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1">烹飪時間</label>
-                        <input type="number" id="input-cooktime" class="w-full text-sm py-2 px-3 bg-gray-50 rounded-xl border border-transparent outline-none focus:bg-white focus:border-blue-200" placeholder="分鐘">
-                    </div>
+                    <input type="text" id="input-serving" class="w-full text-sm py-2 px-3 bg-gray-50 rounded-xl border border-transparent outline-none focus:bg-white focus:border-blue-200" placeholder="份量 (如: 2人)">
+                    <input type="number" id="input-cooktime" class="w-full text-sm py-2 px-3 bg-gray-50 rounded-xl border border-transparent outline-none focus:bg-white focus:border-blue-200" placeholder="時間 (分鐘)">
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-1 tracking-widest">評分推薦</label>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-1">評分推薦</label>
                     <input type="hidden" id="input-rating" value="4">
                     <div class="grid grid-cols-2 gap-2 text-[11px]">
                         <button type="button" onclick="setRating('input-rating', 1)" id="btn-rating-input-rating-1" class="py-3 rounded-xl border bg-white transition-all font-bold">🤢 中伏</button>
@@ -246,25 +246,40 @@
             </form>
         </main>
 
-        <!-- 視圖 4：設定頁面 -->
+        <!-- 視圖 4：設定頁面 (含帳號登入) -->
         <main id="view-profile" class="view-section p-8 bg-white min-h-[70vh] text-left">
-            <h2 class="font-bold text-2xl mb-8 text-gray-900">設定</h2>
+            <h2 class="font-bold text-2xl mb-8 text-gray-900">帳號與設定</h2>
+            
             <div class="space-y-8">
-                <div class="bg-gray-50 rounded-3xl p-6 border border-gray-100 shadow-sm">
-                    <h3 class="font-bold text-sm mb-3 flex items-center gap-2 text-gray-700"><i data-lucide="cloud" class="w-5 h-5 text-blue-500"></i> 雲端數據同步</h3>
-                    <p id="sync-status" class="text-xs text-gray-400 mb-5 font-medium leading-relaxed">加密傳輸中。最後同步：未開始</p>
-                    <!-- 修改 forceSync 以免環境死機 -->
-                    <button onclick="forceSync()" class="w-full py-3 bg-white border border-gray-200 rounded-2xl text-xs font-bold shadow-sm transition hover:bg-gray-50 active:scale-95">強制手動同步雲端數據</button>
+                <!-- 帳號登入區域 -->
+                <div id="auth-section" class="bg-gray-50 rounded-3xl p-6 border border-gray-100 shadow-sm">
+                    <h3 class="font-bold text-sm mb-4 flex items-center gap-2 text-gray-700 font-bold"><i data-lucide="user" class="w-5 h-5 text-blue-500"></i> 帳號同步狀態</h3>
+                    
+                    <div id="user-info" class="hidden space-y-4 text-left">
+                        <p class="text-xs text-gray-600">已登入：<span id="user-email" class="font-bold text-blue-600"></span></p>
+                        <p class="text-[10px] text-gray-400 leading-relaxed">您的食譜已與此帳號同步。更換裝置後只需登入即可找回所有食譜。</p>
+                        <button onclick="handleLogout()" class="w-full py-2.5 bg-white border border-red-200 text-red-500 rounded-xl text-xs font-bold transition">登出帳號</button>
+                    </div>
+
+                    <div id="login-form" class="space-y-3 text-left">
+                        <p class="text-[11px] text-gray-400 mb-2">註冊/登入後，食譜將永久備份至你的私人帳號。</p>
+                        <input type="email" id="auth-email" placeholder="電郵地址 (Email)" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none text-sm">
+                        <input type="password" id="auth-password" placeholder="密碼 (最少 6 位)" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none text-sm">
+                        <div class="flex gap-2">
+                            <button onclick="handleAuth('login')" class="flex-1 py-3 bg-gray-900 text-white rounded-xl text-xs font-bold transition">登入</button>
+                            <button onclick="handleAuth('signup')" class="flex-1 py-3 bg-blue-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-blue-500/30">註冊</button>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="bg-gray-50 rounded-3xl p-6 border border-gray-100 shadow-sm">
-                    <h3 class="font-bold text-sm mb-4 flex items-center gap-2 text-gray-700"><i data-lucide="key" class="w-5 h-5 text-orange-500"></i> AI 大廚 API 金鑰</h3>
-                    <input type="password" id="setting-api-key" class="w-full px-4 py-3 text-sm bg-white border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/10 mb-4 transition-all" placeholder="輸入 Gemini API Key">
-                    <button onclick="saveApiKey()" class="w-full py-3 bg-gray-900 text-white rounded-2xl text-xs font-bold transition hover:bg-gray-800 shadow-xl shadow-black/10 active:scale-95">儲存 API 設定</button>
+                <div class="bg-gray-50 rounded-3xl p-6 border border-gray-100 shadow-sm text-left">
+                    <h3 class="font-bold text-sm mb-3 flex items-center gap-2 text-gray-700 font-bold"><i data-lucide="cloud" class="w-5 h-5 text-blue-500"></i> AI 大廚 API 金鑰</h3>
+                    <input type="password" id="setting-api-key" class="w-full px-4 py-3 bg-white border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/10 mb-4 transition-all" placeholder="輸入 Gemini API Key">
+                    <button onclick="saveApiKey()" class="w-full py-3 bg-gray-900 text-white rounded-2xl text-xs font-bold shadow-xl active:scale-95 transition">儲存 API 設定</button>
                 </div>
 
                 <div class="text-center pt-12">
-                    <p class="text-[11px] text-gray-300 font-bold tracking-[0.3em] uppercase select-none">COOKING PAPA v2.3.4 🚀</p>
+                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.4.3 ✨</p>
                 </div>
             </div>
         </main>
@@ -281,22 +296,22 @@
         </main>
 
         <!-- 視圖 6：收藏頁面 -->
-        <main id="view-favorites" class="view-section bg-white min-h-[85vh] text-left">
+        <main id="view-favorites" class="view-section bg-white min-h-[85vh] text-left text-left">
             <div class="p-6 border-b border-gray-50 flex items-center gap-2">
                 <i data-lucide="heart" class="w-5 h-5 text-red-500 fill-red-500"></i>
-                <h2 class="font-bold text-lg text-gray-900">我的收藏記錄</h2>
+                <h2 class="font-bold text-lg text-gray-900">我的收藏 ❤️</h2>
             </div>
             <div id="favorites-grid" class="grid grid-cols-3 gap-0.5 bg-gray-100"></div>
         </main>
     </div>
 
-    <!-- 底部導航欄 - 修正 Grid 平分佈局 -->
+    <!-- 底部導航欄 -->
     <nav class="fixed bottom-0 w-full bg-white/90 backdrop-blur-lg border-t border-gray-100 grid grid-cols-5 items-center z-50 pb-8 pt-3 max-w-2xl left-1/2 -translate-x-1/2">
-        <button id="nav-btn-home" onclick="navigate('home')"><i data-lucide="home" class="w-6 h-6"></i></button>
-        <button id="nav-btn-search" onclick="navigate('search')"><i data-lucide="search" class="w-6 h-6"></i></button>
-        <button id="nav-btn-add" onclick="navigate('add')"><i data-lucide="plus-square" class="w-6 h-6"></i></button>
-        <button id="nav-btn-favorites" onclick="navigate('favorites')"><i data-lucide="heart" class="w-6 h-6"></i></button>
-        <button id="nav-btn-profile" onclick="navigate('profile')">
+        <button id="nav-btn-home" onclick="navigate('home')" class="flex justify-center transition-colors"><i data-lucide="home" class="w-6 h-6"></i></button>
+        <button id="nav-btn-search" onclick="navigate('search')" class="flex justify-center transition-colors"><i data-lucide="search" class="w-6 h-6"></i></button>
+        <button id="nav-btn-add" onclick="navigate('add')" class="flex justify-center transition-colors"><i data-lucide="plus-square" class="w-6 h-6"></i></button>
+        <button id="nav-btn-favorites" onclick="navigate('favorites')" class="flex justify-center transition-colors"><i data-lucide="heart" class="w-6 h-6"></i></button>
+        <button id="nav-btn-profile" onclick="navigate('profile')" class="flex justify-center">
              <div class="w-7 h-7 rounded-full border border-gray-200 overflow-hidden ring-2 ring-transparent transition-all avatar-ring">
                 <img id="nav-avatar-img" src="" class="w-full h-full object-cover">
              </div>
@@ -305,7 +320,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- 1. Firebase 初始化 ---
@@ -327,6 +342,7 @@
         let db = []; 
         let currentDishId = null;
         let currentFlavorId = null;
+        let unsubscribeSnapshot = null;
 
         // 頭像管理
         const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23FFF3E0' width='100' height='100'/><text x='50' y='55' font-size='45' text-anchor='middle' dominant-baseline='middle'>👨🏻‍🍳</text></svg>";
@@ -339,22 +355,116 @@
             if (nAv) nAv.src = window.userAvatar;
         }
 
-        // --- 2. 功能邏輯 (搜尋、導航、手勢) ---
+        // --- 2. 帳號與登入邏輯 ---
+        window.handleAuth = async (type) => {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            if(!email || !password) return customAlert("請輸入電郵同密碼！");
+            if(password.length < 6) return customAlert("密碼最少需要 6 個字元。");
+
+            try {
+                if(type === 'signup') {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    showToast("註冊成功！🎉");
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    showToast("已登入！👋");
+                }
+            } catch(e) {
+                console.error(e.code);
+                if (e.code === 'auth/operation-not-allowed') {
+                    customAlert("⚠️ Firebase 設定錯誤：\n\n您需要前往 Firebase 後台開啟「Email/Password」登入方式。\n\n路徑：Authentication -> Sign-in method -> Email/Password -> Enable");
+                } else if (e.code === 'auth/email-already-in-use') {
+                    customAlert("此電郵已被註冊，請直接登入。");
+                } else if (e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
+                    customAlert("電郵或密碼錯誤。");
+                } else {
+                    customAlert("登入失敗：" + e.message);
+                }
+            }
+        };
+
+        window.handleLogout = async () => {
+            await signOut(auth);
+            showToast("已登出，資料將恢復為本地暫存");
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+            
+            // 自動登入處理：如果沒有帳號，保持匿名模式
+            if (!user) {
+                await signInAnonymously(auth);
+                return;
+            }
+
+            // 更新 UI 介面
+            const userInfoEl = document.getElementById('user-info');
+            const loginFormEl = document.getElementById('login-form');
+            const userEmailEl = document.getElementById('user-email');
+            const displayNameEl = document.getElementById('display-name');
+
+            if (!user.isAnonymous) {
+                userInfoEl.classList.remove('hidden');
+                loginFormEl.classList.add('hidden');
+                userEmailEl.innerText = user.email;
+                displayNameEl.innerText = (user.email.split('@')[0]) + " 大廚";
+            } else {
+                userInfoEl.classList.add('hidden');
+                loginFormEl.classList.remove('hidden');
+                displayNameEl.innerText = "爸爸大廚 cooking_papa";
+            }
+
+            // 數據實時同步：與帳號 UID 綁定
+            if (unsubscribeSnapshot) unsubscribeSnapshot();
+            const recipesRef = collection(dbFirestore, 'artifacts', appId, 'users', user.uid, 'recipes');
+            unsubscribeSnapshot = onSnapshot(recipesRef, (snap) => {
+                db = [];
+                snap.forEach(d => db.push({ id: d.id, ...d.data() }));
+                refreshCurrentView();
+            }, (error) => {
+                console.error("Firestore error:", error);
+            });
+        });
+
+        // --- 3. 基礎功能 (導航、手勢) ---
+        window.navigate = function(viewId, dishId = null, flavorId = null) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active');
+            
+            const navIds = ['home', 'search', 'add', 'favorites', 'profile'];
+            navIds.forEach(id => {
+                const btn = document.getElementById('nav-btn-' + id);
+                if (!btn) return;
+                const active = (id === viewId || (viewId === 'recipe' && id === 'home'));
+                btn.classList.toggle('text-gray-900', active);
+                btn.classList.toggle('text-gray-400', !active);
+                if(id === 'profile') btn.querySelector('.avatar-ring').classList.toggle('ring-black', active);
+            });
+
+            if (viewId === 'home') renderHome();
+            else if (viewId === 'recipe') renderPost(dishId, flavorId);
+            else if (viewId === 'search') performSearch();
+            else if (viewId === 'favorites') renderFavorites();
+
+            lucide.createIcons();
+            window.scrollTo(0,0);
+        }
+
         window.performSearch = function() {
             const keyword = document.getElementById('search-input').value.toLowerCase().trim();
             const grid = document.getElementById('search-results');
             grid.innerHTML = '';
-            if(!keyword) { grid.innerHTML = '<div class="col-span-3 py-20 text-center text-gray-400 text-xs">輸入菜名、風格或標籤搜尋</div>'; return; }
+            if(!keyword) { grid.innerHTML = '<div class="col-span-3 py-20 text-center text-gray-400 text-xs">輸入搜尋關鍵字</div>'; return; }
 
             let res = [];
             db.forEach(d => (d.flavors||[]).forEach(f => {
-                if (d.name.toLowerCase().includes(keyword) || f.name.toLowerCase().includes(keyword) || (f.tags && f.tags.some(t => t.toLowerCase().includes(keyword)))) {
+                if (d.name.toLowerCase().includes(keyword) || f.name.toLowerCase().includes(keyword)) {
                     let img = 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=400';
                     if (f.records?.length > 0 && f.records[0].image) img = f.records[0].image;
                     res.push({ dishId: d.id, flavorId: f.id, img });
                 }
             }));
-            if (!res.length) { grid.innerHTML = '<div class="col-span-3 py-20 text-center text-gray-400 text-xs">搵唔到相關食譜 😢</div>'; return; }
             res.reverse().forEach(p => {
                 grid.innerHTML += `<div class="grid-img-container cursor-pointer" onclick="navigate('recipe', '${p.dishId}', '${p.flavorId}')"><img src="${p.img}"></div>`;
             });
@@ -367,47 +477,15 @@
             if (e.changedTouches[0].screenX - touchStartX > 130) navigate('home');
         });
 
-        window.navigate = function(viewId, dishId = null, flavorId = null) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.getElementById('view-' + viewId).classList.add('active');
-            
-            const navIds = ['home', 'search', 'add', 'favorites', 'profile'];
-            navIds.forEach(id => {
-                const btn = document.getElementById('nav-btn-' + id);
-                if (!btn) return;
-                const active = (id === viewId || (viewId === 'recipe' && id === 'home'));
-                btn.classList.toggle('text-gray-900', active);
-                btn.classList.toggle('text-gray-400', !active);
-                if(id === 'profile') {
-                    btn.querySelector('.avatar-ring').classList.toggle('ring-black', active);
-                }
-            });
-
-            if (viewId === 'home') renderHome();
-            else if (viewId === 'recipe') renderPost(dishId, flavorId);
-            else if (viewId === 'search') performSearch();
-            else if (viewId === 'favorites') renderFavorites();
-
-            lucide.createIcons();
-            window.scrollTo(0,0);
-        }
-
-        // --- 3. Firebase 同步 ---
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) { await signInAnonymously(auth); return; }
-            currentUser = user;
-            onSnapshot(collection(dbFirestore, 'artifacts', appId, 'users', user.uid, 'recipes'), (snap) => {
-                db = [];
-                snap.forEach(d => db.push({ id: d.id, ...d.data() }));
-                const syncEl = document.getElementById('sync-status');
-                if(syncEl) syncEl.innerText = "數據實時同步中。最後同步：" + new Date().toLocaleTimeString();
-                refreshCurrentView();
-            });
-        });
-
+        // --- 4. 數據操作 ---
         async function syncToCloud(data) {
             if (!currentUser) return;
             await setDoc(doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'recipes', data.id), data);
+        }
+
+        async function deleteFromCloud(id) {
+            if (!currentUser) return;
+            await deleteDoc(doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'recipes', id));
         }
 
         function refreshCurrentView() {
@@ -417,15 +495,12 @@
             if (activeId === 'view-home') renderHome();
             else if (activeId === 'view-recipe') renderPost(currentDishId, currentFlavorId);
             else if (activeId === 'view-favorites') renderFavorites();
-            else if (activeId === 'view-search') performSearch();
             updateAvatarDisplays();
         }
 
-        // --- 4. 核心渲染 ---
         function renderHome() {
             const grid = document.getElementById('dishes-grid');
-            if(!grid) return;
-            grid.innerHTML = '';
+            if(!grid) return; grid.innerHTML = '';
             let posts = [];
             db.forEach(d => (d.flavors||[]).forEach(f => {
                 let img = 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=400';
@@ -436,7 +511,7 @@
             document.getElementById('stat-flavors').innerText = posts.length;
             document.getElementById('stat-records').innerText = db.reduce((a, b) => a + (b.flavors||[]).reduce((x, y) => x + (y.records?.length || 0), 0), 0);
             
-            if (!posts.length) { grid.innerHTML = '<div class="col-span-3 py-24 text-center text-gray-300 text-xs">仲未發佈過食譜</div>'; return; }
+            if (!posts.length) { grid.innerHTML = '<div class="col-span-3 py-24 text-center text-gray-300 text-xs">尚無食譜</div>'; return; }
             posts.reverse().forEach(p => {
                 grid.innerHTML += `<div class="grid-img-container cursor-pointer" onclick="navigate('recipe', '${p.dishId}', '${p.flavorId}')"><img src="${p.img}"></div>`;
             });
@@ -453,59 +528,55 @@
             const ratingTexts = { 1: "🤢 中伏", 2: "🤐 試一次", 3: "🙂 得閒整", 4: "🤤 要著兩條褲" };
             
             document.getElementById('posts-container').innerHTML = `
-                <div class="bg-white border-b border-gray-50 animate-in fade-in duration-300">
+                <div class="bg-white border-b border-gray-50 text-left">
                     <div class="flex items-center justify-between px-4 py-3">
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-8 rounded-full border border-gray-100 overflow-hidden"><img src="${window.userAvatar}" class="w-full h-full object-cover"></div>
                             <span class="font-bold text-sm text-gray-900">cooking_papa</span>
                         </div>
-                        <button onclick="openEditModal()" class="p-2"><i data-lucide="more-horizontal" class="w-5 h-5 text-gray-400"></i></button>
+                        <button onclick="openEditModal()" class="p-2 text-gray-400"><i data-lucide="more-horizontal"></i></button>
                     </div>
-                    <div class="w-full aspect-square bg-gray-50 flex items-center justify-center overflow-hidden">
-                        <img src="${img}" class="w-full h-full object-cover">
-                    </div>
+                    <img src="${img}" class="w-full aspect-square object-cover bg-gray-50">
                     <div class="px-4 py-3 flex justify-between">
                         <div class="flex gap-5">
-                            <button onclick="toggleFavorite()"><i data-lucide="heart" class="w-7 h-7 ${flavor.isFavorite?'text-red-500 fill-red-500 animate-pulse':'text-gray-900'}"></i></button>
-                            <button onclick="shareRecipe('${dish.id}', '${flavor.id}')"><i data-lucide="send" class="w-7 h-7 text-gray-900"></i></button>
+                            <button onclick="toggleFavorite()"><i data-lucide="heart" class="w-7 h-7 ${flavor.isFavorite?'text-red-500 fill-red-500':'text-gray-900'}"></i></button>
+                            <button onclick="shareRecipe('${dish.id}', '${flavor.id}')"><i data-lucide="send" class="w-7 h-7"></i></button>
                         </div>
-                        <button onclick="deleteCurrentRecipe()"><i data-lucide="trash-2" class="w-6 h-6 text-red-100 hover:text-red-300"></i></button>
+                        <button onclick="deleteCurrentRecipe()"><i data-lucide="trash-2" class="w-6 h-6 text-red-200"></i></button>
                     </div>
-                    <div class="px-5 pb-6 text-sm text-left">
+                    <div class="px-5 pb-6 text-sm">
                         <div class="flex gap-2.5 text-[10px] font-bold mb-3 uppercase">
-                            <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md">👥 ${flavor.serving || '--'}</span>
-                            <span class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md">${ratingTexts[flavor.rating || 4]}</span>
-                            ${flavor.cooktime ? `<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md">⏱️ ${flavor.cooktime}M</span>` : ''}
+                            <span class="bg-gray-100 px-2 py-0.5 rounded-md text-gray-600 uppercase">👥 ${flavor.serving || '--'}</span>
+                            <span class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md uppercase">${ratingTexts[flavor.rating || 4]}</span>
+                            ${flavor.cooktime ? `<span class="bg-gray-100 px-2 py-0.5 rounded-md text-gray-600 uppercase">⏱️ ${flavor.cooktime}M</span>` : ''}
                         </div>
-                        <p class="leading-relaxed"><span class="font-bold mr-2 text-gray-900">cooking_papa</span><span class="font-bold text-gray-800">【${dish.name} - ${flavor.name}】</span></p>
-                        <div class="mt-5 space-y-4">
-                            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                                <p class="font-bold text-[10px] text-gray-400 uppercase tracking-widest border-b border-gray-200 pb-1.5 mb-2 text-left">🛒 材料 Ingredients</p>
-                                <p class="whitespace-pre-line text-gray-700 leading-relaxed text-left">${flavor.ingredients}</p>
+                        <p class="leading-relaxed text-left"><span class="font-bold mr-2 text-gray-900">cooking_papa</span>【${dish.name} - ${flavor.name}】</p>
+                        <div class="mt-5 space-y-4 text-left">
+                            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-left">
+                                <p class="font-bold text-[10px] text-gray-400 border-b border-gray-200 pb-1.5 mb-2 uppercase text-left">🛒 材料</p>
+                                <p class="whitespace-pre-line text-gray-700 text-left">${flavor.ingredients}</p>
                             </div>
-                            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                                <p class="font-bold text-[10px] text-gray-400 uppercase tracking-widest border-b border-gray-200 pb-1.5 mb-2 text-left">🍳 步驟 Steps</p>
+                            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-left">
+                                <p class="font-bold text-[10px] text-gray-400 border-b border-gray-200 pb-1.5 mb-2 uppercase text-left">🍳 步驟</p>
                                 <p class="whitespace-pre-line text-gray-700 leading-loose text-left">${flavor.steps}</p>
                             </div>
                         </div>
                     </div>
                     <div class="px-5 mt-4 pb-12 text-left">
-                        <h4 class="font-bold text-sm mb-4 border-t border-gray-50 pt-6 flex items-center gap-2 text-gray-400">
-                            <i data-lucide="camera" class="w-4 h-4"></i> 製作記錄相簿
-                        </h4>
-                        <div class="space-y-4 text-left">
+                        <h4 class="font-bold text-sm mb-4 border-t pt-6 text-gray-400">製作記錄 相簿</h4>
+                        <div class="space-y-4">
                             ${(flavor.records || []).map(r => `
-                                <div class="bg-gray-50 rounded-2xl p-4 relative border border-gray-100">
-                                    <button onclick="deleteRecord('${r.id}')" class="absolute top-3 right-3 text-gray-300 hover:text-red-400"><i data-lucide="x" class="w-4 h-4"></i></button>
-                                    <span class="text-[10px] font-bold text-blue-500 bg-blue-100/50 px-2 py-0.5 rounded-md">${r.date}</span>
-                                    <p class="text-xs mt-2 text-gray-600 font-medium">${r.note || ''}</p>
-                                    ${r.image ? `<img src="${r.image}" class="mt-3 w-full rounded-xl border border-gray-100">` : ''}
+                                <div class="bg-gray-50 rounded-2xl p-4 relative border text-left">
+                                    <button onclick="deleteRecord('${r.id}')" class="absolute top-3 right-3 text-gray-300"><i data-lucide="x" class="w-4 h-4"></i></button>
+                                    <span class="text-[10px] font-bold text-blue-400">${r.date}</span>
+                                    <p class="text-xs mt-2 text-gray-600 text-left">${r.note || ''}</p>
+                                    ${r.image ? `<img src="${r.image}" class="mt-3 w-full rounded-xl">` : ''}
                                 </div>
                             `).join('')}
-                            <div class="border-2 border-dashed border-gray-200 rounded-3xl p-6 text-center bg-gray-50/50">
+                            <div class="border-2 border-dashed border-gray-200 rounded-3xl p-6 text-center">
                                 <input type="file" id="rec-img" accept="image/*" class="text-xs mb-3 w-full">
-                                <input type="text" id="rec-note" class="w-full text-xs p-3 bg-white border border-gray-100 rounded-xl mb-3 outline-none" placeholder="分享今次煮成點？">
-                                <button onclick="saveRecord()" class="w-full bg-blue-500 text-white text-xs font-bold py-3 rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all">發佈新記錄</button>
+                                <input type="text" id="rec-note" class="w-full text-xs p-3 bg-white border border-gray-100 rounded-xl mb-3 outline-none" placeholder="心得...">
+                                <button onclick="saveRecord()" class="w-full bg-blue-500 text-white font-bold py-3 rounded-xl shadow-lg">發佈新記錄</button>
                             </div>
                         </div>
                     </div>
@@ -514,50 +585,19 @@
             lucide.createIcons();
         }
 
-        function renderFavorites() {
-            const grid = document.getElementById('favorites-grid');
-            if(!grid) return;
-            grid.innerHTML = '';
-            let favs = [];
-            db.forEach(d => (d.flavors||[]).forEach(f => {
-                if (f.isFavorite) {
-                    let img = 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=400';
-                    if (f.records?.length > 0 && f.records[0].image) img = f.records[0].image;
-                    favs.push({ dishId: d.id, flavorId: f.id, img });
-                }
-            }));
-            if (!favs.length) { grid.innerHTML = '<div class="col-span-3 py-24 text-center text-gray-300 text-xs">未有收藏 ❤️</div>'; return; }
-            favs.reverse().forEach(p => {
-                grid.innerHTML += `<div class="grid-img-container cursor-pointer" onclick="navigate('recipe', '${p.dishId}', '${p.flavorId}')"><img src="${p.img}"><div class="absolute top-2 right-2 bg-white/90 p-1 rounded-full"><i data-lucide="heart" class="w-3 h-3 text-red-500 fill-red-500"></i></div></div>`;
-            });
-            lucide.createIcons();
-        }
-
-        // --- 5. 工具與交互 ---
-        window.forceSync = function() {
-            showToast("正在對齊雲端數據...");
-            // onSnapshot 本身已保證數據最新，這裡僅手動刷新視圖並顯示成功
-            refreshCurrentView();
-            setTimeout(() => {
-                showToast("同步完成！✅");
-            }, 800);
-        };
-
+        // --- 5. 工具函數 ---
         window.setRating = (id, val) => {
             document.getElementById(id).value = val;
             for(let i=1; i<=4; i++) {
                 const b = document.getElementById(`btn-rating-${id}-${i}`);
                 if (!b) continue;
-                if (i == val) {
-                    b.className = "py-3 rounded-xl border-blue-500 bg-blue-500 text-white font-bold transition-all shadow-md shadow-blue-500/20";
-                } else {
-                    b.className = "py-3 rounded-xl border border-gray-100 bg-white text-gray-400 font-bold transition-all hover:bg-gray-50";
-                }
+                b.className = (i == val) ? "py-3 rounded-xl border-blue-500 bg-blue-500 text-white font-bold transition shadow-lg" : "py-3 rounded-xl border border-gray-100 bg-white text-gray-400 font-bold transition";
             }
         };
 
         window.appendFlavor = (id, txt) => {
             const el = document.getElementById(id);
+            if (!el) return;
             let vals = el.value.split(',').map(s => s.trim()).filter(s => s);
             if (!vals.includes(txt)) { vals.push(txt); el.value = vals.join(', '); }
         };
@@ -565,7 +605,7 @@
         window.generateAI = async function() {
             const name = document.getElementById('input-dish').value.trim();
             const style = document.getElementById('input-flavor').value.trim();
-            if (!name) return customAlert("請先輸入菜式名稱！");
+            if (!name) return customAlert("請先輸入菜名！");
             
             document.getElementById('ai-loading').classList.remove('hidden');
             const apiKey = (localStorage.getItem('geminiApiKey') || "").trim();
@@ -576,8 +616,8 @@
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: `請用廣東話提供「${name}」詳細食譜。口味風格要求：${style||'家常'}。` }]}],
-                        systemInstruction: { parts: [{ text: `只准輸出純 JSON，格式：{"flavor":"口味風格名","ingredients":"材料","steps":"步驟1.2.3.","tags":["標籤"]}` }]},
+                        contents: [{ parts: [{ text: `請用廣東話提供「${name}」詳細食譜。風格：${style||'家常'}。` }]}],
+                        systemInstruction: { parts: [{ text: `只准輸出純 JSON：{"flavor":"風格名","ingredients":"材料","steps":"步驟1.2.3.","tags":["標籤"]}` }]},
                         generationConfig: { responseMimeType: "application/json" }
                     })
                 });
@@ -587,23 +627,19 @@
                 document.getElementById('input-ingredients').value = recipe.ingredients;
                 document.getElementById('input-steps').value = recipe.steps;
                 document.getElementById('input-tags').value = (recipe.tags||[]).join(', ');
-                showToast("AI 大廚構思完成！✨");
-            } catch (e) { customAlert("AI 暫時未能連線 (404/403)。\n請檢查 API Key 或確保 VPN 為「全局」模式。"); }
+                showToast("AI 已構思完畢！✨");
+            } catch (e) { customAlert("AI 暫時休息中 (請檢查 Key 或 VPN)"); }
             finally { document.getElementById('ai-loading').classList.add('hidden'); }
         };
 
         window.shareRecipe = async (dishId, flavorId) => {
             const dish = db.find(d => d.id === dishId);
             const flavor = dish?.flavors.find(f => f.id === flavorId);
-            const ratingTexts = { 1: "🤢 中伏", 2: "🤐 試一次", 3: "🙂 得閒整", 4: "🤤 要著兩條褲" };
-            const text = `👨🏻‍🍳 Cooking PAPA 推介\n\n【${dish.name} - ${flavor.name}】\n👥 份量：${flavor.serving || '--'}\n⏱️ 時間：${flavor.cooktime ? flavor.cooktime + '分鐘' : '--'}\n⭐ 評分：${ratingTexts[flavor.rating || 4]}\n\n🛒 材料：\n${flavor.ingredients}\n\n🍳 步驟：\n${flavor.steps}`;
+            const text = `👨🏻‍🍳 Cooking PAPA\n\n【${dish.name} - ${flavor.name}】\n🛒 材料：\n${flavor.ingredients}\n\n🍳 步驟：\n${flavor.steps}`;
             try {
                 await navigator.clipboard.writeText(text);
-                showToast("食譜已複製到剪貼簿！✅");
-            } catch (e) {
-                const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove();
-                showToast("食譜已複製到剪貼簿！✅");
-            }
+                showToast("食譜已複製 ✅");
+            } catch (e) { showToast("複製失敗"); }
         };
 
         function showToast(msg) {
@@ -617,15 +653,6 @@
             document.getElementById('custom-modal-msg').innerText = msg;
             document.getElementById('custom-modal-cancel').classList.add('hidden');
             document.getElementById('custom-modal-confirm').onclick = () => document.getElementById('custom-modal').classList.add('hidden');
-            document.getElementById('custom-modal').classList.remove('hidden');
-            document.getElementById('custom-modal').classList.add('flex');
-        };
-
-        window.customConfirm = (msg, fn) => {
-            document.getElementById('custom-modal-title').innerText = "確認操作";
-            document.getElementById('custom-modal-msg').innerText = msg;
-            document.getElementById('custom-modal-cancel').classList.remove('hidden');
-            document.getElementById('custom-modal-confirm').onclick = () => { document.getElementById('custom-modal').classList.add('hidden'); fn(); };
             document.getElementById('custom-modal').classList.remove('hidden');
             document.getElementById('custom-modal').classList.add('flex');
         };
@@ -658,29 +685,25 @@
                 await syncToCloud(dish);
                 document.getElementById('rec-note').value = '';
                 document.getElementById('rec-img').value = '';
-                showToast("記錄上傳成功！📸");
+                showToast("記錄已上傳 📸");
             };
             if(file) resizeImage(file, add); else add(null);
         };
 
         window.deleteRecord = async (id) => {
-            customConfirm("確定要刪除呢個製作記錄？", async () => {
-                const dish = db.find(d => d.id === currentDishId);
-                const flavor = dish.flavors.find(f => f.id === currentFlavorId);
-                flavor.records = flavor.records.filter(r => r.id !== id);
-                await syncToCloud(dish);
-                showToast("記錄已刪除");
-            });
+            const dish = db.find(d => d.id === currentDishId);
+            const flavor = dish.flavors.find(f => f.id === currentFlavorId);
+            flavor.records = flavor.records.filter(r => r.id !== id);
+            await syncToCloud(dish);
+            showToast("記錄已刪除");
         };
 
         window.deleteCurrentRecipe = () => {
-            customConfirm("確定要永久刪除呢個口味食譜？此動作無法還原。", async () => {
-                const dish = db.find(d => d.id === currentDishId);
-                dish.flavors = dish.flavors.filter(f => f.id !== currentFlavorId);
-                if(dish.flavors.length === 0) await deleteFromCloud(currentDishId); else await syncToCloud(dish);
-                navigate('home');
-                showToast("食譜已永久刪除 🗑️");
-            });
+            const dish = db.find(d => d.id === currentDishId);
+            dish.flavors = dish.flavors.filter(f => f.id !== currentFlavorId);
+            if(dish.flavors.length === 0) deleteFromCloud(currentDishId); else syncToCloud(dish);
+            navigate('home');
+            showToast("食譜已刪除 🗑️");
         };
 
         window.toggleFavorite = async () => {
@@ -695,7 +718,6 @@
             e.preventDefault();
             const name = document.getElementById('input-dish').value.trim();
             const flavor = document.getElementById('input-flavor').value.trim();
-            const tags = document.getElementById('input-tags').value.split(',').map(t => t.trim()).filter(t => t);
             let dish = db.find(d => d.name.toLowerCase() === name.toLowerCase());
             const newF = { 
                 id: 'f'+Date.now(), name: flavor, 
@@ -704,13 +726,10 @@
                 serving: document.getElementById('input-serving').value, 
                 cooktime: document.getElementById('input-cooktime').value, 
                 rating: parseInt(document.getElementById('input-rating').value), 
-                tags, isFavorite: false, records: [] 
+                isFavorite: false, records: [] 
             };
-            if(dish) {
-                dish.flavors.push(newF); await syncToCloud(dish); navigate('recipe', dish.id, newF.id);
-            } else {
-                const nDish = { id: 'd'+Date.now(), name, flavors: [newF] }; await syncToCloud(nDish); setTimeout(()=>navigate('recipe', nDish.id, newF.id), 500);
-            }
+            if(dish) { dish.flavors.push(newF); await syncToCloud(dish); navigate('recipe', dish.id, newF.id); }
+            else { const nDish = { id: 'd'+Date.now(), name, flavors: [newF] }; await syncToCloud(nDish); setTimeout(()=>navigate('recipe', nDish.id, newF.id), 500); }
             showToast("食譜已儲存至雲端！🍳");
         };
 
@@ -725,7 +744,7 @@
                 window.userAvatar = data; 
                 localStorage.setItem('cookingPapaAvatar', data); 
                 updateAvatarDisplays(); 
-                showToast("個人頭像已更新 ✨"); 
+                showToast("頭像已更新 ✨"); 
             });
         };
 
@@ -739,7 +758,6 @@
             document.getElementById('edit-steps').value = flavor.steps;
             window.setRating('edit-rating', flavor.rating || 4);
             document.getElementById('edit-modal').classList.remove('hidden');
-            document.getElementById('edit-modal').classList.add('flex');
         };
 
         window.closeEditModal = () => document.getElementById('edit-modal').classList.add('hidden');
