@@ -104,11 +104,11 @@
                     </div>
                 </div>
                 
-                <!-- 修改為3欄：份量、時間、卡路里 -->
+                <!-- 3欄：份量、時間、卡路里 -->
                 <div class="grid grid-cols-3 gap-3">
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1.5 ml-1">份量</label>
-                        <input type="text" id="edit-serving" placeholder="2人" class="w-full px-3 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1.5 ml-1">份量 / 吋尺</label>
+                        <input type="text" id="edit-serving" placeholder="如: 2人" class="w-full px-3 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1.5 ml-1">時間(分)</label>
@@ -238,7 +238,7 @@
 
                 <div class="flex gap-2 mb-5">
                     <button id="grocery-tab-recipe" onclick="renderGroceryList('recipe')" class="flex-1 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold transition">按食譜分類</button>
-                    <button id="grocery-tab-flat" onclick="renderGroceryList('flat')" class="flex-1 py-2 bg-gray-50 text-gray-600 rounded-xl text-xs font-bold transition">合併獨立清單</button>
+                    <button id="grocery-tab-flat" onclick="renderGroceryList('flat')" class="flex-1 py-2 bg-gray-50 text-gray-600 rounded-xl text-xs font-bold transition">合併獨立清單 (可排序)</button>
                 </div>
                 <div id="grocery-list-container"></div>
             </div>
@@ -356,11 +356,11 @@
                     <i data-lucide="sparkles" class="w-4 h-4"></i> AI 智能生成食譜
                 </button>
                 
-                <!-- 新增：3欄位 (份量, 時間, 卡路里) -->
+                <!-- 3欄位 (份量, 時間, 卡路里) -->
                 <div class="grid grid-cols-3 gap-3 text-left">
                     <div class="space-y-1">
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1">份量</label>
-                        <input type="text" id="input-serving" class="w-full text-sm py-2.5 px-3 bg-gray-50 rounded-xl border border-transparent outline-none focus:bg-white focus:border-blue-200 transition-colors" placeholder="如: 2人">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1">份量 / 吋尺</label>
+                        <input type="text" id="input-serving" class="w-full text-sm py-2.5 px-3 bg-gray-50 rounded-xl border border-transparent outline-none focus:bg-white focus:border-blue-200 transition-colors" placeholder="如: 6吋">
                     </div>
                     <div class="space-y-1">
                         <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1">時間(分)</label>
@@ -426,7 +426,7 @@
                 </div>
 
                 <div class="text-center pt-12">
-                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.10.0 🚀</p>
+                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.11.0 ✨</p>
                 </div>
             </div>
         </main>
@@ -950,7 +950,7 @@
                         <div class="flex gap-2.5 text-[10px] font-bold mb-3 uppercase items-center flex-wrap">
                             <div class="flex items-center bg-gray-100 rounded-md">
                                 <button onclick="scaleIngredients(0.5)" class="px-2 py-1 text-gray-400 hover:text-gray-900 transition-colors">-</button>
-                                <span class="text-gray-600 px-1 border-x border-gray-200">👥 ${flavor.serving || '--'}</span>
+                                <span class="text-gray-600 px-2 border-x border-gray-200 font-bold">${flavor.serving || '份量'}</span>
                                 <button onclick="scaleIngredients(2)" class="px-2 py-1 text-gray-400 hover:text-gray-900 transition-colors">+</button>
                             </div>
                             <span class="bg-blue-50 text-blue-600 px-2 py-1 rounded-md uppercase">${ratingTexts[flavor.rating || 4]}</span>
@@ -1764,6 +1764,8 @@
             if(!nameEl) return;
             const name = nameEl.value.trim();
             const style = document.getElementById('input-flavor') ? document.getElementById('input-flavor').value.trim() : '';
+            const serving = document.getElementById('input-serving') ? document.getElementById('input-serving').value.trim() : '';
+            
             if (!name) return window.customAlert("請先輸入菜名！");
             
             const loading = document.getElementById('ai-loading');
@@ -1772,11 +1774,15 @@
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
             
             try {
+                let promptTxt = `請用廣東話提供「${name}」詳細食譜。`;
+                if (style) promptTxt += `風格：${style}。`;
+                if (serving) promptTxt += `份量要求：${serving}。`;
+
                 const res = await fetch(url, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: `請用廣東話提供「${name}」詳細食譜。風格：${style||'家常'}。` }]}],
+                        contents: [{ parts: [{ text: promptTxt }]}],
                         systemInstruction: { parts: [{ text: `只准輸出純 JSON，格式：{"flavor":"風格名","ingredients":"材料1\\n材料2 (必須用 \\n 分隔每項)","steps":"1. 步驟一\\n2. 步驟二 (必須用 \\n 分隔每個步驟)","tags":["標籤"],"kcal":350}` }]},
                         generationConfig: { responseMimeType: "application/json" }
                     })
