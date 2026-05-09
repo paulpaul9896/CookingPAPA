@@ -337,10 +337,9 @@
                         <i data-lucide="camera" class="w-6 h-6 text-red-300 mx-auto mb-1 relative z-0"></i>
                         <p class="text-[10px] font-bold text-gray-400 relative z-0">上載食物相片 (選填)</p>
                     </div>
-                    <!-- 強制統一高度解決對齊問題，加入 w-full 確保 flex 包裝正確 -->
                     <div class="flex gap-2 mb-3 h-12 w-full">
                         <input type="text" id="calorie-text" class="flex-1 min-w-0 bg-white px-4 h-full rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400 transition-all" placeholder="食物名稱 (例如: 雞胸肉)">
-                        <div class="flex items-center bg-white border border-gray-200 rounded-xl px-3 focus-within:border-red-400 transition-all w-24 shrink-0 h-full">
+                        <div class="flex items-center bg-white border border-gray-200 rounded-xl px-3 focus-within:border-red-400 transition-all w-28 shrink-0 h-full">
                             <input type="number" id="calorie-weight" class="w-full h-full text-sm outline-none bg-transparent text-center min-w-0" placeholder="重量">
                             <span class="text-gray-500 text-sm font-bold ml-1 shrink-0">g</span>
                         </div>
@@ -475,9 +474,9 @@
                         
                         <div class="pt-3 border-t border-gray-200 mt-2">
                             <p class="text-[11px] text-gray-500 mb-2 font-bold">修改密碼</p>
-                            <div class="flex gap-2 mb-4 h-12">
-                                <input type="password" id="new-password-input" placeholder="新密碼 (最少 6 位)" class="flex-1 min-w-0 px-4 h-full bg-white border border-gray-200 rounded-xl outline-none text-sm focus:ring-2 focus:ring-blue-500/20">
-                                <button onclick="handleChangePassword()" class="shrink-0 w-20 h-full bg-gray-900 text-white rounded-xl text-sm font-bold transition active:scale-95 flex items-center justify-center">更新</button>
+                            <div class="flex gap-2 mb-4">
+                                <input type="password" id="new-password-input" placeholder="新密碼 (最少 6 位)" class="flex-1 min-w-0 px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none text-sm focus:ring-2 focus:ring-blue-500/20">
+                                <button onclick="handleChangePassword()" class="shrink-0 px-5 py-3 bg-gray-900 text-white rounded-xl text-sm font-bold transition active:scale-95 flex items-center justify-center">更新</button>
                             </div>
                             <button onclick="handleLogout()" class="w-full py-3.5 bg-white border border-red-200 text-red-500 rounded-xl text-sm font-bold transition active:scale-95 hover:bg-red-50">登出帳號</button>
                         </div>
@@ -501,7 +500,7 @@
                 </div>
 
                 <div class="text-center pt-12">
-                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.16.1 🚀</p>
+                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.16.3 🚀</p>
                 </div>
             </div>
         </main>
@@ -561,6 +560,10 @@
         window.flavorTags = JSON.parse(localStorage.getItem('cookingPapaFlavorTags')) || ['減肥餐', '兒童至愛', '快手15分鐘', '惹味大排檔', '清淡健康'];
 
         const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23FFF3E0' width='100' height='100'/><text x='50' y='55' font-size='45' text-anchor='middle' dominant-baseline='middle'>👨🏻‍🍳</text></svg>";
+        
+        // 準備挑戰 預設背景圖 (大廚與火 Emoji)
+        const planningBgImg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 800'><rect width='800' height='800' fill='%23fff7ed'/><text x='400' y='350' font-size='280' text-anchor='middle' dominant-baseline='middle'>👨🏻‍🍳</text><text x='400' y='620' font-size='120' text-anchor='middle' dominant-baseline='middle'>🔥</text></svg>";
+
         window.userAvatar = localStorage.getItem('cookingPapaAvatar') || defaultAvatar;
 
         function updateAvatarDisplays() {
@@ -967,7 +970,7 @@
                 if (window.searchFilterPlanning && !isPlanningActive) return;
 
                 if (!keyword || d.name.toLowerCase().includes(keyword) || f.name.toLowerCase().includes(keyword)) {
-                    let img = isPlanningActive ? 'https://images.unsplash.com/photo-1556910103-1c02745a8720?w=800' : 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=400';
+                    let img = isPlanningActive ? planningBgImg : 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?auto=format&fit=crop&w=800&q=80';
                     if (f.coverImage) {
                         img = f.coverImage;
                     } else if (f.records && f.records.length > 0) {
@@ -989,6 +992,15 @@
             });
         }
         window.performSearch = performSearch;
+
+        let touchStartX = 0;
+        const viewRecipeEl = document.getElementById('view-recipe');
+        if(viewRecipeEl) {
+            viewRecipeEl.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
+            viewRecipeEl.addEventListener('touchend', e => {
+                if (e.changedTouches[0].screenX - touchStartX > 130) window.navigate('home');
+            });
+        }
 
         // --- 4. 數據操作 ---
         async function syncToCloud(data) {
@@ -1030,7 +1042,7 @@
             let posts = [];
             db.forEach(d => (d.flavors||[]).forEach(f => {
                 const isPlanningActive = f.isPlanning && (!f.records || f.records.length === 0);
-                let img = isPlanningActive ? 'https://images.unsplash.com/photo-1556910103-1c02745a8720?w=800' : 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=400';
+                let img = isPlanningActive ? planningBgImg : 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?auto=format&fit=crop&w=800&q=80';
                 if (f.coverImage) {
                     img = f.coverImage;
                 } else if (f.records && f.records.length > 0) {
@@ -1099,7 +1111,7 @@
             if (!flavor) return;
             
             const isPlanningActive = flavor.isPlanning && (!flavor.records || flavor.records.length === 0);
-            let img = isPlanningActive ? 'https://images.unsplash.com/photo-1556910103-1c02745a8720?w=800' : 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=800';
+            let img = isPlanningActive ? planningBgImg : 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?auto=format&fit=crop&w=800&q=80';
             
             if (flavor.coverImage) {
                 img = flavor.coverImage;
@@ -1241,7 +1253,8 @@
             let favs = [];
             db.forEach(d => (d.flavors||[]).forEach(f => {
                 if (f.isFavorite) {
-                    let img = 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=400';
+                    const isPlanningActive = f.isPlanning && (!f.records || f.records.length === 0);
+                    let img = isPlanningActive ? planningBgImg : 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?auto=format&fit=crop&w=800&q=80';
                     if (f.coverImage) {
                         img = f.coverImage;
                     } else if (f.records && f.records.length > 0) {
