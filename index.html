@@ -318,11 +318,11 @@
                         <i data-lucide="camera" class="w-6 h-6 text-red-300 mx-auto mb-1 relative z-0"></i>
                         <p class="text-[10px] font-bold text-gray-400 relative z-0">上載食物相片 (選填)</p>
                     </div>
-                    <div class="flex gap-2 mb-3">
-                        <input type="text" id="calorie-text" class="flex-1 bg-white p-3.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400 transition-all" placeholder="食物名稱 (例如: 雞胸肉)">
-                        <div class="flex items-center bg-white border border-gray-200 rounded-xl px-3 focus-within:border-red-400 transition-all w-24 shrink-0">
-                            <input type="number" id="calorie-weight" class="w-full text-sm outline-none bg-transparent text-center" placeholder="重量">
-                            <span class="text-gray-500 text-sm font-bold ml-1">g</span>
+                    <div class="flex gap-2 mb-3 items-stretch">
+                        <input type="text" id="calorie-text" class="flex-1 bg-white px-4 py-3.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400 transition-all" placeholder="食物名稱 (例如: 雞胸肉)">
+                        <div class="flex items-center bg-white border border-gray-200 rounded-xl px-3 py-3.5 focus-within:border-red-400 transition-all w-28 shrink-0">
+                            <input type="number" id="calorie-weight" class="w-full text-sm outline-none bg-transparent text-center min-w-0" placeholder="重量">
+                            <span class="text-gray-500 text-sm font-bold ml-1 shrink-0">g</span>
                         </div>
                     </div>
                     <button onclick="aiCalculateCalorie()" class="w-full py-3.5 bg-red-500 text-white rounded-xl font-bold shadow-lg shadow-red-500/20 flex items-center justify-center gap-2 active:scale-95 transition-all"><i data-lucide="activity" class="w-4 h-4"></i> 計算並記錄</button>
@@ -481,12 +481,12 @@
                 </div>
 
                 <div class="text-center pt-12">
-                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.15.1 🚀</p>
+                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.15.2 🚀</p>
                 </div>
             </div>
         </main>
+    </div>
 
-        <!-- 視圖 5：搜尋頁面 -->
     <!-- 底部導航欄 -->
     <nav class="fixed bottom-0 w-full bg-white/90 backdrop-blur-lg border-t border-gray-100 grid grid-cols-5 items-center z-50 pb-8 pt-3 max-w-2xl left-1/2 -translate-x-1/2">
         <button id="nav-btn-home" onclick="navigate('home')" class="flex justify-center transition-colors h-full"><i data-lucide="home" class="w-6 h-6"></i></button>
@@ -1104,6 +1104,7 @@
                             <button onclick="toggleFavorite()"><i data-lucide="heart" class="w-7 h-7 ${flavor.isFavorite?'text-red-500 fill-red-500':'text-gray-900'}"></i></button>
                             <button onclick="shareRecipe('${dish.id}', '${flavor.id}')"><i data-lucide="send" class="w-7 h-7 text-gray-900"></i></button>
                         </div>
+                        <button onclick="deleteCurrentRecipe()"><i data-lucide="trash-2" class="w-6 h-6 text-red-200 hover:text-red-400 transition-colors"></i></button>
                     </div>
                     <div class="px-5 pb-6 text-sm">
                         
@@ -1201,7 +1202,7 @@
         }
         window.renderFavorites = renderFavorites;
 
-        // --- 分享功能 (新增) ---
+        // --- 分享功能 ---
         window.openShareModal = function() {
             const listContainer = document.getElementById('share-recipe-list');
             if(!listContainer) return;
@@ -1364,7 +1365,7 @@
         }
         window.saveFridgeRecipes = saveFridgeRecipes;
 
-        // --- 購物清單 (雙模式) ---
+        // --- 購物清單 ---
         window.currentGroceryMode = 'recipe';
         function renderGroceryList(mode = window.currentGroceryMode) {
             window.currentGroceryMode = mode;
