@@ -66,7 +66,7 @@
     <div id="planner-modal" class="fixed inset-0 bg-black/60 z-[80] hidden flex-col items-center justify-end sm:justify-center">
         <div class="absolute inset-0" onclick="closePlannerModal()"></div>
         <div class="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl relative z-10 flex flex-col max-h-[85vh]">
-            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden shrink-0"></div>
+            <div class="w-12 h-1.5 bg-bg-gray-200 rounded-full mx-auto mb-4 sm:hidden shrink-0"></div>
             <h3 class="text-lg font-bold mb-4 text-center shrink-0">加入餐單項目</h3>
             
             <div class="flex gap-2 mb-5 shrink-0">
@@ -278,8 +278,15 @@
                         <i data-lucide="camera" class="w-6 h-6 text-red-300 mx-auto mb-1 relative z-0"></i>
                         <p class="text-[10px] font-bold text-gray-400 relative z-0">上載食物相片 (選填)</p>
                     </div>
-                    <input type="text" id="calorie-text" class="w-full bg-white p-3.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400 mb-3 transition-all" placeholder="食物名稱 (例如: 一碟乾炒牛河)">
-                    <button onclick="aiCalculateCalorie()" class="w-full py-3 bg-red-500 text-white rounded-xl font-bold shadow-lg shadow-red-500/20 flex items-center justify-center gap-2 active:scale-95 transition-all"><i data-lucide="activity" class="w-4 h-4"></i> 計算並記錄</button>
+                    <!-- 加入 g 數輸入框 -->
+                    <div class="flex gap-2 mb-3">
+                        <input type="text" id="calorie-text" class="flex-1 bg-white p-3.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400 transition-all" placeholder="食物名稱 (例如: 雞胸肉)">
+                        <div class="flex items-center bg-white border border-gray-200 rounded-xl px-3 focus-within:border-red-400 transition-all w-24 shrink-0">
+                            <input type="number" id="calorie-weight" class="w-full text-sm outline-none bg-transparent text-center" placeholder="重量">
+                            <span class="text-gray-500 text-sm font-bold ml-1">g</span>
+                        </div>
+                    </div>
+                    <button onclick="aiCalculateCalorie()" class="w-full py-3.5 bg-red-500 text-white rounded-xl font-bold shadow-lg shadow-red-500/20 flex items-center justify-center gap-2 active:scale-95 transition-all"><i data-lucide="activity" class="w-4 h-4"></i> 計算並記錄</button>
                 </div>
 
                 <h4 class="font-bold text-sm mb-4 border-t border-gray-100 pt-6 text-gray-800 flex justify-between items-end">
@@ -410,11 +417,12 @@
                         
                         <div class="pt-3 border-t border-gray-100">
                             <p class="text-[11px] text-gray-500 mb-2 font-bold">修改密碼</p>
+                            <!-- 修復：排版及置中問題 -->
                             <div class="flex gap-2 mb-3">
-                                <input type="password" id="new-password-input" placeholder="新密碼 (最少 6 位)" class="flex-1 px-3 py-2.5 bg-white border border-gray-200 rounded-xl outline-none text-xs focus:ring-2 focus:ring-blue-500/20">
-                                <button onclick="handleChangePassword()" class="px-4 py-2.5 bg-gray-900 text-white rounded-xl text-xs font-bold transition active:scale-95">更新</button>
+                                <input type="password" id="new-password-input" placeholder="新密碼 (最少 6 位)" class="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none text-sm focus:ring-2 focus:ring-blue-500/20">
+                                <button onclick="handleChangePassword()" class="px-5 py-3 bg-gray-900 text-white rounded-xl text-sm font-bold transition active:scale-95 flex items-center justify-center shrink-0">更新</button>
                             </div>
-                            <button onclick="handleLogout()" class="w-full py-2.5 bg-white border border-red-200 text-red-500 rounded-xl text-xs font-bold transition active:scale-95">登出帳號</button>
+                            <button onclick="handleLogout()" class="w-full py-3 bg-white border border-red-200 text-red-500 rounded-xl text-sm font-bold transition active:scale-95">登出帳號</button>
                         </div>
                     </div>
 
@@ -436,7 +444,7 @@
                 </div>
 
                 <div class="text-center pt-12">
-                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.12.0 ✨</p>
+                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.12.1 ✨</p>
                 </div>
             </div>
         </main>
@@ -1474,8 +1482,10 @@
 
         async function aiCalculateCalorie() {
             const textEl = document.getElementById('calorie-text');
+            const weightEl = document.getElementById('calorie-weight');
             const fileEl = document.getElementById('calorie-image');
             const textInput = textEl ? textEl.value.trim() : '';
+            const weightInput = weightEl ? weightEl.value.trim() : '';
             const fileInput = fileEl ? fileEl.files[0] : null;
             const dateInput = window.calSelectedDate;
             
@@ -1487,7 +1497,11 @@
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
             
             try {
-                let parts = [{ text: `估算食物卡路里。文字提示：${textInput}。請以 JSON 輸出。` }];
+                let promptMsg = `估算食物卡路里。文字提示：${textInput}。`;
+                if (weightInput) promptMsg += `實際份量為：${weightInput}克(g)。`;
+                promptMsg += `請以 JSON 輸出。`;
+                
+                let parts = [{ text: promptMsg }];
                 if (fileInput) {
                     const base64 = await new Promise((resolve) => {
                         const reader = new FileReader();
@@ -1518,6 +1532,7 @@
                 window.showToast(`🔥 ${result.name}: 約 ${result.kcal} kcal!`);
                 
                 if(textEl) textEl.value = '';
+                if(weightEl) weightEl.value = '';
                 if(fileEl) fileEl.value = '';
                 const preview = document.getElementById('calorie-image-preview');
                 if(preview) {
