@@ -62,6 +62,25 @@
         </div>
     </div>
 
+    <!-- 編輯卡路里視窗 -->
+    <div id="calorie-edit-modal" class="fixed inset-0 bg-black/60 z-[100] hidden flex-col items-center justify-center p-4 text-left">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center relative">
+            <h3 class="text-lg font-bold mb-4 text-gray-900">修改卡路里記錄</h3>
+            <input type="hidden" id="edit-cal-id">
+            <div class="space-y-3 mb-6">
+                <input type="text" id="edit-cal-name" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-red-400 text-sm" placeholder="食物名稱">
+                <div class="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 focus-within:border-red-400 transition-all h-12">
+                    <input type="number" id="edit-cal-kcal" class="w-full h-full bg-transparent outline-none text-sm text-center" placeholder="卡路里數值">
+                    <span class="text-gray-500 text-sm font-bold ml-1">kcal</span>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="closeEditCalorieModal()" class="flex-1 py-3 bg-gray-100 rounded-2xl font-bold text-gray-600 transition hover:bg-gray-200">取消</button>
+                <button onclick="saveCalorieEdit()" class="flex-1 py-3 bg-red-500 rounded-2xl font-bold text-white shadow-lg transition hover:bg-red-600">確定</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 選擇食譜匯出分享視窗 -->
     <div id="share-modal" class="fixed inset-0 bg-black/60 z-[80] hidden flex-col items-center justify-end sm:justify-center">
         <div class="absolute inset-0" onclick="closeShareModal()"></div>
@@ -318,10 +337,11 @@
                         <i data-lucide="camera" class="w-6 h-6 text-red-300 mx-auto mb-1 relative z-0"></i>
                         <p class="text-[10px] font-bold text-gray-400 relative z-0">上載食物相片 (選填)</p>
                     </div>
-                    <div class="flex gap-2 mb-3 items-stretch">
-                        <input type="text" id="calorie-text" class="flex-1 bg-white px-4 py-3.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400 transition-all" placeholder="食物名稱 (例如: 雞胸肉)">
-                        <div class="flex items-center bg-white border border-gray-200 rounded-xl px-3 py-3.5 focus-within:border-red-400 transition-all w-28 shrink-0">
-                            <input type="number" id="calorie-weight" class="w-full text-sm outline-none bg-transparent text-center min-w-0" placeholder="重量">
+                    <!-- 強制統一高度解決對齊問題 -->
+                    <div class="flex gap-2 mb-3 h-12">
+                        <input type="text" id="calorie-text" class="flex-1 bg-white px-4 h-full rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400 transition-all" placeholder="食物名稱 (例如: 雞胸肉)">
+                        <div class="flex items-center bg-white border border-gray-200 rounded-xl px-3 focus-within:border-red-400 transition-all w-28 shrink-0 h-full">
+                            <input type="number" id="calorie-weight" class="w-full h-full text-sm outline-none bg-transparent text-center min-w-0" placeholder="重量">
                             <span class="text-gray-500 text-sm font-bold ml-1 shrink-0">g</span>
                         </div>
                     </div>
@@ -481,7 +501,7 @@
                 </div>
 
                 <div class="text-center pt-12">
-                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.15.2 🚀</p>
+                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.16.0 🚀</p>
                 </div>
             </div>
         </main>
@@ -948,7 +968,9 @@
 
                 if (!keyword || d.name.toLowerCase().includes(keyword) || f.name.toLowerCase().includes(keyword)) {
                     let img = isPlanningActive ? 'https://images.unsplash.com/photo-1556910103-1c02745a8720?w=800' : 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=400';
-                    if (f.records && f.records.length > 0) {
+                    if (f.coverImage) {
+                        img = f.coverImage;
+                    } else if (f.records && f.records.length > 0) {
                         img = (f.records[0].images && f.records[0].images.length > 0) ? f.records[0].images[0] : (f.records[0].image || img);
                     }
                     res.push({ dishId: d.id, flavorId: f.id, img, isPlanningActive });
@@ -967,6 +989,15 @@
             });
         }
         window.performSearch = performSearch;
+
+        let touchStartX = 0;
+        const viewRecipeEl = document.getElementById('view-recipe');
+        if(viewRecipeEl) {
+            viewRecipeEl.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
+            viewRecipeEl.addEventListener('touchend', e => {
+                if (e.changedTouches[0].screenX - touchStartX > 130) window.navigate('home');
+            });
+        }
 
         // --- 4. 數據操作 ---
         async function syncToCloud(data) {
@@ -1009,7 +1040,9 @@
             db.forEach(d => (d.flavors||[]).forEach(f => {
                 const isPlanningActive = f.isPlanning && (!f.records || f.records.length === 0);
                 let img = isPlanningActive ? 'https://images.unsplash.com/photo-1556910103-1c02745a8720?w=800' : 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=400';
-                if (f.records && f.records.length > 0) {
+                if (f.coverImage) {
+                    img = f.coverImage;
+                } else if (f.records && f.records.length > 0) {
                     img = (f.records[0].images && f.records[0].images.length > 0) ? f.records[0].images[0] : (f.records[0].image || img);
                 }
                 posts.push({ dishId: d.id, flavorId: f.id, img, isPlanningActive });
@@ -1056,6 +1089,18 @@
         }
         window.scaleIngredients = scaleIngredients;
 
+        // --- 設定代表照 ---
+        window.setCoverImage = async function(imgUrl) {
+            const dish = db.find(d => d.id === currentDishId);
+            const flavor = dish?.flavors.find(f => f.id === currentFlavorId);
+            if(!dish || !flavor) return;
+            
+            flavor.coverImage = imgUrl;
+            await window.syncToCloud(dish);
+            window.showToast("已設定為代表照 ⭐");
+            window.renderPost(currentDishId, currentFlavorId);
+        };
+
         function renderPost(dishId, flavorId) {
             currentDishId = dishId; currentFlavorId = flavorId;
             const dish = db.find(d => d.id === dishId);
@@ -1064,7 +1109,10 @@
             
             const isPlanningActive = flavor.isPlanning && (!flavor.records || flavor.records.length === 0);
             let img = isPlanningActive ? 'https://images.unsplash.com/photo-1556910103-1c02745a8720?w=800' : 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=800';
-            if (flavor.records && flavor.records.length > 0) {
+            
+            if (flavor.coverImage) {
+                img = flavor.coverImage;
+            } else if (flavor.records && flavor.records.length > 0) {
                 img = (flavor.records[0].images && flavor.records[0].images.length > 0) ? flavor.records[0].images[0] : (flavor.records[0].image || img);
             }
             
@@ -1146,16 +1194,31 @@
                                 let imagesList = r.images || (r.image ? [r.image] : []);
                                 if (imagesList.length > 0) {
                                     if (imagesList.length === 1) {
-                                        imgsHtml = `<img src="${imagesList[0]}" class="mt-3 w-full max-h-56 object-cover rounded-xl border border-gray-100">`;
-                                    } else if (imagesList.length === 2) {
-                                        imgsHtml = `<div class="grid grid-cols-2 gap-1.5 mt-3">` + imagesList.map(img => `<div class="aspect-square"><img src="${img}" class="w-full h-full object-cover rounded-xl border border-gray-100"></div>`).join('') + `</div>`;
+                                        const isCover = (flavor.coverImage === imagesList[0]);
+                                        imgsHtml = `<div class="relative mt-3 group">
+                                            <img src="${imagesList[0]}" class="w-full max-h-56 object-cover rounded-xl border border-gray-100">
+                                            <button onclick="setCoverImage('${imagesList[0]}')" class="absolute top-2 left-2 p-1.5 bg-white/90 rounded-full shadow-sm backdrop-blur-sm transition-colors ${isCover ? 'text-yellow-500' : 'text-gray-400 hover:text-yellow-500'} z-10" title="設為代表照">
+                                                <i data-lucide="star" class="w-4 h-4 ${isCover ? 'fill-yellow-500' : ''}"></i>
+                                            </button>
+                                        </div>`;
                                     } else {
-                                        imgsHtml = `<div class="grid grid-cols-3 gap-1.5 mt-3">` + imagesList.map(img => `<div class="aspect-square"><img src="${img}" class="w-full h-full object-cover rounded-xl border border-gray-100"></div>`).join('') + `</div>`;
+                                        let gridCols = imagesList.length === 2 ? 'grid-cols-2' : 'grid-cols-3';
+                                        imgsHtml = `<div class="grid ${gridCols} gap-1.5 mt-3">` + imagesList.map((img) => {
+                                            const isCover = (flavor.coverImage === img);
+                                            return `
+                                            <div class="relative aspect-square group">
+                                                <img src="${img}" class="w-full h-full object-cover rounded-xl border border-gray-100">
+                                                <button onclick="setCoverImage('${img}')" class="absolute top-1.5 left-1.5 p-1 bg-white/90 rounded-full shadow-sm backdrop-blur-sm transition-colors ${isCover ? 'text-yellow-500' : 'text-gray-400 hover:text-yellow-500'} z-10" title="設為代表照">
+                                                    <i data-lucide="star" class="w-3.5 h-3.5 ${isCover ? 'fill-yellow-500' : ''}"></i>
+                                                </button>
+                                            </div>
+                                            `;
+                                        }).join('') + `</div>`;
                                     }
                                 }
                                 return `
                                     <div class="bg-gray-50 rounded-2xl p-4 relative border text-left mb-4 shadow-sm">
-                                        <div class="absolute top-3 right-3 flex gap-2 z-10">
+                                        <div class="absolute top-3 right-3 flex gap-2 z-20">
                                             <button onclick="editRecordNote('${r.id}')" class="text-gray-400 hover:text-blue-500 transition-colors p-1 bg-white/80 rounded-full shadow-sm backdrop-blur-sm"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
                                             <button onclick="deleteRecord('${r.id}')" class="text-gray-400 hover:text-red-500 transition-colors p-1 bg-white/80 rounded-full shadow-sm backdrop-blur-sm"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                         </div>
@@ -1188,7 +1251,9 @@
             db.forEach(d => (d.flavors||[]).forEach(f => {
                 if (f.isFavorite) {
                     let img = 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=400';
-                    if (f.records && f.records.length > 0) {
+                    if (f.coverImage) {
+                        img = f.coverImage;
+                    } else if (f.records && f.records.length > 0) {
                         img = (f.records[0].images && f.records[0].images.length > 0) ? f.records[0].images[0] : (f.records[0].image || img);
                     }
                     favs.push({ dishId: d.id, flavorId: f.id, img });
@@ -1761,7 +1826,8 @@
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="text-red-500 font-bold text-base bg-red-50 px-2 py-1 rounded-lg">🔥 ${item.kcal}</span>
-                            <button onclick="deleteCalorie('${item.id}')" class="text-gray-300 hover:text-red-500 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            <button onclick="openEditCalorieModal('${item.id}')" class="text-gray-300 hover:text-blue-500 transition p-1"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                            <button onclick="deleteCalorie('${item.id}')" class="text-gray-300 hover:text-red-500 transition p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         </div>
                     </div>
                 `;
@@ -1769,6 +1835,49 @@
             lucide.createIcons();
         }
         window.renderCalorieHistory = renderCalorieHistory;
+
+        window.openEditCalorieModal = function(id) {
+            const item = calorieDb.find(i => i.id === id);
+            if (!item) return;
+            const idEl = document.getElementById('edit-cal-id');
+            const nameEl = document.getElementById('edit-cal-name');
+            const kcalEl = document.getElementById('edit-cal-kcal');
+            if (idEl) idEl.value = item.id;
+            if (nameEl) nameEl.value = item.name;
+            if (kcalEl) kcalEl.value = item.kcal;
+            
+            const modal = document.getElementById('calorie-edit-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        };
+
+        window.closeEditCalorieModal = function() {
+            const modal = document.getElementById('calorie-edit-modal');
+            if(modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        };
+
+        window.saveCalorieEdit = async function() {
+            const id = document.getElementById('edit-cal-id').value;
+            const name = document.getElementById('edit-cal-name').value.trim();
+            const kcal = parseInt(document.getElementById('edit-cal-kcal').value);
+            
+            if(!name || isNaN(kcal)) return window.customAlert("請輸入有效名稱及卡路里！");
+            
+            const item = calorieDb.find(i => i.id === id);
+            if(item && currentUser) {
+                item.name = name;
+                item.kcal = kcal;
+                const docRef = doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'calories', id);
+                await setDoc(docRef, item);
+                window.closeEditCalorieModal();
+                window.showToast("記錄已更新 ✅");
+            }
+        };
 
         async function deleteCalorie(id) {
             if (!currentUser) return;
