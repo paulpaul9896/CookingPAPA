@@ -62,11 +62,25 @@
         </div>
     </div>
 
+    <!-- 選擇食譜匯出分享視窗 (全新功能) -->
+    <div id="share-modal" class="fixed inset-0 bg-black/60 z-[80] hidden flex-col items-center justify-end sm:justify-center">
+        <div class="absolute inset-0" onclick="closeShareModal()"></div>
+        <div class="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl relative z-10 flex flex-col max-h-[85vh]">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden shrink-0"></div>
+            <h3 class="text-lg font-bold mb-4 text-center shrink-0 flex items-center justify-center gap-2">
+                <i data-lucide="share-2" class="w-5 h-5 text-blue-500"></i> 選擇要匯出嘅食譜
+            </h3>
+            <p class="text-xs text-gray-500 mb-4 text-center shrink-0">點擊食譜後，系統會自動複製圖文並茂嘅文字，方便你貼上 WhatsApp 或 IG 分享畀朋友！</p>
+            <div id="share-recipe-list" class="flex-1 overflow-y-auto pr-2 space-y-2 scroll-container text-left pb-4"></div>
+            <button onclick="closeShareModal()" class="w-full py-3.5 bg-gray-100 rounded-2xl font-bold text-gray-600 transition mt-2 shrink-0 hover:bg-gray-200">取消</button>
+        </div>
+    </div>
+
     <!-- 選擇食譜放入餐單視窗 -->
     <div id="planner-modal" class="fixed inset-0 bg-black/60 z-[80] hidden flex-col items-center justify-end sm:justify-center">
         <div class="absolute inset-0" onclick="closePlannerModal()"></div>
         <div class="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl relative z-10 flex flex-col max-h-[85vh]">
-            <div class="w-12 h-1.5 bg-bg-gray-200 rounded-full mx-auto mb-4 sm:hidden shrink-0"></div>
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden shrink-0"></div>
             <h3 class="text-lg font-bold mb-4 text-center shrink-0">加入餐單項目</h3>
             
             <div class="flex gap-2 mb-5 shrink-0">
@@ -93,23 +107,21 @@
                     <input type="checkbox" id="edit-is-planning" class="w-5 h-5 text-blue-500 rounded border-gray-300 accent-blue-500">
                     <div class="flex-1"><p class="text-[12px] font-bold text-gray-700">設為「準備挑戰」項目 ⏳</p></div>
                 </label>
-                <div>
-                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">口味及風格</label>
-                    <input type="text" id="edit-flavor" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white text-sm">
-                    <div class="flex flex-wrap gap-1.5 mt-2 ml-1">
-                        <button type="button" onclick="appendFlavor('edit-flavor', '減肥餐')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold">減肥餐</button>
-                        <button type="button" onclick="appendFlavor('edit-flavor', '兒童至愛')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold">兒童至愛</button>
-                        <button type="button" onclick="appendFlavor('edit-flavor', '快手15分鐘')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold">快手15分鐘</button>
-                        <button type="button" onclick="appendFlavor('edit-flavor', '惹味大排檔')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold">惹味大排檔</button>
+                
+                <!-- 對齊口味與份量 -->
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">口味及風格</label>
+                        <input type="text" id="edit-flavor" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white text-sm">
+                        <!-- 動態渲染標籤 -->
+                        <div id="flavor-tags-edit" class="flex flex-wrap gap-1.5 mt-2 ml-1"></div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">份量 / 吋尺</label>
+                        <input type="text" id="edit-serving" placeholder="如: 2人" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white text-sm">
                     </div>
                 </div>
-                
-                <div>
-                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">份量 / 吋尺</label>
-                    <input type="text" id="edit-serving" placeholder="如: 2人" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white text-sm">
-                </div>
 
-                <!-- 2欄：時間、卡路里 -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1.5 ml-1">時間(分)</label>
@@ -159,14 +171,15 @@
     </div>
 
     <!-- 頂部標題欄 -->
-    <header class="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-40 px-4 py-3 flex justify-between items-center max-w-2xl mx-auto w-full">
+    <header class="bg-white/90 backdrop-blur-md border-b border-gray-100 sticky top-0 z-40 px-4 py-3 flex justify-between items-center max-w-2xl mx-auto w-full">
         <div class="flex items-center gap-1 cursor-pointer" onclick="navigate('home')">
             <h1 class="ig-title text-gray-900 select-none">Cooking PAPA</h1>
             <i data-lucide="chevron-down" class="w-4 h-4 mt-1"></i>
         </div>
         <div class="flex items-center gap-5">
-            <button onclick="navigate('add')" class="hover:text-blue-500 transition-colors"><i data-lucide="plus-square" class="w-6 h-6"></i></button>
-            <button onclick="navigate('profile')" class="hover:text-blue-500 transition-colors"><i data-lucide="menu" class="w-6 h-6"></i></button>
+            <button onclick="navigate('search')" class="hover:text-blue-500 transition-colors"><i data-lucide="search" class="w-6 h-6"></i></button>
+            <button onclick="navigate('planner')" class="hover:text-blue-500 transition-colors"><i data-lucide="calendar-days" class="w-6 h-6"></i></button>
+            <button onclick="navigate('calorie')" class="hover:text-blue-500 transition-colors"><i data-lucide="flame" class="w-6 h-6"></i></button>
         </div>
     </header>
 
@@ -194,28 +207,52 @@
                 <p class="text-[13px] text-gray-600 mt-1 whitespace-pre-line leading-relaxed">紀錄為屋企人煮嘅每一餐😋🍽️</p>
                 <div class="mt-5 flex gap-3 w-full">
                     <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-black font-bold text-[12px] py-2.5 rounded-xl transition" onclick="navigate('profile')">設定與備份</button>
-                    <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-black font-bold text-[12px] py-2.5 rounded-xl transition" onclick="navigate('add')">分享新食譜</button>
+                    <!-- 修改為分享食譜功能 -->
+                    <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-black font-bold text-[12px] py-2.5 rounded-xl transition" onclick="openShareModal()">匯出分享食譜</button>
                 </div>
             </div>
 
             <!-- Tab 工具列 -->
-            <div class="flex border-t border-b border-gray-100 mt-2 bg-white">
+            <div class="flex border-t border-b border-gray-100 mt-2 bg-white sticky top-[58px] z-30">
                 <div id="tab-btn-grid" onclick="switchHomeTab('grid')" class="flex-1 flex justify-center py-3.5 border-t-2 border-black -mt-[2px] text-gray-900 cursor-pointer transition-colors"><i data-lucide="grid" class="w-5 h-5"></i></div>
-                <div id="tab-btn-fridge" onclick="switchHomeTab('fridge')" class="flex-1 flex justify-center py-3.5 border-t-2 border-transparent -mt-[2px] text-gray-400 cursor-pointer transition-colors" title="雪櫃清垃圾"><i data-lucide="refrigerator" class="w-5 h-5"></i></div>
-                <div id="tab-btn-grocery" onclick="switchHomeTab('grocery')" class="flex-1 flex justify-center py-3.5 border-t-2 border-transparent -mt-[2px] text-gray-400 cursor-pointer transition-colors" title="購物清單"><i data-lucide="shopping-cart" class="w-5 h-5"></i></div>
-                <div id="tab-btn-calorie" onclick="switchHomeTab('calorie')" class="flex-1 flex justify-center py-3.5 border-t-2 border-transparent -mt-[2px] text-gray-400 cursor-pointer transition-colors" title="卡路里計算"><i data-lucide="flame" class="w-5 h-5"></i></div>
-                <div id="tab-btn-planner" onclick="switchHomeTab('planner')" class="flex-1 flex justify-center py-3.5 border-t-2 border-transparent -mt-[2px] text-gray-400 cursor-pointer transition-colors" title="餐單日曆"><i data-lucide="calendar-days" class="w-5 h-5"></i></div>
+                <div id="tab-btn-search" onclick="switchHomeTab('search')" class="flex-1 flex justify-center py-3.5 border-t-2 border-transparent -mt-[2px] text-gray-400 cursor-pointer transition-colors"><i data-lucide="search" class="w-5 h-5"></i></div>
+                <div id="tab-btn-favorites" onclick="switchHomeTab('favorites')" class="flex-1 flex justify-center py-3.5 border-t-2 border-transparent -mt-[2px] text-gray-400 cursor-pointer transition-colors"><i data-lucide="heart" class="w-5 h-5"></i></div>
             </div>
 
-            <!-- 子分頁內容 -->
-            <div id="home-content-grid" class="block">
+            <!-- 首頁子分頁內容 -->
+            <div id="home-content-grid" class="block pb-10">
                 <div id="dishes-grid" class="grid grid-cols-3 gap-0.5 bg-gray-100"></div>
             </div>
 
-            <!-- 雪櫃清垃圾 -->
-            <div id="home-content-fridge" class="hidden p-6 bg-white min-h-[50vh]">
-                <h3 class="font-bold text-lg mb-2 flex items-center gap-2"><i data-lucide="refrigerator" class="w-5 h-5 text-blue-500"></i> 雪櫃清垃圾</h3>
-                <p class="text-xs text-gray-500 mb-5">輸入你雪櫃淨低嘅食材，AI 會提供 3 個食譜建議！</p>
+            <div id="home-content-search" class="hidden pb-10">
+                <div class="px-5 py-4 border-b border-gray-50 bg-white">
+                    <div class="relative flex-1">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                        <input type="text" id="search-input" oninput="performSearch()" class="w-full bg-gray-100 rounded-2xl py-2.5 pl-10 pr-4 outline-none text-sm transition-all focus:bg-gray-200/50" placeholder="搜尋菜式、口味或風格...">
+                    </div>
+                    <div class="mt-3 flex gap-2">
+                        <button id="filter-planning-btn" onclick="toggleSearchFilterPlanning()" class="px-3 py-1.5 bg-gray-50 rounded-full text-xs font-bold text-gray-500 transition-colors flex items-center gap-1 border border-gray-200">
+                            <i data-lucide="hourglass" class="w-3 h-3"></i> 只顯示「準備挑戰」
+                        </button>
+                    </div>
+                </div>
+                <div id="search-results" class="grid grid-cols-3 gap-0.5 bg-gray-100"></div>
+            </div>
+
+            <div id="home-content-favorites" class="hidden pb-10">
+                <div class="p-6 border-b border-gray-50 flex items-center gap-2">
+                    <i data-lucide="heart" class="w-5 h-5 text-red-500 fill-red-500"></i>
+                    <h2 class="font-bold text-lg text-gray-900">我的收藏 ❤️</h2>
+                </div>
+                <div id="favorites-grid" class="grid grid-cols-3 gap-0.5 bg-gray-100"></div>
+            </div>
+        </main>
+
+        <!-- 獨立視圖：雪櫃清垃圾 -->
+        <main id="view-fridge" class="view-section bg-white min-h-[90vh] pb-12">
+            <div class="p-6">
+                <h3 class="font-bold text-2xl mb-2 flex items-center gap-2 text-gray-900"><i data-lucide="refrigerator" class="w-6 h-6 text-blue-500"></i> 雪櫃清垃圾</h3>
+                <p class="text-xs text-gray-500 mb-6">輸入你雪櫃淨低嘅食材，AI 會提供 3 個食譜建議！</p>
                 <textarea id="fridge-input" rows="3" class="w-full bg-gray-50 p-4 rounded-2xl border border-gray-100 text-sm outline-none focus:border-blue-400 mb-4 transition-all" placeholder="例如：半個椰菜、兩隻雞蛋... (可註明想煮中式/西式等風格)"></textarea>
                 <button onclick="aiFridgeSearch()" class="w-full py-3.5 bg-blue-500 text-white rounded-2xl font-bold shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 active:scale-95 transition-all"><i data-lucide="sparkles" class="w-4 h-4"></i> AI 提供 3 個建議</button>
                 
@@ -225,11 +262,13 @@
                     <button onclick="saveFridgeRecipes()" class="w-full py-3.5 bg-orange-500 text-white rounded-2xl font-bold shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 active:scale-95 transition-all">加入選中食譜至「準備挑戰」</button>
                 </div>
             </div>
+        </main>
 
-            <!-- 購物清單 -->
-            <div id="home-content-grocery" class="hidden p-6 bg-white min-h-[50vh]">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-bold text-lg flex items-center gap-2"><i data-lucide="shopping-cart" class="w-5 h-5 text-orange-500"></i> 購物清單</h3>
+        <!-- 獨立視圖：購物清單 -->
+        <main id="view-grocery" class="view-section bg-white min-h-[90vh] pb-12">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-bold text-2xl flex items-center gap-2 text-gray-900"><i data-lucide="shopping-cart" class="w-6 h-6 text-orange-500"></i> 購物清單</h3>
                 </div>
                 
                 <div class="flex gap-2 mb-4 shrink-0">
@@ -239,15 +278,17 @@
 
                 <div class="flex gap-2 mb-5">
                     <button id="grocery-tab-recipe" onclick="renderGroceryList('recipe')" class="flex-1 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold transition">按食譜分類</button>
-                    <button id="grocery-tab-flat" onclick="renderGroceryList('flat')" class="flex-1 py-2 bg-gray-50 text-gray-600 rounded-xl text-xs font-bold transition">合併獨立清單 (可排序)</button>
+                    <button id="grocery-tab-flat" onclick="renderGroceryList('flat')" class="flex-1 py-2 bg-gray-50 text-gray-600 rounded-xl text-xs font-bold transition">合併清單 (可排序)</button>
                 </div>
                 <div id="grocery-list-container"></div>
             </div>
+        </main>
 
-            <!-- 卡路里日曆 -->
-            <div id="home-content-calorie" class="hidden p-6 bg-white min-h-[50vh]">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold text-lg flex items-center gap-2"><i data-lucide="flame" class="w-5 h-5 text-red-500"></i> 卡路里記帳</h3>
+        <!-- 獨立視圖：卡路里記帳 -->
+        <main id="view-calorie" class="view-section bg-white min-h-[90vh] pb-12">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-2xl flex items-center gap-2 text-gray-900"><i data-lucide="flame" class="w-6 h-6 text-red-500"></i> 卡路里記帳</h3>
                 </div>
 
                 <div class="bg-white p-5 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 mb-6">
@@ -278,7 +319,6 @@
                         <i data-lucide="camera" class="w-6 h-6 text-red-300 mx-auto mb-1 relative z-0"></i>
                         <p class="text-[10px] font-bold text-gray-400 relative z-0">上載食物相片 (選填)</p>
                     </div>
-                    <!-- 加入 g 數輸入框 -->
                     <div class="flex gap-2 mb-3">
                         <input type="text" id="calorie-text" class="flex-1 bg-white p-3.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400 transition-all" placeholder="食物名稱 (例如: 雞胸肉)">
                         <div class="flex items-center bg-white border border-gray-200 rounded-xl px-3 focus-within:border-red-400 transition-all w-24 shrink-0">
@@ -295,11 +335,13 @@
                 </h4>
                 <div id="calorie-history-container" class="space-y-3"></div>
             </div>
+        </main>
 
-            <!-- 每週餐單 日曆版 -->
-            <div id="home-content-planner" class="hidden p-6 bg-white min-h-[50vh]">
-                <h3 class="font-bold text-lg mb-2 flex items-center gap-2"><i data-lucide="calendar-days" class="w-5 h-5 text-purple-500"></i> 餐單日曆</h3>
-                <p class="text-xs text-gray-500 mb-5">點擊日期安排每日菜式，買餸煮飯更有預算！</p>
+        <!-- 獨立視圖：餐單日曆 -->
+        <main id="view-planner" class="view-section bg-white min-h-[90vh] pb-12">
+            <div class="p-6">
+                <h3 class="font-bold text-2xl mb-2 flex items-center gap-2 text-gray-900"><i data-lucide="calendar-days" class="w-6 h-6 text-purple-500"></i> 餐單日曆</h3>
+                <p class="text-xs text-gray-500 mb-6">點擊日期安排每日菜式，買餸煮飯更有預算！</p>
                 
                 <div class="bg-white p-5 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 mb-6">
                     <div class="flex justify-between items-center mb-4">
@@ -342,6 +384,7 @@
                     </div>
                 </label>
 
+                <!-- 將份量輸入合併入上方資料區 -->
                 <div class="flex gap-5">
                     <div class="w-20 h-20 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-center text-gray-300 flex-shrink-0">
                         <i data-lucide="camera" class="w-8 h-8"></i>
@@ -350,19 +393,11 @@
                         <input type="text" id="input-dish" required class="w-full text-base py-1.5 border-b border-gray-100 outline-none focus:border-blue-400 transition-colors" placeholder="菜式名稱">
                         <input type="text" id="input-flavor" required class="w-full text-sm py-1.5 border-b border-gray-100 outline-none focus:border-blue-400 transition-colors" placeholder="口味及風格">
                         
-                        <div class="flex flex-wrap gap-1.5 mt-2">
-                            <button type="button" onclick="appendFlavor('input-flavor', '減肥餐')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">減肥餐</button>
-                            <button type="button" onclick="appendFlavor('input-flavor', '兒童至愛')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">兒童至愛</button>
-                            <button type="button" onclick="appendFlavor('input-flavor', '快手15分鐘')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">快手15分鐘</button>
-                            <button type="button" onclick="appendFlavor('input-flavor', '惹味大排檔')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">惹味大排檔</button>
-                            <button type="button" onclick="appendFlavor('input-flavor', '清淡健康')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition hover:bg-blue-100">清淡健康</button>
-                        </div>
+                        <input type="text" id="input-serving" class="w-full text-sm py-1.5 border-b border-gray-100 outline-none focus:border-blue-400 transition-colors" placeholder="份量 / 吋尺 (如: 2人 或 6吋)">
+                        
+                        <!-- 動態渲染標籤 -->
+                        <div id="flavor-tags-add" class="flex flex-wrap gap-1.5 mt-2"></div>
                     </div>
-                </div>
-
-                <div class="space-y-1">
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1">份量 / 吋尺</label>
-                    <input type="text" id="input-serving" class="w-full text-sm py-2.5 px-3 bg-gray-50 rounded-xl border border-transparent outline-none focus:bg-white focus:border-blue-200 transition-colors" placeholder="如: 2人 或 6吋">
                 </div>
 
                 <button type="button" onclick="generateAI()" class="w-full bg-blue-500 text-white text-sm font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
@@ -403,7 +438,7 @@
             </form>
         </main>
 
-        <!-- 視圖 4：設定頁面 (含帳號登入) -->
+        <!-- 視圖 4：設定頁面 -->
         <main id="view-profile" class="view-section p-8 bg-white min-h-[70vh] text-left">
             <h2 class="font-bold text-2xl mb-8 text-gray-900">帳號與設定</h2>
             
@@ -415,14 +450,13 @@
                         <p class="text-xs text-gray-600">已登入：<span id="user-email" class="font-bold text-blue-600"></span></p>
                         <p class="text-[10px] text-gray-400 leading-relaxed">您的食譜已與此帳號同步。更換裝置後只需登入即可找回所有食譜。</p>
                         
-                        <div class="pt-3 border-t border-gray-100">
+                        <div class="pt-3 border-t border-gray-200 mt-2">
                             <p class="text-[11px] text-gray-500 mb-2 font-bold">修改密碼</p>
-                            <!-- 修復：排版及置中問題 -->
-                            <div class="flex gap-2 mb-3">
-                                <input type="password" id="new-password-input" placeholder="新密碼 (最少 6 位)" class="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none text-sm focus:ring-2 focus:ring-blue-500/20">
-                                <button onclick="handleChangePassword()" class="px-5 py-3 bg-gray-900 text-white rounded-xl text-sm font-bold transition active:scale-95 flex items-center justify-center shrink-0">更新</button>
+                            <div class="flex gap-2 mb-4 h-12">
+                                <input type="password" id="new-password-input" placeholder="新密碼 (最少 6 位)" class="flex-1 px-4 bg-white border border-gray-200 rounded-xl outline-none text-sm focus:ring-2 focus:ring-blue-500/20 h-full">
+                                <button onclick="handleChangePassword()" class="px-5 bg-gray-900 text-white rounded-xl text-sm font-bold transition active:scale-95 flex items-center justify-center h-full w-20 shrink-0">更新</button>
                             </div>
-                            <button onclick="handleLogout()" class="w-full py-3 bg-white border border-red-200 text-red-500 rounded-xl text-sm font-bold transition active:scale-95">登出帳號</button>
+                            <button onclick="handleLogout()" class="w-full py-3.5 bg-white border border-red-200 text-red-500 rounded-xl text-sm font-bold transition active:scale-95 hover:bg-red-50">登出帳號</button>
                         </div>
                     </div>
 
@@ -444,43 +478,18 @@
                 </div>
 
                 <div class="text-center pt-12">
-                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.12.1 ✨</p>
+                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.13.0 🚀</p>
                 </div>
             </div>
-        </main>
-
-        <!-- 視圖 5：搜尋頁面 -->
-        <main id="view-search" class="view-section bg-white text-left">
-            <div class="sticky top-[58px] bg-white/90 backdrop-blur-md z-30 px-5 py-4 border-b border-gray-100">
-                <div class="relative flex-1">
-                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
-                    <input type="text" id="search-input" oninput="performSearch()" class="w-full bg-gray-100 rounded-2xl py-2.5 pl-10 pr-4 outline-none text-sm transition-all focus:bg-gray-200/50" placeholder="搜尋菜式、口味或風格...">
-                </div>
-                <div class="mt-3 flex gap-2">
-                    <button id="filter-planning-btn" onclick="toggleSearchFilterPlanning()" class="px-3 py-1.5 bg-gray-50 rounded-full text-xs font-bold text-gray-500 transition-colors flex items-center gap-1 border border-gray-200">
-                        <i data-lucide="hourglass" class="w-3 h-3"></i> 只顯示「準備挑戰」
-                    </button>
-                </div>
-            </div>
-            <div id="search-results" class="grid grid-cols-3 gap-0.5 bg-gray-100"></div>
-        </main>
-
-        <!-- 視圖 6：收藏頁面 -->
-        <main id="view-favorites" class="view-section bg-white min-h-[85vh] text-left text-left">
-            <div class="p-6 border-b border-gray-50 flex items-center gap-2">
-                <i data-lucide="heart" class="w-5 h-5 text-red-500 fill-red-500"></i>
-                <h2 class="font-bold text-lg text-gray-900">我的收藏 ❤️</h2>
-            </div>
-            <div id="favorites-grid" class="grid grid-cols-3 gap-0.5 bg-gray-100"></div>
         </main>
     </div>
 
     <!-- 底部導航欄 -->
     <nav class="fixed bottom-0 w-full bg-white/90 backdrop-blur-lg border-t border-gray-100 grid grid-cols-5 items-center z-50 pb-8 pt-3 max-w-2xl left-1/2 -translate-x-1/2">
         <button id="nav-btn-home" onclick="navigate('home')" class="flex justify-center transition-colors h-full"><i data-lucide="home" class="w-6 h-6"></i></button>
-        <button id="nav-btn-search" onclick="navigate('search')" class="flex justify-center transition-colors h-full"><i data-lucide="search" class="w-6 h-6"></i></button>
+        <button id="nav-btn-fridge" onclick="navigate('fridge')" class="flex justify-center transition-colors h-full"><i data-lucide="refrigerator" class="w-6 h-6"></i></button>
         <button id="nav-btn-add" onclick="navigate('add')" class="flex justify-center transition-colors h-full"><i data-lucide="plus-square" class="w-6 h-6"></i></button>
-        <button id="nav-btn-favorites" onclick="navigate('favorites')" class="flex justify-center transition-colors h-full"><i data-lucide="heart" class="w-6 h-6"></i></button>
+        <button id="nav-btn-grocery" onclick="navigate('grocery')" class="flex justify-center transition-colors h-full"><i data-lucide="shopping-cart" class="w-6 h-6"></i></button>
         <button id="nav-btn-profile" onclick="navigate('profile')" class="flex justify-center h-full items-center">
              <div class="w-7 h-7 rounded-full border border-gray-200 overflow-hidden ring-2 ring-transparent transition-all avatar-ring">
                 <img id="nav-avatar-img" src="" class="w-full h-full object-cover">
@@ -525,6 +534,9 @@
         let groceryDeleted = JSON.parse(localStorage.getItem('groceryDeleted')) || {};
         let groceryOrder = JSON.parse(localStorage.getItem('groceryOrder')) || [];
 
+        // 口味標籤庫
+        window.flavorTags = JSON.parse(localStorage.getItem('cookingPapaFlavorTags')) || ['減肥餐', '兒童至愛', '快手15分鐘', '惹味大排檔', '清淡健康'];
+
         const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23FFF3E0' width='100' height='100'/><text x='50' y='55' font-size='45' text-anchor='middle' dominant-baseline='middle'>👨🏻‍🍳</text></svg>";
         window.userAvatar = localStorage.getItem('cookingPapaAvatar') || defaultAvatar;
 
@@ -539,12 +551,14 @@
         function customAlert(msg) {
             const titleEl = document.getElementById('custom-modal-title');
             const msgEl = document.getElementById('custom-modal-msg');
+            const inputEl = document.getElementById('custom-modal-input');
             const cancelBtn = document.getElementById('custom-modal-cancel');
             const confirmBtn = document.getElementById('custom-modal-confirm');
             const modal = document.getElementById('custom-modal');
 
             if(titleEl) titleEl.innerText = "提示";
             if(msgEl) msgEl.innerText = msg;
+            if(inputEl) inputEl.classList.add('hidden');
             if(cancelBtn) cancelBtn.classList.add('hidden');
             if(confirmBtn) {
                 confirmBtn.onclick = () => { if(modal) modal.classList.add('hidden'); };
@@ -559,12 +573,14 @@
         function customConfirm(msg, fn) {
             const titleEl = document.getElementById('custom-modal-title');
             const msgEl = document.getElementById('custom-modal-msg');
+            const inputEl = document.getElementById('custom-modal-input');
             const cancelBtn = document.getElementById('custom-modal-cancel');
             const confirmBtn = document.getElementById('custom-modal-confirm');
             const modal = document.getElementById('custom-modal');
 
             if(titleEl) titleEl.innerText = "確認操作";
             if(msgEl) msgEl.innerText = msg;
+            if(inputEl) inputEl.classList.add('hidden');
             if(cancelBtn) {
                 cancelBtn.classList.remove('hidden');
                 cancelBtn.onclick = () => { if(modal) modal.classList.add('hidden'); };
@@ -578,6 +594,38 @@
             }
         }
         window.customConfirm = customConfirm;
+
+        function customPrompt(msg, placeholder, fn) {
+            const titleEl = document.getElementById('custom-modal-title');
+            const msgEl = document.getElementById('custom-modal-msg');
+            const inputEl = document.getElementById('custom-modal-input');
+            const cancelBtn = document.getElementById('custom-modal-cancel');
+            const confirmBtn = document.getElementById('custom-modal-confirm');
+            const modal = document.getElementById('custom-modal');
+
+            if(titleEl) titleEl.innerText = "請輸入";
+            if(msgEl) msgEl.innerText = msg;
+            if(inputEl) {
+                inputEl.classList.remove('hidden');
+                inputEl.value = '';
+                inputEl.placeholder = placeholder || '';
+            }
+            if(cancelBtn) {
+                cancelBtn.classList.remove('hidden');
+                cancelBtn.onclick = () => { if(modal) modal.classList.add('hidden'); };
+            }
+            if(confirmBtn) {
+                confirmBtn.onclick = () => { 
+                    if(modal) modal.classList.add('hidden'); 
+                    fn(inputEl.value); 
+                };
+            }
+            if(modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+        window.customPrompt = customPrompt;
 
         function showToast(msg) {
             const t = document.getElementById('toast-notification');
@@ -609,6 +657,50 @@
             r.readAsDataURL(file);
         }
         window.resizeImage = resizeImage;
+
+        // --- 標籤渲染邏輯 ---
+        window.renderFlavorTags = function() {
+            const createHtml = (targetInputId) => {
+                return window.flavorTags.map(tag => `
+                    <div class="flex items-center bg-blue-50 text-blue-600 rounded-lg text-[10px] font-bold overflow-hidden border border-blue-100">
+                        <button type="button" class="px-2.5 py-1 hover:bg-blue-100 transition" onclick="appendFlavor('${targetInputId}', '${tag}')">${tag}</button>
+                        <button type="button" class="px-1.5 py-1 hover:bg-blue-100 text-blue-400 hover:text-blue-600 transition border-l border-blue-100" onclick="removeFlavorTag('${tag}')">
+                            <i data-lucide="x" class="w-3 h-3"></i>
+                        </button>
+                    </div>
+                `).join('') + `
+                    <button type="button" onclick="promptAddFlavorTag()" class="text-[10px] font-bold text-gray-500 bg-gray-100 border border-gray-200 px-2 py-1 rounded-lg hover:bg-gray-200 transition">
+                        + 新增
+                    </button>
+                `;
+            };
+
+            const addContainer = document.getElementById('flavor-tags-add');
+            if (addContainer) addContainer.innerHTML = createHtml('input-flavor');
+            
+            const editContainer = document.getElementById('flavor-tags-edit');
+            if (editContainer) editContainer.innerHTML = createHtml('edit-flavor');
+            
+            lucide.createIcons();
+        };
+
+        window.promptAddFlavorTag = function() {
+            window.customPrompt("請輸入新嘅口味或風格：", "例如：節日大餐", (val) => {
+                if(val && val.trim() && !window.flavorTags.includes(val.trim())) {
+                    window.flavorTags.push(val.trim());
+                    localStorage.setItem('cookingPapaFlavorTags', JSON.stringify(window.flavorTags));
+                    window.renderFlavorTags();
+                }
+            });
+        };
+
+        window.removeFlavorTag = function(tag) {
+            window.customConfirm(`確定要刪除「${tag}」預設標籤嗎？`, () => {
+                window.flavorTags = window.flavorTags.filter(t => t !== tag);
+                localStorage.setItem('cookingPapaFlavorTags', JSON.stringify(window.flavorTags));
+                window.renderFlavorTags();
+            });
+        };
 
         // --- 2. 帳號與登入邏輯 ---
         async function handleAuth(type) {
@@ -692,7 +784,7 @@
             if (unsubscribeCalorie) unsubscribeCalorie();
             unsubscribeCalorie = onSnapshot(collection(dbFirestore, 'artifacts', appId, 'users', user.uid, 'calories'), (snap) => {
                 calorieDb = []; snap.forEach(d => calorieDb.push({ id: d.id, ...d.data() }));
-                if(document.querySelector('.view-section.active')?.id === 'view-home') {
+                if(document.querySelector('.view-section.active')?.id === 'view-calorie') {
                     if (window.renderCalorieHistory) window.renderCalorieHistory();
                 }
             });
@@ -702,7 +794,7 @@
             unsubscribePlanner = onSnapshot(doc(dbFirestore, 'artifacts', appId, 'users', user.uid, 'settings', 'planner'), (docSnap) => {
                 if (docSnap.exists()) plannerDb = docSnap.data();
                 else plannerDb = {};
-                if(document.querySelector('.view-section.active')?.id === 'view-home') {
+                if(document.querySelector('.view-section.active')?.id === 'view-planner') {
                     if (window.renderPlanner) window.renderPlanner();
                 }
             });
@@ -715,7 +807,7 @@
                 } else {
                     customGroceryDb = [];
                 }
-                if(document.querySelector('.view-section.active')?.id === 'view-home' && window.currentHomeTab === 'grocery') {
+                if(document.querySelector('.view-section.active')?.id === 'view-grocery' && window.currentHomeTab === 'grocery') {
                     if (window.renderGroceryList) window.renderGroceryList();
                 }
             });
@@ -723,11 +815,20 @@
 
         // --- 3. 基礎功能 (導航、手勢、Tab) ---
         function navigate(viewId, dishId = null, flavorId = null) {
+            // 特殊處理：當選擇 search, 則跳至 home 並啟動 search 標籤
+            if (viewId === 'search') {
+                viewId = 'home';
+                setTimeout(() => { if (window.switchHomeTab) window.switchHomeTab('search'); }, 0);
+            } else if (viewId === 'favorites') {
+                viewId = 'home';
+                setTimeout(() => { if (window.switchHomeTab) window.switchHomeTab('favorites'); }, 0);
+            }
+
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             const targetView = document.getElementById('view-' + viewId);
             if(targetView) targetView.classList.add('active');
             
-            const navIds = ['home', 'search', 'add', 'favorites', 'profile'];
+            const navIds = ['home', 'fridge', 'add', 'grocery', 'profile'];
             navIds.forEach(id => {
                 const btn = document.getElementById('nav-btn-' + id);
                 if (!btn) return;
@@ -739,16 +840,27 @@
             });
 
             if (viewId === 'home') {
-                if (window.switchHomeTab) window.switchHomeTab(window.currentHomeTab || 'grid');
+                if (window.switchHomeTab && !['search', 'favorites'].includes(window.currentHomeTab)) {
+                    window.switchHomeTab('grid');
+                } else if (window.switchHomeTab && window.currentHomeTab) {
+                    window.switchHomeTab(window.currentHomeTab);
+                }
             }
             else if (viewId === 'recipe') {
                 if(window.renderPost) window.renderPost(dishId, flavorId);
             }
-            else if (viewId === 'search') {
-                if(window.performSearch) window.performSearch();
+            else if (viewId === 'grocery') {
+                if(window.renderGroceryList) window.renderGroceryList();
             }
-            else if (viewId === 'favorites') {
-                if(window.renderFavorites) window.renderFavorites();
+            else if (viewId === 'calorie') {
+                if(window.renderCalorieCalendar) window.renderCalorieCalendar(); 
+            }
+            else if (viewId === 'planner') {
+                if(window.renderPlanner) window.renderPlanner();
+            }
+            
+            if (viewId === 'add') {
+                window.renderFlavorTags();
             }
 
             lucide.createIcons();
@@ -759,7 +871,7 @@
         window.currentHomeTab = 'grid';
         function switchHomeTab(tabName) {
             window.currentHomeTab = tabName;
-            const tabs = ['grid', 'planner', 'fridge', 'grocery', 'calorie'];
+            const tabs = ['grid', 'search', 'favorites'];
             tabs.forEach(t => {
                 const btn = document.getElementById(`tab-btn-${t}`);
                 const content = document.getElementById(`home-content-${t}`);
@@ -779,11 +891,8 @@
             });
 
             if (tabName === 'grid' && window.renderHome) window.renderHome();
-            if (tabName === 'grocery' && window.renderGroceryList) window.renderGroceryList();
-            if (tabName === 'calorie') { 
-                if(window.renderCalorieCalendar) window.renderCalorieCalendar(); 
-            }
-            if (tabName === 'planner' && window.renderPlanner) window.renderPlanner();
+            if (tabName === 'search' && window.performSearch) window.performSearch();
+            if (tabName === 'favorites' && window.renderFavorites) window.renderFavorites();
         }
         window.switchHomeTab = switchHomeTab;
 
@@ -845,15 +954,6 @@
             });
         }
         window.performSearch = performSearch;
-
-        let touchStartX = 0;
-        const viewRecipeEl = document.getElementById('view-recipe');
-        if(viewRecipeEl) {
-            viewRecipeEl.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
-            viewRecipeEl.addEventListener('touchend', e => {
-                if (e.changedTouches[0].screenX - touchStartX > 130) window.navigate('home');
-            });
-        }
 
         // --- 4. 數據操作 ---
         async function syncToCloud(data) {
@@ -949,9 +1049,20 @@
             
             const isPlanningActive = flavor.isPlanning && (!flavor.records || flavor.records.length === 0);
             let img = isPlanningActive ? 'https://images.unsplash.com/photo-1556910103-1c02745a8720?w=800' : 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=800';
-            if (flavor.records?.length > 0 && f.records && flavor.records[0].image) img = flavor.records[0].image;
+            if (flavor.records?.length > 0 && flavor.records && flavor.records[0].image) img = flavor.records[0].image;
             
             const ratingTexts = { 1: "🤢 中伏", 2: "🤐 試一次", 3: "🙂 得閒整", 4: "🤤 要著兩條褲" };
+            
+            // 處理份量單位
+            let originalNum = 1;
+            let unit = '份';
+            let match = (flavor.serving || '').match(/(\d+(?:\.\d+)?)\s*(.*)/);
+            if (match) {
+                originalNum = parseFloat(match[1]) || 1;
+                unit = match[2] || '';
+            } else if (flavor.serving) {
+                unit = flavor.serving;
+            }
             
             const postsContainer = document.getElementById('posts-container');
             if(!postsContainer) return;
@@ -988,10 +1099,11 @@
 
                         <div class="flex gap-2.5 text-[10px] font-bold mb-3 uppercase items-center flex-wrap">
                             <div class="flex items-center bg-gray-100 rounded-md">
-                                <button onclick="scaleIngredients(0.5)" class="px-2 py-1 text-gray-400 hover:text-gray-900 transition-colors">-</button>
-                                <span class="text-gray-600 px-2 border-x border-gray-200 font-bold">${flavor.serving || '份量'}</span>
-                                <button onclick="scaleIngredients(2)" class="px-2 py-1 text-gray-400 hover:text-gray-900 transition-colors">+</button>
+                                <button onclick="adjustServing(-1)" class="px-3 py-1.5 text-gray-400 hover:text-gray-900 transition-colors font-bold text-sm">-</button>
+                                <span id="display-serving" data-original-num="${originalNum}" data-current-num="${originalNum}" data-unit="${unit}" class="text-gray-600 px-3 border-x border-gray-200 font-bold text-xs">${flavor.serving || '份量'}</span>
+                                <button onclick="adjustServing(1)" class="px-3 py-1.5 text-gray-400 hover:text-gray-900 transition-colors font-bold text-sm">+</button>
                             </div>
+                            
                             <span class="bg-blue-50 text-blue-600 px-2 py-1 rounded-md uppercase">${ratingTexts[flavor.rating || 4]}</span>
                             ${flavor.cooktime ? `<span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-md uppercase">⏱️ ${flavor.cooktime}M</span>` : ''}
                             ${flavor.kcal ? `<span class="bg-red-50 text-red-600 px-2 py-1 rounded-md uppercase flex items-center gap-1"><i data-lucide="flame" class="w-3 h-3 text-red-500"></i> ${flavor.kcal}</span>` : ''}
@@ -1055,7 +1167,44 @@
         }
         window.renderFavorites = renderFavorites;
 
-        // --- 新功能: 估算食譜卡路里 ---
+        // --- 分享功能 (新增) ---
+        window.openShareModal = function() {
+            const listContainer = document.getElementById('share-recipe-list');
+            if(!listContainer) return;
+            
+            let html = '';
+            let hasRecipes = false;
+            
+            db.forEach(d => (d.flavors||[]).forEach(f => {
+                hasRecipes = true;
+                html += `
+                    <div class="p-3 bg-gray-50 rounded-xl border border-gray-100 flex justify-between items-center cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition" onclick="shareRecipe('${d.id}', '${f.id}'); closeShareModal();">
+                        <span class="font-bold text-sm text-gray-700">${d.name} <span class="text-gray-400 text-xs">- ${f.name}</span></span>
+                        <i data-lucide="share-2" class="w-5 h-5 text-blue-500"></i>
+                    </div>
+                `;
+            }));
+            
+            if (!hasRecipes) html = '<p class="text-center text-gray-400 py-10 text-sm">庫內仲未有食譜可以分享！</p>';
+            listContainer.innerHTML = html;
+            
+            const modal = document.getElementById('share-modal');
+            if(modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+            lucide.createIcons();
+        };
+
+        window.closeShareModal = function() {
+            const modal = document.getElementById('share-modal');
+            if(modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        };
+
+        // --- 估算食譜卡路里 ---
         async function estimateRecipeKcal(prefix) {
             let dishName = '';
             if (prefix === 'input') {
@@ -1103,7 +1252,7 @@
         }
         window.estimateRecipeKcal = estimateRecipeKcal;
 
-        // --- 新功能: 雪櫃清垃圾 (3選項多選) ---
+        // --- 雪櫃清垃圾 (3選項多選) ---
         window.fridgeTempRecipes = [];
         async function aiFridgeSearch() {
             const input = document.getElementById('fridge-input').value.trim();
@@ -1181,7 +1330,7 @@
         }
         window.saveFridgeRecipes = saveFridgeRecipes;
 
-        // --- 新功能: 購物清單 (雙模式) ---
+        // --- 購物清單 (雙模式) ---
         window.currentGroceryMode = 'recipe';
         function renderGroceryList(mode = window.currentGroceryMode) {
             window.currentGroceryMode = mode;
@@ -1378,7 +1527,7 @@
         }
         window.deleteCustomGrocery = deleteCustomGrocery;
 
-        // --- 新功能: 卡路里日曆 ---
+        // --- 卡路里日曆 ---
         window.calDate = new Date();
         window.calSelectedDate = new Date().toISOString().split('T')[0];
 
@@ -1462,23 +1611,6 @@
             window.renderCalorieCalendar();
         }
         window.selectCalDate = selectCalDate;
-
-        function previewCalorieImage(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const preview = document.getElementById('calorie-image-preview');
-                    if(preview) {
-                        preview.style.backgroundImage = `url(${e.target.result})`;
-                        preview.classList.remove('hidden');
-                        input.nextElementSibling.nextElementSibling.classList.add('hidden');
-                        input.nextElementSibling.nextElementSibling.nextElementSibling.classList.add('hidden');
-                    }
-                }
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-        window.previewCalorieImage = previewCalorieImage;
 
         async function aiCalculateCalorie() {
             const textEl = document.getElementById('calorie-text');
@@ -1593,7 +1725,7 @@
         }
         window.deleteCalorie = deleteCalorie;
 
-        // --- 新功能: 每週餐單 (Meal Planner Calendar Version) ---
+        // --- 每週餐單 (Meal Planner) ---
         window.plannerCalDate = new Date();
         window.plannerSelectedDate = new Date().toISOString().split('T')[0];
 
@@ -1944,6 +2076,7 @@
             const srvEl = document.getElementById('input-serving');
             const cookEl = document.getElementById('input-cooktime');
             const ratEl = document.getElementById('input-rating');
+            const kcalEl = document.getElementById('input-kcal');
             
             const newF = { 
                 id: 'f'+Date.now(), name: flavor, 
@@ -1951,7 +2084,7 @@
                 steps: stEl ? stEl.value : '', 
                 serving: srvEl ? srvEl.value : '', 
                 cooktime: cookEl ? cookEl.value : '', 
-                kcal: document.getElementById('input-kcal') ? document.getElementById('input-kcal').value.trim() : '',
+                kcal: kcalEl ? kcalEl.value.trim() : '',
                 rating: ratEl ? parseInt(ratEl.value) : 4, 
                 isPlanning: isPlanning, isFavorite: false, records: [] 
             };
@@ -2047,6 +2180,7 @@
             const keyEl = document.getElementById('setting-api-key');
             if(keyEl) keyEl.value = localStorage.getItem('geminiApiKey') || "";
             
+            window.renderFlavorTags(); // 渲染動態口味標籤
             if (window.renderCalorieCalendar) window.renderCalorieCalendar();
             window.navigate('home'); 
         });
