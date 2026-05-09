@@ -455,9 +455,9 @@
                         
                         <div class="pt-3 border-t border-gray-200 mt-2">
                             <p class="text-[11px] text-gray-500 mb-2 font-bold">修改密碼</p>
-                            <div class="flex gap-2 mb-4 h-12">
-                                <input type="password" id="new-password-input" placeholder="新密碼 (最少 6 位)" class="flex-1 px-4 bg-white border border-gray-200 rounded-xl outline-none text-sm focus:ring-2 focus:ring-blue-500/20 h-full">
-                                <button onclick="handleChangePassword()" class="px-5 bg-gray-900 text-white rounded-xl text-sm font-bold transition active:scale-95 flex items-center justify-center h-full w-20 shrink-0">更新</button>
+                            <div class="flex gap-2 mb-4">
+                                <input type="password" id="new-password-input" placeholder="新密碼 (最少 6 位)" class="flex-1 min-w-0 px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none text-sm focus:ring-2 focus:ring-blue-500/20">
+                                <button onclick="handleChangePassword()" class="shrink-0 px-5 py-3 bg-gray-900 text-white rounded-xl text-sm font-bold transition active:scale-95 flex items-center justify-center">更新</button>
                             </div>
                             <button onclick="handleLogout()" class="w-full py-3.5 bg-white border border-red-200 text-red-500 rounded-xl text-sm font-bold transition active:scale-95 hover:bg-red-50">登出帳號</button>
                         </div>
@@ -481,12 +481,12 @@
                 </div>
 
                 <div class="text-center pt-12">
-                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.15.0 🚀</p>
+                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.15.1 🚀</p>
                 </div>
             </div>
         </main>
-    </div>
 
+        <!-- 視圖 5：搜尋頁面 -->
     <!-- 底部導航欄 -->
     <nav class="fixed bottom-0 w-full bg-white/90 backdrop-blur-lg border-t border-gray-100 grid grid-cols-5 items-center z-50 pb-8 pt-3 max-w-2xl left-1/2 -translate-x-1/2">
         <button id="nav-btn-home" onclick="navigate('home')" class="flex justify-center transition-colors h-full"><i data-lucide="home" class="w-6 h-6"></i></button>
