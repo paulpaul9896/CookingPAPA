@@ -62,6 +62,20 @@
         </div>
     </div>
 
+    <!-- 選擇食譜匯出分享視窗 -->
+    <div id="share-modal" class="fixed inset-0 bg-black/60 z-[80] hidden flex-col items-center justify-end sm:justify-center">
+        <div class="absolute inset-0" onclick="closeShareModal()"></div>
+        <div class="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl relative z-10 flex flex-col max-h-[85vh]">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden shrink-0"></div>
+            <h3 class="text-lg font-bold mb-4 text-center shrink-0 flex items-center justify-center gap-2">
+                <i data-lucide="share-2" class="w-5 h-5 text-blue-500"></i> 選擇要匯出嘅食譜
+            </h3>
+            <p class="text-xs text-gray-500 mb-4 text-center shrink-0">點擊食譜後，系統會自動複製圖文並茂嘅文字，方便你貼上 WhatsApp 或 IG 分享畀朋友！</p>
+            <div id="share-recipe-list" class="flex-1 overflow-y-auto pr-2 space-y-2 scroll-container text-left pb-4"></div>
+            <button onclick="closeShareModal()" class="w-full py-3.5 bg-gray-100 rounded-2xl font-bold text-gray-600 transition mt-2 shrink-0 hover:bg-gray-200">取消</button>
+        </div>
+    </div>
+
     <!-- 選擇食譜放入餐單視窗 -->
     <div id="planner-modal" class="fixed inset-0 bg-black/60 z-[80] hidden flex-col items-center justify-end sm:justify-center">
         <div class="absolute inset-0" onclick="closePlannerModal()"></div>
@@ -93,20 +107,18 @@
                     <input type="checkbox" id="edit-is-planning" class="w-5 h-5 text-blue-500 rounded border-gray-300 accent-blue-500">
                     <div class="flex-1"><p class="text-[12px] font-bold text-gray-700">設為「準備挑戰」項目 ⏳</p></div>
                 </label>
-                <div>
-                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">口味及風格</label>
-                    <input type="text" id="edit-flavor" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white text-sm">
-                    <div class="flex flex-wrap gap-1.5 mt-2 ml-1">
-                        <button type="button" onclick="appendFlavor('edit-flavor', '減肥餐')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold">減肥餐</button>
-                        <button type="button" onclick="appendFlavor('edit-flavor', '兒童至愛')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold">兒童至愛</button>
-                        <button type="button" onclick="appendFlavor('edit-flavor', '快手15分鐘')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold">快手15分鐘</button>
-                        <button type="button" onclick="appendFlavor('edit-flavor', '惹味大排檔')" class="bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg text-[10px] font-bold">惹味大排檔</button>
-                    </div>
-                </div>
                 
-                <div>
-                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">份量 / 吋尺</label>
-                    <input type="text" id="edit-serving" placeholder="如: 2人" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white text-sm">
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">口味及風格</label>
+                        <input type="text" id="edit-flavor" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white text-sm">
+                        <!-- 動態渲染標籤 -->
+                        <div id="flavor-tags-edit" class="flex flex-wrap gap-1.5 mt-2 ml-1"></div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">份量 / 吋尺</label>
+                        <input type="text" id="edit-serving" placeholder="如: 2人" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white text-sm">
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
@@ -427,7 +439,7 @@
             </form>
         </main>
 
-        <!-- 視圖 4：設定頁面 -->
+        <!-- 視圖 4：設定頁面 (含帳號登入) -->
         <main id="view-profile" class="view-section p-8 bg-white min-h-[70vh] text-left">
             <h2 class="font-bold text-2xl mb-8 text-gray-900">帳號與設定</h2>
             
@@ -443,9 +455,9 @@
                         
                         <div class="pt-3 border-t border-gray-200 mt-2">
                             <p class="text-[11px] text-gray-500 mb-2 font-bold">修改密碼</p>
-                            <div class="flex gap-2 mb-4">
-                                <input type="password" id="new-password-input" placeholder="新密碼 (最少 6 位)" class="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none text-sm focus:ring-2 focus:ring-blue-500/20 min-w-0">
-                                <button onclick="handleChangePassword()" class="px-5 py-3 bg-gray-900 text-white rounded-xl text-sm font-bold transition active:scale-95 shrink-0 whitespace-nowrap">更新</button>
+                            <div class="flex gap-2 mb-4 h-12">
+                                <input type="password" id="new-password-input" placeholder="新密碼 (最少 6 位)" class="flex-1 px-4 bg-white border border-gray-200 rounded-xl outline-none text-sm focus:ring-2 focus:ring-blue-500/20 h-full">
+                                <button onclick="handleChangePassword()" class="px-5 bg-gray-900 text-white rounded-xl text-sm font-bold transition active:scale-95 flex items-center justify-center h-full w-20 shrink-0">更新</button>
                             </div>
                             <button onclick="handleLogout()" class="w-full py-3.5 bg-white border border-red-200 text-red-500 rounded-xl text-sm font-bold transition active:scale-95 hover:bg-red-50">登出帳號</button>
                         </div>
@@ -469,7 +481,7 @@
                 </div>
 
                 <div class="text-center pt-12">
-                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.14.0 🚀</p>
+                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.15.0 🚀</p>
                 </div>
             </div>
         </main>
@@ -586,7 +598,7 @@
         }
         window.customConfirm = customConfirm;
 
-        function customPrompt(msg, placeholder, fn) {
+        function customPrompt(msg, placeholder, fn, defaultValue = '') {
             const titleEl = document.getElementById('custom-modal-title');
             const msgEl = document.getElementById('custom-modal-msg');
             const inputEl = document.getElementById('custom-modal-input');
@@ -598,7 +610,7 @@
             if(msgEl) msgEl.innerText = msg;
             if(inputEl) {
                 inputEl.classList.remove('hidden');
-                inputEl.value = '';
+                inputEl.value = defaultValue;
                 inputEl.placeholder = placeholder || '';
             }
             if(cancelBtn) {
@@ -815,7 +827,6 @@
 
         // --- 3. 基礎功能 (導航、手勢、Tab) ---
         function navigate(viewId, dishId = null, flavorId = null) {
-            // 特殊處理：當選擇 search, 則跳至 home 並啟動 search 標籤
             if (viewId === 'search') {
                 viewId = 'home';
                 setTimeout(() => { if (window.switchHomeTab) window.switchHomeTab('search'); }, 0);
@@ -937,7 +948,9 @@
 
                 if (!keyword || d.name.toLowerCase().includes(keyword) || f.name.toLowerCase().includes(keyword)) {
                     let img = isPlanningActive ? 'https://images.unsplash.com/photo-1556910103-1c02745a8720?w=800' : 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=400';
-                    if (f.records?.length > 0 && f.records[0].image) img = f.records[0].image;
+                    if (f.records && f.records.length > 0) {
+                        img = (f.records[0].images && f.records[0].images.length > 0) ? f.records[0].images[0] : (f.records[0].image || img);
+                    }
                     res.push({ dishId: d.id, flavorId: f.id, img, isPlanningActive });
                 }
             }));
@@ -996,7 +1009,9 @@
             db.forEach(d => (d.flavors||[]).forEach(f => {
                 const isPlanningActive = f.isPlanning && (!f.records || f.records.length === 0);
                 let img = isPlanningActive ? 'https://images.unsplash.com/photo-1556910103-1c02745a8720?w=800' : 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=400';
-                if (f.records?.length > 0 && f.records[0].image) img = f.records[0].image;
+                if (f.records && f.records.length > 0) {
+                    img = (f.records[0].images && f.records[0].images.length > 0) ? f.records[0].images[0] : (f.records[0].image || img);
+                }
                 posts.push({ dishId: d.id, flavorId: f.id, img, isPlanningActive });
             }));
             
@@ -1049,7 +1064,9 @@
             
             const isPlanningActive = flavor.isPlanning && (!flavor.records || flavor.records.length === 0);
             let img = isPlanningActive ? 'https://images.unsplash.com/photo-1556910103-1c02745a8720?w=800' : 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=800';
-            if (flavor.records?.length > 0 && flavor.records && flavor.records[0].image) img = flavor.records[0].image;
+            if (flavor.records && flavor.records.length > 0) {
+                img = (flavor.records[0].images && flavor.records[0].images.length > 0) ? flavor.records[0].images[0] : (flavor.records[0].image || img);
+            }
             
             const ratingTexts = { 1: "🤢 中伏", 2: "🤐 試一次", 3: "🙂 得閒整", 4: "🤤 要著兩條褲" };
             
@@ -1087,7 +1104,6 @@
                             <button onclick="toggleFavorite()"><i data-lucide="heart" class="w-7 h-7 ${flavor.isFavorite?'text-red-500 fill-red-500':'text-gray-900'}"></i></button>
                             <button onclick="shareRecipe('${dish.id}', '${flavor.id}')"><i data-lucide="send" class="w-7 h-7 text-gray-900"></i></button>
                         </div>
-                        <button onclick="deleteCurrentRecipe()"><i data-lucide="trash-2" class="w-6 h-6 text-red-200 hover:text-red-400 transition-colors"></i></button>
                     </div>
                     <div class="px-5 pb-6 text-sm">
                         
@@ -1124,17 +1140,33 @@
                     <div class="px-5 mt-4 pb-12 text-left">
                         <h4 class="font-bold text-sm mb-4 border-t pt-6 text-gray-400">製作記錄 相簿</h4>
                         <div class="space-y-4">
-                            ${(flavor.records || []).map(r => `
-                                <div class="bg-gray-50 rounded-2xl p-4 relative border text-left">
-                                    <button onclick="deleteRecord('${r.id}')" class="absolute top-3 right-3 text-gray-300 hover:text-red-400 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
-                                    <span class="text-[10px] font-bold text-blue-400">${r.date}</span>
-                                    <p class="text-xs mt-2 text-gray-600 text-left">${r.note || ''}</p>
-                                    ${r.image ? `<img src="${r.image}" class="mt-3 w-full rounded-xl">` : ''}
-                                </div>
-                            `).join('')}
+                            ${(flavor.records || []).map(r => {
+                                let imgsHtml = '';
+                                let imagesList = r.images || (r.image ? [r.image] : []);
+                                if (imagesList.length > 0) {
+                                    if (imagesList.length === 1) {
+                                        imgsHtml = `<img src="${imagesList[0]}" class="mt-3 w-full max-h-56 object-cover rounded-xl border border-gray-100">`;
+                                    } else if (imagesList.length === 2) {
+                                        imgsHtml = `<div class="grid grid-cols-2 gap-1.5 mt-3">` + imagesList.map(img => `<div class="aspect-square"><img src="${img}" class="w-full h-full object-cover rounded-xl border border-gray-100"></div>`).join('') + `</div>`;
+                                    } else {
+                                        imgsHtml = `<div class="grid grid-cols-3 gap-1.5 mt-3">` + imagesList.map(img => `<div class="aspect-square"><img src="${img}" class="w-full h-full object-cover rounded-xl border border-gray-100"></div>`).join('') + `</div>`;
+                                    }
+                                }
+                                return `
+                                    <div class="bg-gray-50 rounded-2xl p-4 relative border text-left mb-4 shadow-sm">
+                                        <div class="absolute top-3 right-3 flex gap-2 z-10">
+                                            <button onclick="editRecordNote('${r.id}')" class="text-gray-400 hover:text-blue-500 transition-colors p-1 bg-white/80 rounded-full shadow-sm backdrop-blur-sm"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                                            <button onclick="deleteRecord('${r.id}')" class="text-gray-400 hover:text-red-500 transition-colors p-1 bg-white/80 rounded-full shadow-sm backdrop-blur-sm"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                        </div>
+                                        <span class="text-[10px] font-bold text-blue-500 bg-blue-100/50 px-2 py-0.5 rounded-md border border-blue-100">${r.date}</span>
+                                        <p class="text-xs mt-2 text-gray-700 text-left whitespace-pre-line leading-relaxed">${r.note || ''}</p>
+                                        ${imgsHtml}
+                                    </div>
+                                `;
+                            }).join('')}
                             <div class="border-2 border-dashed ${isPlanningActive ? 'border-orange-300 bg-orange-50/30' : 'border-gray-200 bg-gray-50/50'} rounded-3xl p-6 text-center">
-                                <input type="file" id="rec-img" accept="image/*" multiple class="text-xs mb-3 w-full">
-                                <input type="text" id="rec-note" class="w-full text-xs p-3 bg-white border border-gray-100 rounded-xl mb-3 outline-none" placeholder="心得...">
+                                <input type="file" id="rec-img" accept="image/*" multiple class="text-xs mb-3 w-full text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-600">
+                                <input type="text" id="rec-note" class="w-full text-xs p-3 bg-white border border-gray-100 rounded-xl mb-3 outline-none focus:ring-1 focus:ring-blue-500" placeholder="分享今次煮成點？心得...">
                                 <button onclick="saveRecord()" class="w-full ${isPlanningActive ? 'bg-orange-500 shadow-orange-500/20' : 'bg-blue-500 shadow-blue-500/20'} text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition-all">
                                     ${isPlanningActive ? '上載相片完成挑戰 🎉' : '發佈新記錄'}
                                 </button>
@@ -1155,7 +1187,9 @@
             db.forEach(d => (d.flavors||[]).forEach(f => {
                 if (f.isFavorite) {
                     let img = 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=400';
-                    if (f.records?.length > 0 && f.records[0].image) img = f.records[0].image;
+                    if (f.records && f.records.length > 0) {
+                        img = (f.records[0].images && f.records[0].images.length > 0) ? f.records[0].images[0] : (f.records[0].image || img);
+                    }
                     favs.push({ dishId: d.id, flavorId: f.id, img });
                 }
             }));
@@ -2025,29 +2059,48 @@
             
             if (files.length > 0) {
                 let processed = 0;
+                let imagesArray = [];
                 for (let i = 0; i < files.length; i++) {
-                    window.resizeImage(files[i], async (imgData) => {
-                        flavor.records.push({ id: 'r'+Date.now()+i, date: new Date().toLocaleDateString(), image: imgData, note: i === 0 ? note : '' });
+                    window.resizeImage(files[i], (imgData) => {
+                        imagesArray.push(imgData);
                         processed++;
                         if (processed === files.length) {
-                            await window.syncToCloud(dish);
-                            if(noteInput) noteInput.value = '';
-                            if(fileInput) fileInput.value = '';
-                            if (challengeCompleted) window.showToast("🎉 挑戰完成！記錄已上傳");
-                            else window.showToast("記錄已上傳 📸");
-                            window.renderPost(currentDishId, currentFlavorId);
+                            flavor.records.push({ id: 'r'+Date.now(), date: new Date().toLocaleDateString(), images: imagesArray, note: note });
+                            finishSave();
                         }
                     });
                 }
             } else {
-                flavor.records.push({ id: 'r'+Date.now(), date: new Date().toLocaleDateString(), image: null, note });
+                flavor.records.push({ id: 'r'+Date.now(), date: new Date().toLocaleDateString(), images: null, note: note });
+                finishSave();
+            }
+
+            async function finishSave() {
                 await window.syncToCloud(dish);
                 if(noteInput) noteInput.value = '';
                 if(fileInput) fileInput.value = '';
+                
                 if (challengeCompleted) window.showToast("🎉 挑戰完成！記錄已上傳");
                 else window.showToast("記錄已上傳 📸");
                 window.renderPost(currentDishId, currentFlavorId);
             }
+        };
+
+        window.editRecordNote = function(id) {
+            const dish = db.find(d => d.id === currentDishId);
+            const flavor = dish?.flavors.find(f => f.id === currentFlavorId);
+            if(!flavor) return;
+            const record = flavor.records.find(r => r.id === id);
+            if(!record) return;
+
+            window.customPrompt("修改記錄心得：", "輸入心得...", async (newNote) => {
+                if (newNote !== null) {
+                    record.note = newNote;
+                    await window.syncToCloud(dish);
+                    window.renderPost(currentDishId, currentFlavorId);
+                    window.showToast("記錄心得已更新 ✅");
+                }
+            }, record.note);
         };
 
         async function deleteRecord(id) {
@@ -2058,6 +2111,7 @@
                 flavor.records = flavor.records.filter(r => r.id !== id);
                 await window.syncToCloud(dish);
                 window.showToast("記錄已刪除");
+                window.renderPost(currentDishId, currentFlavorId);
             });
         }
         window.deleteRecord = deleteRecord;
@@ -2184,6 +2238,12 @@
             }
         }
         window.saveApiKey = saveApiKey;
+
+        function forceSync() { 
+            window.refreshCurrentView(); 
+            window.showToast("強制同步完成 ✅"); 
+        }
+        window.forceSync = forceSync;
 
         function handleAvatarUpload(e) {
             const file = e.target.files[0];
