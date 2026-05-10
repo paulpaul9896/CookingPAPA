@@ -319,11 +319,14 @@
                     
                     <!-- 重新製作按鈕 -->
                     <div class="flex gap-2 mt-4">
-                        <button onclick="aiFridgeSearch(this)" class="shrink-0 px-4 py-3.5 bg-gray-100 text-gray-700 rounded-2xl font-bold shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all hover:bg-gray-200 text-[13px]">
-                            <i data-lucide="refresh-cw" class="w-4 h-4"></i> 重新製作
+                        <button onclick="clearFridgeResults(this)" class="shrink-0 px-3 sm:px-4 py-3.5 bg-gray-100 text-gray-700 rounded-2xl font-bold shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all hover:bg-gray-200 text-[13px]">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i> 放棄
+                        </button>
+                        <button onclick="aiFridgeSearch(this)" class="shrink-0 px-3 sm:px-4 py-3.5 bg-blue-50 text-blue-600 rounded-2xl font-bold shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all hover:bg-blue-100 text-[13px]">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i> 重做
                         </button>
                         <button onclick="saveFridgeRecipes()" class="flex-1 py-3.5 bg-orange-500 text-white rounded-2xl font-bold shadow-lg shadow-orange-500/30 flex items-center justify-center gap-1.5 active:scale-95 transition-all text-[13px]">
-                            儲存選中食譜
+                            儲存選中
                         </button>
                     </div>
                 </div>
@@ -337,7 +340,6 @@
                     <h3 class="font-bold text-2xl flex items-center gap-2 text-gray-900"><i data-lucide="shopping-cart" class="w-6 h-6 text-orange-500"></i> 購物清單</h3>
                 </div>
                 
-                <!-- 修正手機版走位：統一使用 h-12, w-full, min-w-0, shrink-0 -->
                 <div class="flex gap-2 mb-4 h-12 w-full">
                     <input type="text" id="grocery-manual-input" placeholder="新增購買項目 (如: 洗潔精)" class="flex-1 min-w-0 px-4 h-full bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-500/20">
                     <button onclick="addCustomGrocery()" class="shrink-0 px-5 h-full bg-orange-500 text-white rounded-xl text-sm font-bold shadow-md active:scale-95 transition flex items-center justify-center whitespace-nowrap">加入</button>
@@ -444,7 +446,7 @@
                 <button form="recipe-form" type="submit" class="text-blue-500 font-bold text-lg">發佈</button>
             </div>
             
-            <form id="recipe-form" onsubmit="saveNewRecipe(event)" class="space-y-6 text-left">
+            <form id="recipe-form" onsubmit="event.preventDefault(); window.saveNewRecipe && window.saveNewRecipe(event);" class="space-y-6 text-left">
                 <label class="flex items-center gap-3 bg-orange-50/50 p-3.5 rounded-2xl border border-orange-100 cursor-pointer">
                     <input type="checkbox" id="input-is-planning" class="w-5 h-5 text-orange-500 rounded border-orange-300 accent-orange-500">
                     <div class="flex-1">
@@ -471,7 +473,7 @@
                     <input type="text" id="input-serving" class="w-full text-sm py-2.5 px-3 bg-gray-50 rounded-xl border border-transparent outline-none focus:bg-white focus:border-blue-200 transition-colors" placeholder="如: 2人 或 6吋">
                 </div>
 
-                <button type="button" onclick="generateAI()" class="w-full bg-blue-500 text-white text-sm font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                <button type="button" onclick="window.generateAI && window.generateAI()" class="w-full bg-blue-500 text-white text-sm font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
                     <i data-lucide="sparkles" class="w-4 h-4"></i> AI 智能生成食譜
                 </button>
                 
@@ -485,7 +487,7 @@
                         <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1">卡路里</label>
                         <div class="flex bg-gray-50 rounded-xl border border-transparent focus-within:bg-white focus-within:border-blue-200 transition-colors overflow-hidden">
                             <input type="number" id="input-kcal" class="w-full text-sm py-2.5 px-3 bg-transparent outline-none min-w-0" placeholder="kcal">
-                            <button type="button" onclick="estimateRecipeKcal('input')" class="px-2 text-red-400 hover:text-red-500 flex items-center justify-center shrink-0" title="AI估算"><i data-lucide="sparkles" class="w-4 h-4"></i></button>
+                            <button type="button" onclick="window.estimateRecipeKcal && window.estimateRecipeKcal('input')" class="px-2 text-red-400 hover:text-red-500 flex items-center justify-center shrink-0" title="AI估算"><i data-lucide="sparkles" class="w-4 h-4"></i></button>
                         </div>
                     </div>
                 </div>
@@ -494,10 +496,10 @@
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-1">評分推薦 (煮後)</label>
                     <input type="hidden" id="input-rating" value="4">
                     <div class="grid grid-cols-2 gap-2 text-[11px]">
-                        <button type="button" onclick="setRating('input-rating', 1)" id="btn-rating-input-rating-1" class="py-3 rounded-xl border bg-white font-bold transition-all">🤢 中伏</button>
-                        <button type="button" onclick="setRating('input-rating', 2)" id="btn-rating-input-rating-2" class="py-3 rounded-xl border bg-white font-bold transition-all">🤐 試一次</button>
-                        <button type="button" onclick="setRating('input-rating', 3)" id="btn-rating-input-rating-3" class="py-3 rounded-xl border bg-white font-bold transition-all">🙂 得閒整</button>
-                        <button type="button" onclick="setRating('input-rating', 4)" id="btn-rating-input-rating-4" class="py-3 rounded-xl border border-blue-500 bg-blue-500 text-white font-bold transition-all">🤤 要著兩條褲</button>
+                        <button type="button" onclick="window.setRating && window.setRating('input-rating', 1)" id="btn-rating-input-rating-1" class="py-3 rounded-xl border bg-white font-bold transition-all">🤢 中伏</button>
+                        <button type="button" onclick="window.setRating && window.setRating('input-rating', 2)" id="btn-rating-input-rating-2" class="py-3 rounded-xl border bg-white font-bold transition-all">🤐 試一次</button>
+                        <button type="button" onclick="window.setRating && window.setRating('input-rating', 3)" id="btn-rating-input-rating-3" class="py-3 rounded-xl border bg-white font-bold transition-all">🙂 得閒整</button>
+                        <button type="button" onclick="window.setRating && window.setRating('input-rating', 4)" id="btn-rating-input-rating-4" class="py-3 rounded-xl border border-blue-500 bg-blue-500 text-white font-bold transition-all">🤤 要著兩條褲</button>
                     </div>
                 </div>
 
@@ -527,9 +529,9 @@
                             <p class="text-[11px] text-gray-500 mb-2 font-bold">修改密碼</p>
                             <div class="flex gap-2 mb-4 h-12 w-full">
                                 <input type="password" id="new-password-input" placeholder="新密碼 (最少 6 位)" class="flex-1 min-w-0 px-4 h-full bg-white border border-gray-200 rounded-xl outline-none text-sm focus:ring-2 focus:ring-blue-500/20">
-                                <button onclick="handleChangePassword()" class="shrink-0 w-20 h-full bg-gray-900 text-white rounded-xl text-sm font-bold transition active:scale-95 flex items-center justify-center">更新</button>
+                                <button onclick="window.handleChangePassword && window.handleChangePassword()" class="shrink-0 w-20 h-full bg-gray-900 text-white rounded-xl text-sm font-bold transition active:scale-95 flex items-center justify-center">更新</button>
                             </div>
-                            <button onclick="handleLogout()" class="w-full py-3.5 bg-white border border-red-200 text-red-500 rounded-xl text-sm font-bold transition active:scale-95 hover:bg-red-50">登出帳號</button>
+                            <button onclick="window.handleLogout && window.handleLogout()" class="w-full py-3.5 bg-white border border-red-200 text-red-500 rounded-xl text-sm font-bold transition active:scale-95 hover:bg-red-50">登出帳號</button>
                         </div>
                     </div>
 
@@ -538,8 +540,8 @@
                         <input type="email" id="auth-email" placeholder="電郵地址 (Email)" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none text-sm">
                         <input type="password" id="auth-password" placeholder="密碼 (最少 6 位)" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none text-sm">
                         <div class="flex gap-2">
-                            <button onclick="handleAuth('login')" class="flex-1 py-3 bg-gray-900 text-white rounded-xl text-xs font-bold transition">登入</button>
-                            <button onclick="handleAuth('signup')" class="flex-1 py-3 bg-blue-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-blue-500/30">註冊</button>
+                            <button onclick="window.handleAuth && window.handleAuth('login')" class="flex-1 py-3 bg-gray-900 text-white rounded-xl text-xs font-bold transition">登入</button>
+                            <button onclick="window.handleAuth && window.handleAuth('signup')" class="flex-1 py-3 bg-blue-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-blue-500/30">註冊</button>
                         </div>
                     </div>
                 </div>
@@ -547,11 +549,11 @@
                 <div class="bg-gray-50 rounded-3xl p-6 border border-gray-100 shadow-sm text-left">
                     <h3 class="font-bold text-sm mb-3 flex items-center gap-2 text-gray-700 font-bold"><i data-lucide="cloud" class="w-5 h-5 text-blue-500"></i> AI 大廚 API 金鑰</h3>
                     <input type="password" id="setting-api-key" class="w-full px-4 py-3 bg-white border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/10 mb-4 transition-all" placeholder="輸入 Gemini API Key">
-                    <button onclick="saveApiKey()" class="w-full py-3 bg-gray-900 text-white rounded-2xl text-xs font-bold shadow-xl active:scale-95 transition">儲存 API 設定</button>
+                    <button onclick="window.saveApiKey && window.saveApiKey()" class="w-full py-3 bg-gray-900 text-white rounded-2xl text-xs font-bold shadow-xl active:scale-95 transition">儲存 API 設定</button>
                 </div>
 
                 <div class="text-center pt-12">
-                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.18.0 🚀</p>
+                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.19.1 🚀</p>
                 </div>
             </div>
         </main>
@@ -603,19 +605,32 @@
         let unsubscribePlanner = null;
         let unsubscribeCustomGrocery = null;
 
-        let groceryChecked = JSON.parse(localStorage.getItem('groceryChecked')) || {};
-        let groceryDeleted = JSON.parse(localStorage.getItem('groceryDeleted')) || {};
-        let groceryOrder = JSON.parse(localStorage.getItem('groceryOrder')) || [];
+        // 安全地讀取 localStorage 嘅輔助函數，防止解析出錯導致停止執行
+        const safeGetItem = (key, fallback) => {
+            try { 
+                const val = localStorage.getItem(key);
+                return val ? JSON.parse(val) : fallback;
+            } catch (e) { 
+                return fallback; 
+            }
+        };
+
+        let groceryChecked = safeGetItem('groceryChecked', {});
+        let groceryDeleted = safeGetItem('groceryDeleted', {});
+        let groceryOrder = safeGetItem('groceryOrder', []);
 
         // 口味標籤庫
-        window.flavorTags = JSON.parse(localStorage.getItem('cookingPapaFlavorTags')) || ['減肥餐', '兒童至愛', '快手15分鐘', '惹味大排檔', '清淡健康'];
+        window.flavorTags = safeGetItem('cookingPapaFlavorTags', ['減肥餐', '兒童至愛', '快手15分鐘', '惹味大排檔', '清淡健康']);
 
         const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23FFF3E0' width='100' height='100'/><text x='50' y='55' font-size='45' text-anchor='middle' dominant-baseline='middle'>👨🏻‍🍳</text></svg>";
         
         // 準備挑戰 預設背景圖 (大廚與火 Emoji)
         const planningBgImg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 800'><rect width='800' height='800' fill='%23fff7ed'/><text x='400' y='350' font-size='280' text-anchor='middle' dominant-baseline='middle'>👨🏻‍🍳</text><text x='400' y='620' font-size='120' text-anchor='middle' dominant-baseline='middle'>🔥</text></svg>";
 
-        window.userAvatar = localStorage.getItem('cookingPapaAvatar') || defaultAvatar;
+        window.userAvatar = defaultAvatar;
+        try {
+            window.userAvatar = localStorage.getItem('cookingPapaAvatar') || defaultAvatar;
+        } catch(e) {}
 
         function updateAvatarDisplays() {
             const hAv = document.getElementById('home-avatar-img');
@@ -625,7 +640,7 @@
         }
 
         // --- 公共工具函數 ---
-        function customAlert(msg) {
+        window.customAlert = function(msg) {
             const titleEl = document.getElementById('custom-modal-title');
             const msgEl = document.getElementById('custom-modal-msg');
             const inputEl = document.getElementById('custom-modal-input');
@@ -644,10 +659,9 @@
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
             }
-        }
-        window.customAlert = customAlert;
+        };
 
-        function customConfirm(msg, fn) {
+        window.customConfirm = function(msg, fn) {
             const titleEl = document.getElementById('custom-modal-title');
             const msgEl = document.getElementById('custom-modal-msg');
             const inputEl = document.getElementById('custom-modal-input');
@@ -669,10 +683,9 @@
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
             }
-        }
-        window.customConfirm = customConfirm;
+        };
 
-        function customPrompt(msg, placeholder, fn, defaultValue = '') {
+        window.customPrompt = function(msg, placeholder, fn, defaultValue = '') {
             const titleEl = document.getElementById('custom-modal-title');
             const msgEl = document.getElementById('custom-modal-msg');
             const inputEl = document.getElementById('custom-modal-input');
@@ -701,10 +714,9 @@
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
             }
-        }
-        window.customPrompt = customPrompt;
+        };
 
-        function showToast(msg) {
+        window.showToast = function(msg) {
             const t = document.getElementById('toast-notification');
             if(!t) return;
             t.innerText = msg; 
@@ -714,8 +726,7 @@
                 t.style.opacity = '0'; 
                 t.style.transform = 'translateX(-50%) translateY(-20px)'; 
             }, 2500);
-        }
-        window.showToast = showToast;
+        };
 
         window.previewFridgeImage = function(input) {
             if (input.files && input.files[0]) {
@@ -731,7 +742,7 @@
             }
         };
 
-        function resizeImage(file, cb) {
+        window.resizeImage = function(file, cb) {
             const r = new FileReader();
             r.onload = e => {
                 const img = new Image();
@@ -746,21 +757,20 @@
                 img.src = e.target.result;
             };
             r.readAsDataURL(file);
-        }
-        window.resizeImage = resizeImage;
+        };
 
         // --- 標籤渲染邏輯 ---
         window.renderFlavorTags = function() {
             const createHtml = (targetInputId) => {
                 return window.flavorTags.map(tag => `
                     <div class="flex items-center bg-blue-50 text-blue-600 rounded-lg text-[10px] font-bold overflow-hidden border border-blue-100">
-                        <button type="button" class="px-2.5 py-1 hover:bg-blue-100 transition" onclick="appendFlavor('${targetInputId}', '${tag}')">${tag}</button>
-                        <button type="button" class="px-1.5 py-1 hover:bg-blue-100 text-blue-400 hover:text-blue-600 transition border-l border-blue-100" onclick="removeFlavorTag('${tag}')">
+                        <button type="button" class="px-2.5 py-1 hover:bg-blue-100 transition" onclick="window.appendFlavor('${targetInputId}', '${tag}')">${tag}</button>
+                        <button type="button" class="px-1.5 py-1 hover:bg-blue-100 text-blue-400 hover:text-blue-600 transition border-l border-blue-100" onclick="window.removeFlavorTag('${tag}')">
                             <i data-lucide="x" class="w-3 h-3"></i>
                         </button>
                     </div>
                 `).join('') + `
-                    <button type="button" onclick="promptAddFlavorTag()" class="text-[10px] font-bold text-gray-500 bg-gray-100 border border-gray-200 px-2 py-1 rounded-lg hover:bg-gray-200 transition">
+                    <button type="button" onclick="window.promptAddFlavorTag()" class="text-[10px] font-bold text-gray-500 bg-gray-100 border border-gray-200 px-2 py-1 rounded-lg hover:bg-gray-200 transition">
                         + 新增
                     </button>
                 `;
@@ -802,7 +812,7 @@
         };
 
         // --- 2. 帳號與登入邏輯 ---
-        async function handleAuth(type) {
+        window.handleAuth = async function(type) {
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value;
             if(!email || !password) return window.customAlert("請輸入電郵同密碼！");
@@ -822,16 +832,14 @@
                 else if (e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') window.customAlert("電郵或密碼錯誤。");
                 else window.customAlert("登入失敗：" + e.message);
             }
-        }
-        window.handleAuth = handleAuth;
+        };
 
-        async function handleLogout() {
+        window.handleLogout = async function() {
             await signOut(auth);
             window.showToast("已登出，資料將恢復為本地暫存");
-        }
-        window.handleLogout = handleLogout;
+        };
 
-        async function handleChangePassword() {
+        window.handleChangePassword = async function() {
             if (!currentUser || currentUser.isAnonymous) return window.customAlert("請先登入！");
             const newPwdEl = document.getElementById('new-password-input');
             const newPwd = newPwdEl ? newPwdEl.value : '';
@@ -849,8 +857,7 @@
                     window.customAlert("更改密碼失敗：" + error.message);
                 }
             }
-        }
-        window.handleChangePassword = handleChangePassword;
+        };
 
         onAuthStateChanged(auth, async (user) => {
             currentUser = user;
@@ -914,7 +921,7 @@
         });
 
         // --- 3. 基礎功能 (導航、手勢、Tab) ---
-        function navigate(viewId, dishId = null, flavorId = null) {
+        window.navigate = function(viewId, dishId = null, flavorId = null) {
             if (viewId === 'search') {
                 viewId = 'home';
                 setTimeout(() => { if (window.switchHomeTab) window.switchHomeTab('search'); }, 0);
@@ -964,11 +971,10 @@
 
             lucide.createIcons();
             window.scrollTo(0,0);
-        }
-        window.navigate = navigate;
+        };
 
         window.currentHomeTab = 'grid';
-        function switchHomeTab(tabName) {
+        window.switchHomeTab = function(tabName) {
             window.currentHomeTab = tabName;
             const tabs = ['grid', 'search', 'favorites'];
             tabs.forEach(t => {
@@ -992,12 +998,11 @@
             if (tabName === 'grid' && window.renderHome) window.renderHome();
             if (tabName === 'search' && window.performSearch) window.performSearch();
             if (tabName === 'favorites' && window.renderFavorites) window.renderFavorites();
-        }
-        window.switchHomeTab = switchHomeTab;
+        };
 
         // --- 搜尋與過濾 ---
         window.searchFilterPlanning = false;
-        function toggleSearchFilterPlanning() {
+        window.toggleSearchFilterPlanning = function() {
             window.searchFilterPlanning = !window.searchFilterPlanning;
             const btn = document.getElementById('filter-planning-btn');
             if(btn) {
@@ -1012,10 +1017,9 @@
                 }
             }
             if (window.performSearch) window.performSearch();
-        }
-        window.toggleSearchFilterPlanning = toggleSearchFilterPlanning;
+        };
 
-        function performSearch() {
+        window.performSearch = function() {
             const searchInput = document.getElementById('search-input');
             const keyword = searchInput ? searchInput.value.toLowerCase().trim() : '';
             const grid = document.getElementById('search-results');
@@ -1055,23 +1059,29 @@
                     ${p.isPlanningActive ? '<div class="absolute top-2 left-2 bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">⏳</div>' : ''}
                 </div>`;
             });
+        };
+
+        const viewRecipeEl = document.getElementById('view-recipe');
+        if(viewRecipeEl) {
+            let touchStartX = 0;
+            viewRecipeEl.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
+            viewRecipeEl.addEventListener('touchend', e => {
+                if (e.changedTouches[0].screenX - touchStartX > 130) window.navigate('home');
+            });
         }
-        window.performSearch = performSearch;
 
         // --- 4. 數據操作 ---
-        async function syncToCloud(data) {
+        window.syncToCloud = async function(data) {
             if (!currentUser) return;
             await setDoc(doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'recipes', data.id), data);
-        }
-        window.syncToCloud = syncToCloud;
+        };
 
-        async function deleteFromCloud(id) {
+        window.deleteFromCloud = async function(id) {
             if (!currentUser) return;
             await deleteDoc(doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'recipes', id));
-        }
-        window.deleteFromCloud = deleteFromCloud;
+        };
 
-        function refreshCurrentView() {
+        window.refreshCurrentView = function() {
             const activeEl = document.querySelector('.view-section.active');
             if(!activeEl) return;
             if (activeEl.id === 'view-home') {
@@ -1088,10 +1098,9 @@
                 if(window.performSearch) window.performSearch();
             }
             updateAvatarDisplays();
-        }
-        window.refreshCurrentView = refreshCurrentView;
+        };
 
-        function renderHome() {
+        window.renderHome = function() {
             const grid = document.getElementById('dishes-grid');
             if(!grid) return; 
             grid.innerHTML = '';
@@ -1125,11 +1134,10 @@
                     </div>
                 `;
             });
-        }
-        window.renderHome = renderHome;
+        };
 
         // --- 份量動態縮放器 ---
-        function scaleIngredients(multiplier) {
+        window.scaleIngredients = function(multiplier) {
             const ingredientsEl = document.getElementById('post-ingredients-text');
             if (!ingredientsEl) return;
             
@@ -1145,8 +1153,7 @@
             
             ingredientsEl.innerText = newText;
             window.showToast(`已切換為 ${multiplier} 倍份量 ⚖️`);
-        }
-        window.scaleIngredients = scaleIngredients;
+        };
 
         // --- 設定代表照 ---
         window.setCoverImage = async function(imgUrl) {
@@ -1160,7 +1167,7 @@
             window.renderPost(currentDishId, currentFlavorId);
         };
 
-        function renderPost(dishId, flavorId) {
+        window.renderPost = function(dishId, flavorId) {
             currentDishId = dishId; currentFlavorId = flavorId;
             const dish = db.find(d => d.id === dishId);
             const flavor = dish?.flavors.find(f => f.id === flavorId);
@@ -1299,8 +1306,7 @@
                 </div>
             `;
             lucide.createIcons();
-        }
-        window.renderPost = renderPost;
+        };
 
         // --- 新增：記錄相片多重預覽 ---
         window.previewRecordImages = function(input) {
@@ -1327,7 +1333,7 @@
             }
         };
 
-        function renderFavorites() {
+        window.renderFavorites = function() {
             const grid = document.getElementById('favorites-grid');
             if(!grid) return; 
             grid.innerHTML = '';
@@ -1349,8 +1355,7 @@
                 grid.innerHTML += `<div class="grid-img-container cursor-pointer" onclick="navigate('recipe', '${p.dishId}', '${p.flavorId}')"><img src="${p.img}"><div class="absolute top-2 right-2 bg-white/90 p-1 rounded-full"><i data-lucide="heart" class="w-3 h-3 text-red-500 fill-red-500"></i></div></div>`;
             });
             lucide.createIcons();
-        }
-        window.renderFavorites = renderFavorites;
+        };
 
         // --- 分享功能 ---
         window.openShareModal = function() {
@@ -1363,7 +1368,7 @@
             db.forEach(d => (d.flavors||[]).forEach(f => {
                 hasRecipes = true;
                 html += `
-                    <div class="p-3 bg-gray-50 rounded-xl border border-gray-100 flex justify-between items-center cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition" onclick="shareRecipe('${d.id}', '${f.id}'); closeShareModal();">
+                    <div class="p-3 bg-gray-50 rounded-xl border border-gray-100 flex justify-between items-center cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition" onclick="window.shareRecipe('${d.id}', '${f.id}'); window.closeShareModal();">
                         <span class="font-bold text-sm text-gray-700">${d.name} <span class="text-gray-400 text-xs">- ${f.name}</span></span>
                         <i data-lucide="share-2" class="w-5 h-5 text-blue-500"></i>
                     </div>
@@ -1390,7 +1395,7 @@
         };
 
         // --- 估算食譜卡路里 ---
-        async function estimateRecipeKcal(prefix) {
+        window.estimateRecipeKcal = async function(prefix) {
             let dishName = '';
             if (prefix === 'input') {
                 const dishInput = document.getElementById('input-dish');
@@ -1406,7 +1411,7 @@
             if (!ingredients) return window.customAlert("請先輸入材料，AI 先可以幫你計卡路里㗎！");
 
             const loading = document.getElementById('ai-loading');
-            if(loading) loading.classList.remove('hidden');
+            if(loading) { loading.classList.remove('hidden'); loading.classList.add('flex'); }
             const apiKey = (localStorage.getItem('geminiApiKey') || "").trim();
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
@@ -1432,24 +1437,13 @@
             } catch(e) {
                 window.customAlert("AI 估算失敗，請檢查金鑰及網絡。");
             } finally {
-                if(loading) loading.classList.add('hidden');
+                if(loading) { loading.classList.add('hidden'); loading.classList.remove('flex'); }
             }
-        }
-        window.estimateRecipeKcal = estimateRecipeKcal;
+        };
 
-        // --- 輔助函數：取得當前顯示的元素 ---
-        function getActiveEl(selector) {
-            const activeView = document.querySelector('.view-section.active');
-            if (activeView) {
-                const el = activeView.querySelector(selector);
-                if (el) return el;
-            }
-            return document.querySelector(selector);
-        }
-
-        // --- 雪櫃清垃圾 (3選項多選, 支援相片識別, 重新製作) ---
+        // --- 雪櫃清垃圾 (3選項多選) ---
         window.fridgeTempRecipes = [];
-        async function aiFridgeSearch(btnEl) {
+        window.aiFridgeSearch = async function(btnEl) {
             const parentContext = btnEl ? btnEl.closest('.view-section') : document.querySelector('.view-section.active');
             const inputEl = parentContext.querySelector('.fridge-input-text');
             const fileInput = parentContext.querySelector('.fridge-image-upload');
@@ -1459,7 +1453,8 @@
             
             if (!input && !file) return window.customAlert("請輸入或影低雪櫃淨低嘅食材！");
             
-            document.getElementById('ai-loading').classList.remove('hidden');
+            const loading = document.getElementById('ai-loading');
+            if(loading) { loading.classList.remove('hidden'); loading.classList.add('flex'); }
             const apiKey = (localStorage.getItem('geminiApiKey') || "").trim();
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
             
@@ -1522,11 +1517,32 @@
 
                 window.showToast("AI 已經為你準備好 3 個建議！🍳");
             } catch (e) { window.customAlert("AI 暫時休息中 (請檢查 Key 或 VPN)"); }
-            finally { document.getElementById('ai-loading').classList.add('hidden'); }
-        }
-        window.aiFridgeSearch = aiFridgeSearch;
+            finally { if(loading) { loading.classList.add('hidden'); loading.classList.remove('flex'); } }
+        };
 
-        async function saveFridgeRecipes() {
+        window.clearFridgeResults = function(btnEl) {
+            const parentContext = btnEl ? btnEl.closest('.view-section') : document.querySelector('.view-section.active');
+            
+            const container = parentContext.querySelector('.fridge-results-container');
+            if(container) container.classList.add('hidden');
+            
+            const input = parentContext.querySelector('.fridge-input-text');
+            if(input) input.value = '';
+            
+            const fileInput = parentContext.querySelector('.fridge-image-upload');
+            if(fileInput) fileInput.value = '';
+            
+            const preview = parentContext.querySelector('.fridge-image-preview');
+            if(preview) {
+                preview.classList.add('hidden');
+                preview.style.backgroundImage = '';
+            }
+            
+            window.fridgeTempRecipes = [];
+            window.showToast("已放棄製作並清空 🗑️");
+        };
+
+        window.saveFridgeRecipes = async function() {
             const activeView = document.querySelector('.view-section.active');
             let added = 0;
             for (let i = 0; i < window.fridgeTempRecipes.length; i++) {
@@ -1545,30 +1561,16 @@
             }
             if (added > 0) {
                 window.showToast(`已加入 ${added} 個食譜至準備挑戰！⏳`);
-                const container = activeView.querySelector('.fridge-results-container');
-                if(container) container.classList.add('hidden');
-                const input = activeView.querySelector('.fridge-input-text');
-                if(input) input.value = '';
-                
-                // 儲存後才重置檔案上載 UI
-                const fileInput = activeView.querySelector('.fridge-image-upload');
-                if(fileInput) fileInput.value = '';
-                const preview = activeView.querySelector('.fridge-image-preview');
-                if(preview) {
-                    preview.classList.add('hidden');
-                    preview.style.backgroundImage = '';
-                }
-                
+                window.clearFridgeResults(activeView.querySelector('.fridge-results-container'));
                 window.navigate('home');
             } else {
                 window.customAlert('請最少剔選一個食譜！');
             }
-        }
-        window.saveFridgeRecipes = saveFridgeRecipes;
+        };
 
-        // --- 購物清單 ---
+        // --- 購物清單 (雙模式) ---
         window.currentGroceryMode = 'recipe';
-        function renderGroceryList(mode = window.currentGroceryMode) {
+        window.renderGroceryList = function(mode = window.currentGroceryMode) {
             window.currentGroceryMode = mode;
             
             // 同時更新兩個視圖中的清單以保持一致性
@@ -1607,10 +1609,10 @@
                             sectionHtml += `
                                 <div class="flex items-center justify-between transition-all hover:bg-gray-50 rounded-lg pr-2">
                                     <label class="flex items-start gap-3 cursor-pointer p-1 flex-1">
-                                        <input type="checkbox" onchange="toggleGrocery('${key}')" ${isChecked} class="mt-0.5 w-5 h-5 text-orange-500 rounded border-gray-300 accent-orange-500 flex-shrink-0">
+                                        <input type="checkbox" onchange="window.toggleGrocery('${key}')" ${isChecked} class="mt-0.5 w-5 h-5 text-orange-500 rounded border-gray-300 accent-orange-500 flex-shrink-0">
                                         <span class="text-sm font-medium transition-colors ${textClass}" id="g-text-${key}">${item}</span>
                                     </label>
-                                    <button onclick="deleteGrocery('${key}')" class="text-gray-300 hover:text-red-500 transition-colors p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                    <button onclick="window.deleteGrocery('${key}')" class="text-gray-300 hover:text-red-500 transition-colors p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                 </div>
                             `;
                         } else {
@@ -1640,10 +1642,10 @@
                         html += `
                             <div class="flex items-center justify-between transition-all hover:bg-gray-50 rounded-lg pr-2">
                                 <label class="flex items-start gap-3 cursor-pointer p-1 flex-1">
-                                    <input type="checkbox" onchange="toggleGrocery('${key}')" ${isChecked} class="mt-0.5 w-5 h-5 text-orange-500 rounded border-gray-300 accent-orange-500 flex-shrink-0">
+                                    <input type="checkbox" onchange="window.toggleGrocery('${key}')" ${isChecked} class="mt-0.5 w-5 h-5 text-orange-500 rounded border-gray-300 accent-orange-500 flex-shrink-0">
                                     <span class="text-sm font-medium transition-colors ${textClass}" id="g-text-${key}">${cItem.text}</span>
                                 </label>
-                                <button onclick="deleteCustomGrocery('${key}')" class="text-gray-300 hover:text-red-500 transition-colors p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                <button onclick="window.deleteCustomGrocery('${key}')" class="text-gray-300 hover:text-red-500 transition-colors p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                             </div>
                         `;
                     });
@@ -1674,14 +1676,14 @@
                 flatItems.forEach(i => {
                     const isChecked = groceryChecked[i.key] ? 'checked' : '';
                     const textClass = groceryChecked[i.key] ? 'line-through text-gray-300' : 'text-gray-700';
-                    const deleteFn = i.isCustom ? `deleteCustomGrocery('${i.key}')` : `deleteGrocery('${i.key}')`;
+                    const deleteFn = i.isCustom ? `window.deleteCustomGrocery('${i.key}')` : `window.deleteGrocery('${i.key}')`;
                     html += `
                         <div class="grocery-item flex items-center justify-between border-b border-gray-50 last:border-0 transition hover:bg-gray-50 rounded-xl pr-2 bg-white" data-key="${i.key}">
                             <div class="grocery-handle p-2 cursor-grab text-gray-300 hover:text-orange-500 active:cursor-grabbing touch-none flex items-center justify-center">
                                 <i data-lucide="grip-vertical" class="w-5 h-5"></i>
                             </div>
                             <label class="flex items-start gap-3 cursor-pointer p-2 flex-1">
-                                <input type="checkbox" onchange="toggleGrocery('${i.key}')" ${isChecked} class="mt-0.5 w-5 h-5 text-orange-500 rounded border-gray-300 accent-orange-500 flex-shrink-0">
+                                <input type="checkbox" onchange="window.toggleGrocery('${i.key}')" ${isChecked} class="mt-0.5 w-5 h-5 text-orange-500 rounded border-gray-300 accent-orange-500 flex-shrink-0">
                                 <div class="flex-1">
                                     <span class="${textClass} block text-sm font-medium transition-colors" id="g-text-${i.key}">${i.item}</span>
                                     <span class="text-[9px] text-gray-400 block mt-0.5">${i.recipeName}</span>
@@ -1716,10 +1718,9 @@
                     });
                 });
             }
-        }
-        window.renderGroceryList = renderGroceryList;
+        };
 
-        function toggleGrocery(key) {
+        window.toggleGrocery = function(key) {
             groceryChecked[key] = !groceryChecked[key];
             localStorage.setItem('groceryChecked', JSON.stringify(groceryChecked));
             const textEls = document.querySelectorAll(`#g-text-${key}`);
@@ -1727,17 +1728,15 @@
                 if(groceryChecked[key]) textEl.className = 'block text-sm font-medium transition-colors line-through text-gray-300';
                 else textEl.className = 'block text-sm font-medium transition-colors text-gray-700';
             });
-        }
-        window.toggleGrocery = toggleGrocery;
+        };
 
-        function deleteGrocery(key) {
+        window.deleteGrocery = function(key) {
             groceryDeleted[key] = true;
             localStorage.setItem('groceryDeleted', JSON.stringify(groceryDeleted));
             window.renderGroceryList();
-        }
-        window.deleteGrocery = deleteGrocery;
+        };
 
-        async function addCustomGrocery() {
+        window.addCustomGrocery = async function() {
             const activeView = document.querySelector('.view-section.active');
             const input = activeView ? activeView.querySelector('#grocery-manual-input') : document.getElementById('grocery-manual-input');
             const text = input ? input.value.trim() : '';
@@ -1750,36 +1749,32 @@
             await setDoc(doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'grocery'), { items: customGroceryDb });
             if(input) input.value = '';
             window.showToast("已加入購物清單 🛒");
-        }
-        window.addCustomGrocery = addCustomGrocery;
+        };
 
-        async function deleteCustomGrocery(id) {
+        window.deleteCustomGrocery = async function(id) {
             if (!currentUser) return;
             customGroceryDb = customGroceryDb.filter(item => item.id !== id);
             await setDoc(doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'grocery'), { items: customGroceryDb });
             window.showToast("已刪除項目 🗑️");
-        }
-        window.deleteCustomGrocery = deleteCustomGrocery;
+        };
 
         // --- 卡路里日曆 ---
         window.calDate = new Date();
         window.calSelectedDate = new Date().toISOString().split('T')[0];
 
-        function changeCalMonth(offset) {
+        window.changeCalMonth = function(offset) {
             window.calDate.setMonth(window.calDate.getMonth() + offset);
             window.renderCalorieCalendar();
-        }
-        window.changeCalMonth = changeCalMonth;
+        };
 
-        function saveCalLimit() {
+        window.saveCalLimit = function() {
             const els = document.querySelectorAll('#cal-limit-input');
             if(els.length > 0) {
                 localStorage.setItem('calorieLimit', els[0].value);
                 window.renderCalorieCalendar();
                 window.showToast("已更新每日上限");
             }
-        }
-        window.saveCalLimit = saveCalLimit;
+        };
 
         window.openCalorieRefModal = function() {
             const m = document.getElementById('calorie-ref-modal');
@@ -1791,7 +1786,7 @@
             if(m) { m.classList.add('hidden'); m.classList.remove('flex'); }
         };
 
-        function renderCalorieCalendar() {
+        window.renderCalorieCalendar = function() {
             const year = window.calDate.getFullYear();
             const month = window.calDate.getMonth();
             
@@ -1826,7 +1821,7 @@
                 }
 
                 gridHtml += `
-                    <div onclick="selectCalDate('${dateStr}')" class="aspect-square flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all ${colorClass} ${bgClass}">
+                    <div onclick="window.selectCalDate('${dateStr}')" class="aspect-square flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all ${colorClass} ${bgClass}">
                         <span class="text-[12px] font-bold">${d}</span>
                         ${sum > 0 ? `<span class="text-[8px] font-bold tracking-tighter mt-0.5">${sum}</span>` : ''}
                     </div>
@@ -1840,16 +1835,14 @@
             document.querySelectorAll('#calorie-date').forEach(el => el.value = window.calSelectedDate);
             
             if(window.renderCalorieHistory) window.renderCalorieHistory();
-        }
-        window.renderCalorieCalendar = renderCalorieCalendar;
+        };
 
-        function selectCalDate(dateStr) {
+        window.selectCalDate = function(dateStr) {
             window.calSelectedDate = dateStr;
             window.renderCalorieCalendar();
-        }
-        window.selectCalDate = selectCalDate;
+        };
 
-        function previewCalorieImage(input) {
+        window.previewCalorieImage = function(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -1863,10 +1856,9 @@
                 }
                 reader.readAsDataURL(input.files[0]);
             }
-        }
-        window.previewCalorieImage = previewCalorieImage;
+        };
 
-        async function aiCalculateCalorie() {
+        window.aiCalculateCalorie = async function() {
             const activeView = document.querySelector('.view-section.active');
             const textEl = activeView.querySelector('#calorie-text');
             const weightEl = activeView.querySelector('#calorie-weight');
@@ -1933,10 +1925,9 @@
             } finally {
                 if(loading) { loading.classList.add('hidden'); loading.classList.remove('flex'); }
             }
-        }
-        window.aiCalculateCalorie = aiCalculateCalorie;
+        };
 
-        function renderCalorieHistory() {
+        window.renderCalorieHistory = function() {
             const containers = document.querySelectorAll('#calorie-history-container');
             if (containers.length === 0) return;
             
@@ -1964,8 +1955,8 @@
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="text-red-500 font-bold text-base bg-red-50 px-2 py-1 rounded-lg">🔥 ${item.kcal}</span>
-                            <button onclick="openEditCalorieModal('${item.id}')" class="text-gray-300 hover:text-blue-500 transition p-1"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                            <button onclick="deleteCalorie('${item.id}')" class="text-gray-300 hover:text-red-500 transition p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            <button onclick="window.openEditCalorieModal('${item.id}')" class="text-gray-300 hover:text-blue-500 transition p-1"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                            <button onclick="window.deleteCalorie('${item.id}')" class="text-gray-300 hover:text-red-500 transition p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         </div>
                     </div>
                 `;
@@ -1974,8 +1965,7 @@
                 c.innerHTML = html;
                 lucide.createIcons();
             });
-        }
-        window.renderCalorieHistory = renderCalorieHistory;
+        };
 
         window.openEditCalorieModal = function(id) {
             const item = calorieDb.find(i => i.id === id);
@@ -2020,30 +2010,27 @@
             }
         };
 
-        async function deleteCalorie(id) {
+        window.deleteCalorie = async function(id) {
             if (!currentUser) return;
             await deleteDoc(doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'calories', id));
             window.showToast("記錄已刪除");
-        }
-        window.deleteCalorie = deleteCalorie;
+        };
 
         // --- 每週餐單 (Meal Planner Calendar Version) ---
         window.plannerCalDate = new Date();
         window.plannerSelectedDate = new Date().toISOString().split('T')[0];
 
-        function changePlannerMonth(offset) {
+        window.changePlannerMonth = function(offset) {
             window.plannerCalDate.setMonth(window.plannerCalDate.getMonth() + offset);
             window.renderPlanner();
-        }
-        window.changePlannerMonth = changePlannerMonth;
+        };
 
-        function selectPlannerDate(dateStr) {
+        window.selectPlannerDate = function(dateStr) {
             window.plannerSelectedDate = dateStr;
             window.renderPlanner();
-        }
-        window.selectPlannerDate = selectPlannerDate;
+        };
 
-        function renderPlanner() {
+        window.renderPlanner = function() {
             const containers = document.querySelectorAll('#planner-grid');
             if(containers.length === 0) return;
             
@@ -2067,7 +2054,7 @@
                 let bgClass = isSelected ? 'ring-2 ring-purple-500 shadow-md bg-purple-50 text-purple-700' : 'border border-transparent bg-gray-50 text-gray-500 hover:bg-gray-100';
 
                 gridHtml += `
-                    <div onclick="selectPlannerDate('${dateStr}')" class="aspect-square flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all ${bgClass} relative">
+                    <div onclick="window.selectPlannerDate('${dateStr}')" class="aspect-square flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all ${bgClass} relative">
                         <span class="text-[12px] font-bold">${d}</span>
                         ${hasPlan ? `<div class="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-purple-500"></div>` : ''}
                     </div>
@@ -2093,7 +2080,7 @@
                                     <p class="font-bold text-sm text-gray-800">${plan.text}</p>
                                     <p class="text-[9px] text-gray-400 mt-0.5">✍️ 自訂項目</p>
                                 </div>
-                                <button onclick="clearPlannerRecipe('${window.plannerSelectedDate}', ${idx})" class="p-2 text-gray-300 hover:text-red-400 transition"><i data-lucide="x-circle" class="w-5 h-5"></i></button>
+                                <button onclick="window.clearPlannerRecipe('${window.plannerSelectedDate}', ${idx})" class="p-2 text-gray-300 hover:text-red-400 transition"><i data-lucide="x-circle" class="w-5 h-5"></i></button>
                             </div>
                         `;
                     } else if (plan.dishId) {
@@ -2106,7 +2093,7 @@
                                         <p class="font-bold text-sm text-gray-800">${d.name} - ${f.name}</p>
                                         <p class="text-[9px] text-gray-400 mt-0.5">📖 食譜庫</p>
                                     </div>
-                                    <button onclick="clearPlannerRecipe('${window.plannerSelectedDate}', ${idx})" class="p-2 text-gray-300 hover:text-red-400 transition"><i data-lucide="x-circle" class="w-5 h-5"></i></button>
+                                    <button onclick="window.clearPlannerRecipe('${window.plannerSelectedDate}', ${idx})" class="p-2 text-gray-300 hover:text-red-400 transition"><i data-lucide="x-circle" class="w-5 h-5"></i></button>
                                 </div>
                             `;
                         } else {
@@ -2115,7 +2102,7 @@
                                     <div class="flex-1 text-left">
                                         <p class="font-bold text-sm text-gray-500 line-through">食譜已刪除</p>
                                     </div>
-                                    <button onclick="clearPlannerRecipe('${window.plannerSelectedDate}', ${idx})" class="p-2 text-gray-300 hover:text-red-400 transition"><i data-lucide="x-circle" class="w-5 h-5"></i></button>
+                                    <button onclick="window.clearPlannerRecipe('${window.plannerSelectedDate}', ${idx})" class="p-2 text-gray-300 hover:text-red-400 transition"><i data-lucide="x-circle" class="w-5 h-5"></i></button>
                                 </div>
                             `;
                         }
@@ -2124,7 +2111,7 @@
             }
             
             dailyHtml += `
-                <div class="bg-gray-50/50 p-4 rounded-2xl border border-dashed border-gray-200 flex items-center justify-between cursor-pointer hover:bg-purple-50 hover:border-purple-200 transition" onclick="openPlannerModal()">
+                <div class="bg-gray-50/50 p-4 rounded-2xl border border-dashed border-gray-200 flex items-center justify-between cursor-pointer hover:bg-purple-50 hover:border-purple-200 transition" onclick="window.openPlannerModal()">
                     <div class="flex-1 text-left">
                         <p class="font-bold text-sm text-gray-400">+ 加入餐單</p>
                     </div>
@@ -2136,10 +2123,9 @@
                 c.innerHTML = dailyHtml;
                 lucide.createIcons();
             });
-        }
-        window.renderPlanner = renderPlanner;
+        };
 
-        function openPlannerModal() {
+        window.openPlannerModal = function() {
             const manualInput = document.getElementById('planner-manual-input');
             if(manualInput) manualInput.value = '';
             
@@ -2152,7 +2138,7 @@
             db.forEach(d => (d.flavors||[]).forEach(f => {
                 hasRecipes = true;
                 html += `
-                    <div class="p-3 bg-gray-50 rounded-xl border border-gray-100 flex justify-between items-center cursor-pointer hover:bg-purple-50 hover:border-purple-200 transition" onclick="selectPlannerRecipe('${d.id}', '${f.id}')">
+                    <div class="p-3 bg-gray-50 rounded-xl border border-gray-100 flex justify-between items-center cursor-pointer hover:bg-purple-50 hover:border-purple-200 transition" onclick="window.selectPlannerRecipe('${d.id}', '${f.id}')">
                         <span class="font-bold text-sm text-gray-700">${d.name} <span class="text-gray-400 text-xs">- ${f.name}</span></span>
                         <i data-lucide="plus-circle" class="w-5 h-5 text-purple-500"></i>
                     </div>
@@ -2168,19 +2154,17 @@
                 modal.classList.add('flex');
             }
             lucide.createIcons();
-        }
-        window.openPlannerModal = openPlannerModal;
+        };
 
-        function closePlannerModal() {
+        window.closePlannerModal = function() {
             const modal = document.getElementById('planner-modal');
             if(modal) {
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
             }
-        }
-        window.closePlannerModal = closePlannerModal;
+        };
 
-        async function addManualPlanner() {
+        window.addManualPlanner = async function() {
             const input = document.getElementById('planner-manual-input');
             const text = input ? input.value.trim() : '';
             if(!text) return window.customAlert("請輸入菜式或餐廳名稱！");
@@ -2192,10 +2176,9 @@
             await setDoc(doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'planner'), plannerDb);
             window.closePlannerModal();
             window.showToast("已自訂餐單項目 ✍️");
-        }
-        window.addManualPlanner = addManualPlanner;
+        };
 
-        async function selectPlannerRecipe(dishId, flavorId) {
+        window.selectPlannerRecipe = async function(dishId, flavorId) {
             if (!currentUser) return;
             
             if (!Array.isArray(plannerDb[window.plannerSelectedDate])) plannerDb[window.plannerSelectedDate] = [];
@@ -2204,10 +2187,9 @@
             await setDoc(doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'planner'), plannerDb);
             window.closePlannerModal();
             window.showToast("已從庫內加入餐單 🗓️");
-        }
-        window.selectPlannerRecipe = selectPlannerRecipe;
+        };
 
-        async function clearPlannerRecipe(dateStr, idx) {
+        window.clearPlannerRecipe = async function(dateStr, idx) {
             if (!currentUser) return;
             
             if (Array.isArray(plannerDb[dateStr])) {
@@ -2216,11 +2198,10 @@
             }
             
             await setDoc(doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'planner'), plannerDb);
-        }
-        window.clearPlannerRecipe = clearPlannerRecipe;
+        };
 
         // --- 其他工具與食譜操作 ---
-        function setRating(id, val) {
+        window.setRating = function(id, val) {
             const el = document.getElementById(id);
             if(el) el.value = val;
             for(let i=1; i<=4; i++) {
@@ -2228,18 +2209,15 @@
                 if (!b) continue;
                 b.className = (i == val) ? "py-3 rounded-xl border-blue-500 bg-blue-500 text-white font-bold transition shadow-lg" : "py-3 rounded-xl border border-gray-100 bg-white text-gray-400 font-bold transition hover:bg-gray-50";
             }
-        }
-        window.setRating = setRating;
+        };
 
-        function appendFlavor(id, txt) {
+        window.appendFlavor = function(id, txt) {
             const el = document.getElementById(id);
             if (!el) return;
             let vals = el.value.split(',').map(s => s.trim()).filter(s => s);
             if (!vals.includes(txt)) { vals.push(txt); el.value = vals.join(', '); }
-        }
-        window.appendFlavor = appendFlavor;
+        };
 
-        // --- AI 製作食譜 (智能選擇模型) ---
         window.generateAI = async function() {
             const nameEl = document.getElementById('input-dish');
             if(!nameEl) return;
@@ -2308,9 +2286,9 @@
                 window.customAlert(friendlyMsg); 
             }
             finally { if(loading) { loading.classList.add('hidden'); loading.classList.remove('flex'); } }
-        }
+        };
 
-        async function shareRecipe(dishId, flavorId) {
+        window.shareRecipe = async function(dishId, flavorId) {
             const dish = db.find(d => d.id === dishId);
             const flavor = dish?.flavors.find(f => f.id === flavorId);
             if(!dish || !flavor) return;
@@ -2319,8 +2297,7 @@
                 await navigator.clipboard.writeText(text);
                 window.showToast("食譜已複製 ✅");
             } catch (e) { window.showToast("複製失敗"); }
-        }
-        window.shareRecipe = shareRecipe;
+        };
 
         window.saveRecord = async function(btnEl) {
             const parentContext = btnEl ? btnEl.closest('.bg-gray-50') || document : document;
@@ -2384,7 +2361,7 @@
             }, record.note);
         };
 
-        async function deleteRecord(id) {
+        window.deleteRecord = async function(id) {
             window.customConfirm("確定要刪除呢個製作記錄？", async () => {
                 const dish = db.find(d => d.id === currentDishId);
                 const flavor = dish?.flavors.find(f => f.id === currentFlavorId);
@@ -2394,10 +2371,9 @@
                 window.showToast("記錄已刪除");
                 window.renderPost(currentDishId, currentFlavorId);
             });
-        }
-        window.deleteRecord = deleteRecord;
+        };
 
-        function deleteCurrentRecipe() {
+        window.deleteCurrentRecipe = function() {
             window.customConfirm("確定要永久刪除呢個食譜？此動作無法還原。", async () => {
                 const dish = db.find(d => d.id === currentDishId);
                 if(!dish) return;
@@ -2410,21 +2386,19 @@
                 window.navigate('home');
                 window.showToast("食譜已刪除 🗑️");
             });
-        }
-        window.deleteCurrentRecipe = deleteCurrentRecipe;
+        };
 
-        async function toggleFavorite() {
+        window.toggleFavorite = async function() {
             const dish = db.find(d => d.id === currentDishId);
             const flavor = dish?.flavors.find(f => f.id === currentFlavorId);
             if(!flavor) return;
             flavor.isFavorite = !flavor.isFavorite;
             await window.syncToCloud(dish);
             window.renderPost(currentDishId, currentFlavorId);
-        }
-        window.toggleFavorite = toggleFavorite;
+        };
 
-        async function saveNewRecipe(e) {
-            e.preventDefault();
+        window.saveNewRecipe = async function(e) {
+            if(e) e.preventDefault();
             const nameEl = document.getElementById('input-dish');
             const flavorEl = document.getElementById('input-flavor');
             if(!nameEl || !flavorEl) return;
@@ -2463,10 +2437,9 @@
                 setTimeout(()=>window.navigate('recipe', nDish.id, newF.id), 500); 
             }
             window.showToast("食譜已發佈！🍳");
-        }
-        window.saveNewRecipe = saveNewRecipe;
+        };
 
-        function openEditModal() {
+        window.openEditModal = function() {
             const dish = db.find(d => d.id === currentDishId);
             const flavor = dish?.flavors.find(f => f.id === currentFlavorId);
             if(!flavor) return;
@@ -2485,19 +2458,17 @@
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
             }
-        }
-        window.openEditModal = openEditModal;
+        };
 
-        function closeEditModal() { 
+        window.closeEditModal = function() { 
             const modal = document.getElementById('edit-modal');
             if(modal) {
                 modal.classList.add('hidden'); 
                 modal.classList.remove('flex');
             }
-        }
-        window.closeEditModal = closeEditModal;
+        };
 
-        async function saveEdit() {
+        window.saveEdit = async function() {
             const dish = db.find(d => d.id === currentDishId);
             const flavor = dish?.flavors.find(f => f.id === currentFlavorId);
             if(!flavor) return;
@@ -2515,46 +2486,49 @@
             window.closeEditModal();
             window.showToast("修改已儲存 💾");
             window.renderPost(currentDishId, currentFlavorId);
-        }
-        window.saveEdit = saveEdit;
+        };
 
-        function saveApiKey() { 
+        window.saveApiKey = function() { 
             const keyEl = document.getElementById('setting-api-key');
             if(keyEl) {
                 localStorage.setItem('geminiApiKey', keyEl.value.trim()); 
                 window.showToast("API 金鑰已儲存 ✅"); 
             }
-        }
-        window.saveApiKey = saveApiKey;
+        };
 
-        function forceSync() { 
+        window.forceSync = function() { 
             window.refreshCurrentView(); 
             window.showToast("強制同步完成 ✅"); 
-        }
-        window.forceSync = forceSync;
+        };
 
-        function handleAvatarUpload(e) {
+        window.handleAvatarUpload = function(e) {
             const file = e.target.files[0];
             if(file) {
                 window.resizeImage(file, data => { 
                     window.userAvatar = data; 
                     localStorage.setItem('cookingPapaAvatar', data); 
-                    updateAvatarDisplays(); 
+                    window.updateAvatarDisplays(); 
                     window.showToast("頭像已更新 ✨"); 
                 });
             }
-        }
-        window.handleAvatarUpload = handleAvatarUpload;
+        };
 
         document.addEventListener('DOMContentLoaded', () => { 
             lucide.createIcons(); 
-            updateAvatarDisplays(); 
+            
+            const recipeForm = document.getElementById('recipe-form');
+            if(recipeForm) {
+                // 將事件綁定直接交由 JS 處理，避免 HTML inline onsubmit 搵唔到 function
+                recipeForm.addEventListener('submit', window.saveNewRecipe);
+            }
+
+            if(window.updateAvatarDisplays) window.updateAvatarDisplays(); 
             const keyEl = document.getElementById('setting-api-key');
             if(keyEl) keyEl.value = localStorage.getItem('geminiApiKey') || "";
             
-            window.renderFlavorTags(); // 渲染動態口味標籤
+            if(window.renderFlavorTags) window.renderFlavorTags();
             if (window.renderCalorieCalendar) window.renderCalorieCalendar();
-            window.navigate('home'); 
+            if(window.navigate) window.navigate('home'); 
         });
     </script>
 </body>
