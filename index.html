@@ -62,6 +62,36 @@
         </div>
     </div>
 
+    <!-- 卡路里參考建議視窗 -->
+    <div id="calorie-ref-modal" class="fixed inset-0 bg-black/60 z-[100] hidden flex-col items-center justify-center p-4 text-left">
+        <div class="absolute inset-0" onclick="closeCalorieRefModal()"></div>
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative z-10 flex flex-col max-h-[85vh]">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 shrink-0"></div>
+            <h3 class="text-lg font-bold mb-4 text-center shrink-0 flex items-center justify-center gap-2 text-gray-900">
+                <i data-lucide="info" class="w-5 h-5 text-red-500"></i> 每日攝取量建議
+            </h3>
+            <div class="flex-1 overflow-y-auto space-y-3 text-sm text-gray-700 scroll-container pr-2">
+                <div class="bg-red-50 p-4 rounded-xl border border-red-100">
+                    <p class="font-bold text-red-700 mb-2 border-b border-red-200 pb-1">👦👧 青年 (18-29歲)</p>
+                    <div class="flex justify-between"><span class="font-bold">男性：</span><span>約 2400 kcal</span></div>
+                    <div class="flex justify-between mt-1"><span class="font-bold">女性：</span><span>約 1900 kcal</span></div>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <p class="font-bold text-blue-700 mb-2 border-b border-blue-200 pb-1">👨👩 成年 (30-59歲)</p>
+                    <div class="flex justify-between"><span class="font-bold">男性：</span><span>約 2350 kcal</span></div>
+                    <div class="flex justify-between mt-1"><span class="font-bold">女性：</span><span>約 1850 kcal</span></div>
+                </div>
+                <div class="bg-green-50 p-4 rounded-xl border border-green-100">
+                    <p class="font-bold text-green-700 mb-2 border-b border-green-200 pb-1">👴👵 老年 (60歲以上)</p>
+                    <div class="flex justify-between"><span class="font-bold">男性：</span><span>約 2100 kcal</span></div>
+                    <div class="flex justify-between mt-1"><span class="font-bold">女性：</span><span>約 1650 kcal</span></div>
+                </div>
+                <p class="text-[10px] text-gray-400 mt-2 leading-relaxed">* 數據僅供參考，實際需求會因個人身高、體重、活動量及新陳代謝而有所不同。</p>
+            </div>
+            <button onclick="closeCalorieRefModal()" class="w-full py-3.5 bg-gray-100 rounded-2xl font-bold text-gray-600 transition mt-4 shrink-0 hover:bg-gray-200">關閉</button>
+        </div>
+    </div>
+
     <!-- 編輯卡路里視窗 -->
     <div id="calorie-edit-modal" class="fixed inset-0 bg-black/60 z-[100] hidden flex-col items-center justify-center p-4 text-left">
         <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center relative">
@@ -102,9 +132,9 @@
             <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden shrink-0"></div>
             <h3 class="text-lg font-bold mb-4 text-center shrink-0">加入餐單項目</h3>
             
-            <div class="flex gap-2 mb-5 shrink-0">
-                <input type="text" id="planner-manual-input" placeholder="手寫菜式 / 餐廳..." class="flex-1 px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20">
-                <button onclick="addManualPlanner()" class="px-5 py-3 bg-blue-500 text-white rounded-xl text-sm font-bold shadow-md active:scale-95 transition">加入</button>
+            <div class="flex gap-2 mb-5 shrink-0 h-12 w-full">
+                <input type="text" id="planner-manual-input" placeholder="手寫菜式 / 餐廳..." class="flex-1 min-w-0 px-4 h-full bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20">
+                <button onclick="addManualPlanner()" class="shrink-0 px-5 h-full bg-blue-500 text-white rounded-xl text-sm font-bold shadow-md active:scale-95 transition flex items-center justify-center">加入</button>
             </div>
             
             <p class="text-[11px] font-bold text-gray-400 uppercase mb-3 shrink-0 tracking-wider">或從食譜庫選擇</p>
@@ -147,9 +177,9 @@
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1.5 ml-1">卡路里</label>
-                        <div class="flex bg-gray-50 rounded-xl border border-gray-100 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-500/10 transition-all overflow-hidden">
-                            <input type="number" id="edit-kcal" placeholder="kcal" class="w-full px-3 py-3 bg-transparent outline-none text-sm min-w-0">
-                            <button type="button" onclick="estimateRecipeKcal('edit')" class="px-2 text-red-400 hover:text-red-500 flex items-center justify-center shrink-0" title="AI 估算"><i data-lucide="sparkles" class="w-4 h-4"></i></button>
+                        <div class="flex bg-gray-50 rounded-xl border border-gray-100 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-500/10 transition-all overflow-hidden h-[46px]">
+                            <input type="number" id="edit-kcal" placeholder="kcal" class="w-full h-full px-3 bg-transparent outline-none text-sm min-w-0">
+                            <button type="button" onclick="estimateRecipeKcal('edit')" class="px-2 text-red-400 hover:text-red-500 flex items-center justify-center shrink-0 h-full" title="AI 估算"><i data-lucide="sparkles" class="w-4 h-4"></i></button>
                         </div>
                     </div>
                 </div>
@@ -244,9 +274,9 @@
 
             <div id="home-content-search" class="hidden pb-10">
                 <div class="px-5 py-4 border-b border-gray-50 bg-white">
-                    <div class="relative flex-1">
+                    <div class="relative flex-1 h-10 w-full">
                         <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
-                        <input type="text" id="search-input" oninput="performSearch()" class="w-full bg-gray-100 rounded-2xl py-2.5 pl-10 pr-4 outline-none text-sm transition-all focus:bg-gray-200/50" placeholder="搜尋菜式、口味或風格...">
+                        <input type="text" id="search-input" oninput="performSearch()" class="w-full h-full bg-gray-100 rounded-2xl py-2 pl-10 pr-4 outline-none text-sm transition-all focus:bg-gray-200/50" placeholder="搜尋菜式、口味或風格...">
                     </div>
                     <div class="mt-3 flex gap-2">
                         <button id="filter-planning-btn" onclick="toggleSearchFilterPlanning()" class="px-3 py-1.5 bg-gray-50 rounded-full text-xs font-bold text-gray-500 transition-colors flex items-center gap-1 border border-gray-200">
@@ -270,14 +300,32 @@
         <main id="view-fridge" class="view-section bg-white min-h-[90vh] pb-12">
             <div class="p-6">
                 <h3 class="font-bold text-2xl mb-2 flex items-center gap-2 text-gray-900"><i data-lucide="refrigerator" class="w-6 h-6 text-blue-500"></i> 雪櫃清垃圾</h3>
-                <p class="text-xs text-gray-500 mb-6">輸入你雪櫃淨低嘅食材，AI 會提供 3 個食譜建議！</p>
-                <textarea id="fridge-input" rows="3" class="w-full bg-gray-50 p-4 rounded-2xl border border-gray-100 text-sm outline-none focus:border-blue-400 mb-4 transition-all" placeholder="例如：半個椰菜、兩隻雞蛋... (可註明想煮中式/西式等風格)"></textarea>
-                <button onclick="aiFridgeSearch()" class="w-full py-3.5 bg-blue-500 text-white rounded-2xl font-bold shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 active:scale-95 transition-all"><i data-lucide="sparkles" class="w-4 h-4"></i> AI 提供 3 個建議</button>
+                <p class="text-xs text-gray-500 mb-6">輸入或影低你雪櫃淨低嘅食材，AI 會提供食譜建議！</p>
                 
-                <div id="fridge-results-container" class="hidden mt-6 border-t border-gray-100 pt-6">
+                <div class="border-2 border-dashed border-gray-200 rounded-2xl p-4 text-center bg-white mb-3 relative overflow-hidden transition-all hover:border-blue-300">
+                    <input type="file" accept="image/*" class="fridge-image-upload absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onchange="previewFridgeImage(this)">
+                    <div class="fridge-image-preview hidden absolute inset-0 w-full h-full bg-cover bg-center z-10"></div>
+                    <i data-lucide="camera" class="w-6 h-6 text-blue-300 mx-auto mb-1 relative z-0"></i>
+                    <p class="text-[10px] font-bold text-gray-400 relative z-0">影低雪櫃食材 (可選配文字)</p>
+                </div>
+
+                <textarea class="fridge-input-text w-full bg-gray-50 p-4 rounded-2xl border border-gray-100 text-sm outline-none focus:border-blue-400 mb-4 transition-all" rows="3" placeholder="例如：半個椰菜、兩隻雞蛋... (可註明想煮中式/西式等風格)"></textarea>
+                
+                <button onclick="aiFridgeSearch(this)" class="w-full py-3.5 bg-blue-500 text-white rounded-2xl font-bold shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 active:scale-95 transition-all"><i data-lucide="sparkles" class="w-4 h-4"></i> AI 提供 3 個建議</button>
+                
+                <div class="fridge-results-container hidden mt-6 border-t border-gray-100 pt-6">
                     <p class="text-sm font-bold mb-3 text-gray-800">請揀選你想儲存嘅食譜 (可多選)：</p>
-                    <div id="fridge-results" class="space-y-3 mb-4"></div>
-                    <button onclick="saveFridgeRecipes()" class="w-full py-3.5 bg-orange-500 text-white rounded-2xl font-bold shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 active:scale-95 transition-all">加入選中食譜至「準備挑戰」</button>
+                    <div class="fridge-results space-y-3 mb-4"></div>
+                    
+                    <!-- 重新製作按鈕 -->
+                    <div class="flex gap-2 mt-4">
+                        <button onclick="aiFridgeSearch(this)" class="shrink-0 px-4 py-3.5 bg-gray-100 text-gray-700 rounded-2xl font-bold shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all hover:bg-gray-200 text-[13px]">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i> 重新製作
+                        </button>
+                        <button onclick="saveFridgeRecipes()" class="flex-1 py-3.5 bg-orange-500 text-white rounded-2xl font-bold shadow-lg shadow-orange-500/30 flex items-center justify-center gap-1.5 active:scale-95 transition-all text-[13px]">
+                            儲存選中食譜
+                        </button>
+                    </div>
                 </div>
             </div>
         </main>
@@ -289,9 +337,10 @@
                     <h3 class="font-bold text-2xl flex items-center gap-2 text-gray-900"><i data-lucide="shopping-cart" class="w-6 h-6 text-orange-500"></i> 購物清單</h3>
                 </div>
                 
-                <div class="flex gap-2 mb-4 shrink-0">
-                    <input type="text" id="grocery-manual-input" placeholder="新增購買項目 (如: 洗潔精)" class="flex-1 px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-500/20">
-                    <button onclick="addCustomGrocery()" class="px-5 py-3 bg-orange-500 text-white rounded-xl text-sm font-bold shadow-md active:scale-95 transition">加入</button>
+                <!-- 修正手機版走位：統一使用 h-12, w-full, min-w-0, shrink-0 -->
+                <div class="flex gap-2 mb-4 h-12 w-full">
+                    <input type="text" id="grocery-manual-input" placeholder="新增購買項目 (如: 洗潔精)" class="flex-1 min-w-0 px-4 h-full bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-500/20">
+                    <button onclick="addCustomGrocery()" class="shrink-0 px-5 h-full bg-orange-500 text-white rounded-xl text-sm font-bold shadow-md active:scale-95 transition flex items-center justify-center whitespace-nowrap">加入</button>
                 </div>
 
                 <div class="flex gap-2 mb-5">
@@ -305,8 +354,10 @@
         <!-- 獨立視圖：卡路里記帳 -->
         <main id="view-calorie" class="view-section bg-white min-h-[90vh] pb-12">
             <div class="p-6">
+                <!-- 標題與參考按鈕 -->
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="font-bold text-2xl flex items-center gap-2 text-gray-900"><i data-lucide="flame" class="w-6 h-6 text-red-500"></i> 卡路里記帳</h3>
+                    <button onclick="openCalorieRefModal()" class="text-xs bg-red-50 text-red-500 px-3 py-2 rounded-xl font-bold flex items-center gap-1 hover:bg-red-100 transition shadow-sm"><i data-lucide="info" class="w-3.5 h-3.5"></i> 攝取建議</button>
                 </div>
 
                 <div class="bg-white p-5 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 mb-6">
@@ -474,9 +525,9 @@
                         
                         <div class="pt-3 border-t border-gray-200 mt-2">
                             <p class="text-[11px] text-gray-500 mb-2 font-bold">修改密碼</p>
-                            <div class="flex gap-2 mb-4">
-                                <input type="password" id="new-password-input" placeholder="新密碼 (最少 6 位)" class="flex-1 min-w-0 px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none text-sm focus:ring-2 focus:ring-blue-500/20">
-                                <button onclick="handleChangePassword()" class="shrink-0 px-5 py-3 bg-gray-900 text-white rounded-xl text-sm font-bold transition active:scale-95 flex items-center justify-center">更新</button>
+                            <div class="flex gap-2 mb-4 h-12 w-full">
+                                <input type="password" id="new-password-input" placeholder="新密碼 (最少 6 位)" class="flex-1 min-w-0 px-4 h-full bg-white border border-gray-200 rounded-xl outline-none text-sm focus:ring-2 focus:ring-blue-500/20">
+                                <button onclick="handleChangePassword()" class="shrink-0 w-20 h-full bg-gray-900 text-white rounded-xl text-sm font-bold transition active:scale-95 flex items-center justify-center">更新</button>
                             </div>
                             <button onclick="handleLogout()" class="w-full py-3.5 bg-white border border-red-200 text-red-500 rounded-xl text-sm font-bold transition active:scale-95 hover:bg-red-50">登出帳號</button>
                         </div>
@@ -500,7 +551,7 @@
                 </div>
 
                 <div class="text-center pt-12">
-                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.16.3 🚀</p>
+                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.18.0 🚀</p>
                 </div>
             </div>
         </main>
@@ -665,6 +716,20 @@
             }, 2500);
         }
         window.showToast = showToast;
+
+        window.previewFridgeImage = function(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = input.parentElement.querySelector('.fridge-image-preview');
+                    if(preview) {
+                        preview.style.backgroundImage = `url(${e.target.result})`;
+                        preview.classList.remove('hidden');
+                    }
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        };
 
         function resizeImage(file, cb) {
             const r = new FileReader();
@@ -993,15 +1058,6 @@
         }
         window.performSearch = performSearch;
 
-        let touchStartX = 0;
-        const viewRecipeEl = document.getElementById('view-recipe');
-        if(viewRecipeEl) {
-            viewRecipeEl.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
-            viewRecipeEl.addEventListener('touchend', e => {
-                if (e.changedTouches[0].screenX - touchStartX > 130) window.navigate('home');
-            });
-        }
-
         // --- 4. 數據操作 ---
         async function syncToCloud(data) {
             if (!currentUser) return;
@@ -1234,7 +1290,7 @@
                             <div class="border-2 border-dashed ${isPlanningActive ? 'border-orange-300 bg-orange-50/30' : 'border-gray-200 bg-gray-50/50'} rounded-3xl p-6 text-center">
                                 <input type="file" id="rec-img" accept="image/*" multiple class="text-xs mb-3 w-full text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-600">
                                 <input type="text" id="rec-note" class="w-full text-xs p-3 bg-white border border-gray-100 rounded-xl mb-3 outline-none focus:ring-1 focus:ring-blue-500" placeholder="分享今次煮成點？心得...">
-                                <button onclick="saveRecord()" class="w-full ${isPlanningActive ? 'bg-orange-500 shadow-orange-500/20' : 'bg-blue-500 shadow-blue-500/20'} text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition-all">
+                                <button onclick="saveRecord(this)" class="w-full ${isPlanningActive ? 'bg-orange-500 shadow-orange-500/20' : 'bg-blue-500 shadow-blue-500/20'} text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition-all">
                                     ${isPlanningActive ? '上載相片完成挑戰 🎉' : '發佈新記錄'}
                                 </button>
                             </div>
@@ -1245,6 +1301,31 @@
             lucide.createIcons();
         }
         window.renderPost = renderPost;
+
+        // --- 新增：記錄相片多重預覽 ---
+        window.previewRecordImages = function(input) {
+            const previewContainer = input.parentElement.querySelector('.record-image-preview');
+            const placeholder = input.parentElement.querySelector('.upload-placeholder');
+            
+            if (input.files && input.files.length > 0) {
+                previewContainer.innerHTML = '';
+                const maxPreview = Math.min(input.files.length, 3); // 最多預覽3張
+                
+                for(let i=0; i<maxPreview; i++) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewContainer.innerHTML += `<div class="aspect-square rounded-lg overflow-hidden border border-gray-200"><img src="${e.target.result}" class="w-full h-full object-cover"></div>`;
+                    }
+                    reader.readAsDataURL(input.files[i]);
+                }
+                previewContainer.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            } else {
+                previewContainer.innerHTML = '';
+                previewContainer.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+            }
+        };
 
         function renderFavorites() {
             const grid = document.getElementById('favorites-grid');
@@ -1356,22 +1437,61 @@
         }
         window.estimateRecipeKcal = estimateRecipeKcal;
 
-        // --- 雪櫃清垃圾 (3選項多選) ---
+        // --- 輔助函數：取得當前顯示的元素 ---
+        function getActiveEl(selector) {
+            const activeView = document.querySelector('.view-section.active');
+            if (activeView) {
+                const el = activeView.querySelector(selector);
+                if (el) return el;
+            }
+            return document.querySelector(selector);
+        }
+
+        // --- 雪櫃清垃圾 (3選項多選, 支援相片識別, 重新製作) ---
         window.fridgeTempRecipes = [];
-        async function aiFridgeSearch() {
-            const input = document.getElementById('fridge-input').value.trim();
-            if (!input) return window.customAlert("請輸入雪櫃淨低嘅食材！");
+        async function aiFridgeSearch(btnEl) {
+            const parentContext = btnEl ? btnEl.closest('.view-section') : document.querySelector('.view-section.active');
+            const inputEl = parentContext.querySelector('.fridge-input-text');
+            const fileInput = parentContext.querySelector('.fridge-image-upload');
+            
+            const input = inputEl ? inputEl.value.trim() : '';
+            const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+            
+            if (!input && !file) return window.customAlert("請輸入或影低雪櫃淨低嘅食材！");
             
             document.getElementById('ai-loading').classList.remove('hidden');
             const apiKey = (localStorage.getItem('geminiApiKey') || "").trim();
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
             
             try {
+                let promptMsg = `請幫我諗 3 道唔同嘅家常菜食譜，用廣東話輸出完整資料。`;
+                
+                if (file && input) {
+                    promptMsg = `請根據相片入面嘅食材，加上以下特別要求：「${input}」，` + promptMsg;
+                } else if (file) {
+                    promptMsg = `請根據相片入面嘅食材，` + promptMsg;
+                } else {
+                    promptMsg = `我雪櫃有以下食材或要求：${input}。` + promptMsg;
+                }
+                
+                // 加入隨機防緩存編號，確保每次「重新製作」都會有唔同結果
+                promptMsg += ` (請提供 3 個與上次唔同嘅全新建議，隨機防緩存編號: ${Math.floor(Math.random()*10000)})`;
+
+                let parts = [{ text: promptMsg }];
+                if (file) {
+                    const base64 = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.readAsDataURL(file);
+                    });
+                    parts.push({ inlineData: { data: base64.split(',')[1], mimeType: file.type } });
+                }
+
                 const res = await fetch(url, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: `我雪櫃有以下食材或要求：${input}。請幫我諗 3 道唔同嘅家常菜食譜，用廣東話輸出完整資料。` }]}],
+                        contents: [{ parts }],
                         systemInstruction: { parts: [{ text: `只准輸出純 JSON Array：[{"name":"食譜名","flavor":"口味特色","ingredients":"材料1\\n材料2 (必須用 \\n 分隔每項)","steps":"1. 步驟一\\n2. 步驟二 (必須用 \\n 分隔每個步驟)","tags":["標籤"], "kcal":整數數字}]` }]},
                         generationConfig: { responseMimeType: "application/json" }
                     })
@@ -1383,7 +1503,7 @@
                 window.fridgeTempRecipes.forEach((r, i) => {
                     html += `
                         <label class="flex items-start gap-3 p-4 bg-white rounded-2xl border border-gray-100 cursor-pointer shadow-sm hover:border-orange-300 transition">
-                            <input type="checkbox" id="fridge-chk-${i}" class="mt-1 w-5 h-5 accent-orange-500 rounded text-orange-500 focus:ring-orange-500">
+                            <input type="checkbox" id="fridge-chk-${i}" class="fridge-checkbox mt-1 w-5 h-5 accent-orange-500 rounded text-orange-500 focus:ring-orange-500">
                             <div>
                                 <p class="font-bold text-sm text-gray-800">${r.name}</p>
                                 <p class="text-[11px] text-gray-500 mt-1">${r.flavor}</p>
@@ -1395,10 +1515,11 @@
                         </label>
                     `;
                 });
-                const fridgeResults = document.getElementById('fridge-results');
+                const fridgeResults = parentContext.querySelector('.fridge-results');
                 if(fridgeResults) fridgeResults.innerHTML = html;
-                const container = document.getElementById('fridge-results-container');
+                const container = parentContext.querySelector('.fridge-results-container');
                 if(container) container.classList.remove('hidden');
+
                 window.showToast("AI 已經為你準備好 3 個建議！🍳");
             } catch (e) { window.customAlert("AI 暫時休息中 (請檢查 Key 或 VPN)"); }
             finally { document.getElementById('ai-loading').classList.add('hidden'); }
@@ -1406,9 +1527,10 @@
         window.aiFridgeSearch = aiFridgeSearch;
 
         async function saveFridgeRecipes() {
+            const activeView = document.querySelector('.view-section.active');
             let added = 0;
             for (let i = 0; i < window.fridgeTempRecipes.length; i++) {
-                const chk = document.getElementById(`fridge-chk-${i}`);
+                const chk = activeView.querySelector(`#fridge-chk-${i}`);
                 if (chk && chk.checked) {
                     const r = window.fridgeTempRecipes[i];
                     let dish = db.find(d => d.name === r.name);
@@ -1423,10 +1545,20 @@
             }
             if (added > 0) {
                 window.showToast(`已加入 ${added} 個食譜至準備挑戰！⏳`);
-                const container = document.getElementById('fridge-results-container');
+                const container = activeView.querySelector('.fridge-results-container');
                 if(container) container.classList.add('hidden');
-                const input = document.getElementById('fridge-input');
+                const input = activeView.querySelector('.fridge-input-text');
                 if(input) input.value = '';
+                
+                // 儲存後才重置檔案上載 UI
+                const fileInput = activeView.querySelector('.fridge-image-upload');
+                if(fileInput) fileInput.value = '';
+                const preview = activeView.querySelector('.fridge-image-preview');
+                if(preview) {
+                    preview.classList.add('hidden');
+                    preview.style.backgroundImage = '';
+                }
+                
                 window.navigate('home');
             } else {
                 window.customAlert('請最少剔選一個食譜！');
@@ -1438,20 +1570,16 @@
         window.currentGroceryMode = 'recipe';
         function renderGroceryList(mode = window.currentGroceryMode) {
             window.currentGroceryMode = mode;
-            const container = document.getElementById('grocery-list-container');
-            if(!container) return;
             
-            const btnRec = document.getElementById('grocery-tab-recipe');
-            const btnFlat = document.getElementById('grocery-tab-flat');
-            if(btnRec && btnFlat) {
-                if(mode === 'recipe') {
-                    btnRec.className = 'flex-1 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold transition';
-                    btnFlat.className = 'flex-1 py-2 bg-gray-50 text-gray-600 rounded-xl text-xs font-bold transition';
-                } else {
-                    btnFlat.className = 'flex-1 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold transition';
-                    btnRec.className = 'flex-1 py-2 bg-gray-50 text-gray-600 rounded-xl text-xs font-bold transition';
-                }
-            }
+            // 同時更新兩個視圖中的清單以保持一致性
+            const containers = document.querySelectorAll('#grocery-list-container');
+            
+            document.querySelectorAll('#grocery-tab-recipe').forEach(btn => {
+                btn.className = mode === 'recipe' ? 'flex-1 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold transition' : 'flex-1 py-2 bg-gray-50 text-gray-600 rounded-xl text-xs font-bold transition';
+            });
+            document.querySelectorAll('#grocery-tab-flat').forEach(btn => {
+                btn.className = mode === 'flat' ? 'flex-1 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold transition' : 'flex-1 py-2 bg-gray-50 text-gray-600 rounded-xl text-xs font-bold transition';
+            });
 
             let html = '';
             let hasItems = false;
@@ -1528,7 +1656,7 @@
             }
             
             if (!hasItems) {
-                container.innerHTML = '<p class="text-center text-gray-400 py-10 text-sm">目前無待買項目，清單空空如也！</p>';
+                containers.forEach(c => c.innerHTML = '<p class="text-center text-gray-400 py-10 text-sm">目前無待買項目，清單空空如也！</p>');
                 return;
             }
 
@@ -1542,7 +1670,7 @@
 
                 flatItems.sort((a, b) => groceryOrder.indexOf(a.key) - groceryOrder.indexOf(b.key));
 
-                html += `<div id="grocery-sortable-list" class="space-y-2 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">`;
+                html += `<div class="grocery-sortable-list space-y-2 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">`;
                 flatItems.forEach(i => {
                     const isChecked = groceryChecked[i.key] ? 'checked' : '';
                     const textClass = groceryChecked[i.key] ? 'line-through text-gray-300' : 'text-gray-700';
@@ -1566,12 +1694,13 @@
                 html += `</div>`;
             }
             
-            container.innerHTML = html;
-            lucide.createIcons();
+            containers.forEach(c => {
+                c.innerHTML = html;
+                lucide.createIcons();
+            });
 
             if (mode === 'flat') {
-                const el = document.getElementById('grocery-sortable-list');
-                if (el) {
+                document.querySelectorAll('.grocery-sortable-list').forEach(el => {
                     new Sortable(el, {
                         handle: '.grocery-handle',
                         animation: 150,
@@ -1585,7 +1714,7 @@
                             localStorage.setItem('groceryOrder', JSON.stringify(groceryOrder));
                         }
                     });
-                }
+                });
             }
         }
         window.renderGroceryList = renderGroceryList;
@@ -1593,11 +1722,11 @@
         function toggleGrocery(key) {
             groceryChecked[key] = !groceryChecked[key];
             localStorage.setItem('groceryChecked', JSON.stringify(groceryChecked));
-            const textEl = document.getElementById(`g-text-${key}`);
-            if(textEl) {
+            const textEls = document.querySelectorAll(`#g-text-${key}`);
+            textEls.forEach(textEl => {
                 if(groceryChecked[key]) textEl.className = 'block text-sm font-medium transition-colors line-through text-gray-300';
                 else textEl.className = 'block text-sm font-medium transition-colors text-gray-700';
-            }
+            });
         }
         window.toggleGrocery = toggleGrocery;
 
@@ -1609,7 +1738,8 @@
         window.deleteGrocery = deleteGrocery;
 
         async function addCustomGrocery() {
-            const input = document.getElementById('grocery-manual-input');
+            const activeView = document.querySelector('.view-section.active');
+            const input = activeView ? activeView.querySelector('#grocery-manual-input') : document.getElementById('grocery-manual-input');
             const text = input ? input.value.trim() : '';
             if(!text) return;
             if (!currentUser) return window.customAlert("請先登入以儲存自訂項目");
@@ -1618,7 +1748,7 @@
             customGroceryDb.push(newItem);
 
             await setDoc(doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'grocery'), { items: customGroceryDb });
-            input.value = '';
+            if(input) input.value = '';
             window.showToast("已加入購物清單 🛒");
         }
         window.addCustomGrocery = addCustomGrocery;
@@ -1642,24 +1772,31 @@
         window.changeCalMonth = changeCalMonth;
 
         function saveCalLimit() {
-            const el = document.getElementById('cal-limit-input');
-            if(el) {
-                localStorage.setItem('calorieLimit', el.value);
+            const els = document.querySelectorAll('#cal-limit-input');
+            if(els.length > 0) {
+                localStorage.setItem('calorieLimit', els[0].value);
                 window.renderCalorieCalendar();
                 window.showToast("已更新每日上限");
             }
         }
         window.saveCalLimit = saveCalLimit;
 
+        window.openCalorieRefModal = function() {
+            const m = document.getElementById('calorie-ref-modal');
+            if(m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+        };
+
+        window.closeCalorieRefModal = function() {
+            const m = document.getElementById('calorie-ref-modal');
+            if(m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+        };
+
         function renderCalorieCalendar() {
             const year = window.calDate.getFullYear();
             const month = window.calDate.getMonth();
             
-            const monthDisplay = document.getElementById('cal-month-display');
-            if (monthDisplay) monthDisplay.innerText = `${year}年${month + 1}月`;
-            
-            const limitInput = document.getElementById('cal-limit-input');
-            if (limitInput) limitInput.value = localStorage.getItem('calorieLimit') || '2000';
+            document.querySelectorAll('#cal-month-display').forEach(el => el.innerText = `${year}年${month + 1}月`);
+            document.querySelectorAll('#cal-limit-input').forEach(el => el.value = localStorage.getItem('calorieLimit') || '2000');
 
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -1696,15 +1833,11 @@
                 `;
             }
             
-            const calGrid = document.getElementById('cal-grid');
-            if(calGrid) calGrid.innerHTML = gridHtml;
+            document.querySelectorAll('#cal-grid').forEach(el => el.innerHTML = gridHtml);
             
             const selectedText = window.calSelectedDate === new Date().toISOString().split('T')[0] ? '今日' : window.calSelectedDate;
-            const selDateText = document.getElementById('cal-selected-date-text');
-            if (selDateText) selDateText.innerText = selectedText;
-            
-            const calDateInput = document.getElementById('calorie-date');
-            if(calDateInput) calDateInput.value = window.calSelectedDate;
+            document.querySelectorAll('#cal-selected-date-text').forEach(el => el.innerText = selectedText);
+            document.querySelectorAll('#calorie-date').forEach(el => el.value = window.calSelectedDate);
             
             if(window.renderCalorieHistory) window.renderCalorieHistory();
         }
@@ -1734,9 +1867,11 @@
         window.previewCalorieImage = previewCalorieImage;
 
         async function aiCalculateCalorie() {
-            const textEl = document.getElementById('calorie-text');
-            const weightEl = document.getElementById('calorie-weight');
-            const fileEl = document.getElementById('calorie-image');
+            const activeView = document.querySelector('.view-section.active');
+            const textEl = activeView.querySelector('#calorie-text');
+            const weightEl = activeView.querySelector('#calorie-weight');
+            const fileEl = activeView.querySelector('#calorie-image');
+            
             const textInput = textEl ? textEl.value.trim() : '';
             const weightInput = weightEl ? weightEl.value.trim() : '';
             const fileInput = fileEl ? fileEl.files[0] : null;
@@ -1745,7 +1880,7 @@
             if (!textInput && !fileInput) return window.customAlert("請輸入食物名稱或上載相片！");
             
             const loading = document.getElementById('ai-loading');
-            if(loading) loading.classList.remove('hidden');
+            if(loading) { loading.classList.remove('hidden'); loading.classList.add('flex'); }
             const apiKey = (localStorage.getItem('geminiApiKey') || "").trim();
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
             
@@ -1787,7 +1922,7 @@
                 if(textEl) textEl.value = '';
                 if(weightEl) weightEl.value = '';
                 if(fileEl) fileEl.value = '';
-                const preview = document.getElementById('calorie-image-preview');
+                const preview = activeView.querySelector('#calorie-image-preview');
                 if(preview) {
                     preview.classList.add('hidden');
                     preview.nextElementSibling.classList.remove('hidden');
@@ -1796,15 +1931,14 @@
             } catch (e) {
                 window.customAlert("AI 估算失敗，請確保金鑰有效及網絡正常。");
             } finally {
-                if(loading) loading.classList.add('hidden');
+                if(loading) { loading.classList.add('hidden'); loading.classList.remove('flex'); }
             }
         }
         window.aiCalculateCalorie = aiCalculateCalorie;
 
         function renderCalorieHistory() {
-            const container = document.getElementById('calorie-history-container');
-            if (!container) return;
-            container.innerHTML = '';
+            const containers = document.querySelectorAll('#calorie-history-container');
+            if (containers.length === 0) return;
             
             const dayItems = calorieDb.filter(item => {
                 let d = item.dateStr || new Date(item.timestamp || Date.now()).toISOString().split('T')[0];
@@ -1813,16 +1947,16 @@
             
             let total = 0;
             dayItems.forEach(i => total += (i.kcal || 0));
-            const dailyTotalEl = document.getElementById('cal-daily-total');
-            if (dailyTotalEl) dailyTotalEl.innerText = `${total} kcal`;
+            document.querySelectorAll('#cal-daily-total').forEach(el => el.innerText = `${total} kcal`);
             
             if (dayItems.length === 0) {
-                container.innerHTML = '<p class="text-xs text-gray-400 text-center py-6 border-2 border-dashed border-gray-100 rounded-2xl">呢日暫時無飲食記錄</p>';
+                containers.forEach(c => c.innerHTML = '<p class="text-xs text-gray-400 text-center py-6 border-2 border-dashed border-gray-100 rounded-2xl">呢日暫時無飲食記錄</p>');
                 return;
             }
             
+            let html = '';
             dayItems.sort((a,b) => b.timestamp - a.timestamp).forEach(item => {
-                container.innerHTML += `
+                html += `
                     <div class="bg-white p-4 rounded-2xl border border-gray-100 flex justify-between items-center shadow-sm hover:border-red-100 transition">
                         <div class="flex-1 pr-2 text-left">
                             <p class="font-bold text-sm text-gray-800">${item.name}</p>
@@ -1836,7 +1970,10 @@
                     </div>
                 `;
             });
-            lucide.createIcons();
+            containers.forEach(c => {
+                c.innerHTML = html;
+                lucide.createIcons();
+            });
         }
         window.renderCalorieHistory = renderCalorieHistory;
 
@@ -1907,12 +2044,12 @@
         window.selectPlannerDate = selectPlannerDate;
 
         function renderPlanner() {
-            const container = document.getElementById('planner-grid');
-            if(!container) return;
+            const containers = document.querySelectorAll('#planner-grid');
+            if(containers.length === 0) return;
             
             const year = window.plannerCalDate.getFullYear();
             const month = window.plannerCalDate.getMonth();
-            document.getElementById('planner-month-display').innerText = `${year}年${month + 1}月`;
+            document.querySelectorAll('#planner-month-display').forEach(el => el.innerText = `${year}年${month + 1}月`);
             
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -1936,14 +2073,12 @@
                     </div>
                 `;
             }
-            container.innerHTML = gridHtml;
+            containers.forEach(c => c.innerHTML = gridHtml);
 
             const selectedText = window.plannerSelectedDate === new Date().toISOString().split('T')[0] ? '今日' : window.plannerSelectedDate;
-            document.getElementById('planner-selected-date-text').innerText = selectedText;
+            document.querySelectorAll('#planner-selected-date-text').forEach(el => el.innerText = selectedText);
 
-            const dailyContainer = document.getElementById('planner-daily-container');
             let dailyHtml = '';
-            
             let currentPlans = plannerDb[window.plannerSelectedDate];
             if (!Array.isArray(currentPlans)) {
                 currentPlans = currentPlans ? [currentPlans] : [];
@@ -1997,8 +2132,10 @@
                 </div>
             `;
             
-            dailyContainer.innerHTML = dailyHtml;
-            lucide.createIcons();
+            document.querySelectorAll('#planner-daily-container').forEach(c => {
+                c.innerHTML = dailyHtml;
+                lucide.createIcons();
+            });
         }
         window.renderPlanner = renderPlanner;
 
@@ -2102,7 +2239,8 @@
         }
         window.appendFlavor = appendFlavor;
 
-        async function generateAI() {
+        // --- AI 製作食譜 (智能選擇模型) ---
+        window.generateAI = async function() {
             const nameEl = document.getElementById('input-dish');
             if(!nameEl) return;
             const name = nameEl.value.trim();
@@ -2112,24 +2250,42 @@
             if (!name) return window.customAlert("請先輸入菜名！");
             
             const loading = document.getElementById('ai-loading');
-            if(loading) loading.classList.remove('hidden');
+            if(loading) { loading.classList.remove('hidden'); loading.classList.add('flex'); }
+            
             const apiKey = (localStorage.getItem('geminiApiKey') || "").trim();
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+            
+            // 防呆：錯誤使用 Firebase 金鑰
+            if (apiKey === firebaseConfig.apiKey) {
+                if(loading) { loading.classList.add('hidden'); loading.classList.remove('flex'); }
+                return window.customAlert("⚠️ 錯誤：你輸入咗 Firebase 嘅金鑰！\n\nFirebase 同 Gemini AI 係兩套獨立系統，請前往 Google AI Studio 申請一條全新嘅 Gemini API 金鑰。");
+            }
+            
+            // 自動切換模型
+            const modelName = apiKey ? "gemini-1.5-flash" : "gemini-2.5-flash-preview-09-2025";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
             
             try {
                 let promptTxt = `請用廣東話提供「${name}」詳細食譜。`;
                 if (style) promptTxt += `風格：${style}。`;
                 if (serving) promptTxt += `份量要求：${serving}。`;
 
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: promptTxt }]}],
-                        systemInstruction: { parts: [{ text: `只准輸出純 JSON，格式：{"flavor":"風格名","ingredients":"材料1\\n材料2 (必須用 \\n 分隔每項)","steps":"1. 步驟一\\n2. 步驟二 (必須用 \\n 分隔每個步驟)","tags":["標籤"],"kcal":350}` }]},
-                        generationConfig: { responseMimeType: "application/json" }
-                    })
-                });
+                // 實現重試機制
+                let res;
+                for(let i=0; i<3; i++) {
+                    res = await fetch(url, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: promptTxt }]}],
+                            systemInstruction: { parts: [{ text: `只准輸出純 JSON，格式：{"flavor":"風格名","ingredients":"材料1\\n材料2 (必須用 \\n 分隔每項)","steps":"1. 步驟一\\n2. 步驟二 (必須用 \\n 分隔每個步驟)","tags":["標籤"],"kcal":350}` }]},
+                            generationConfig: { responseMimeType: "application/json" }
+                        })
+                    });
+                    if (res.ok) break;
+                    if (i === 2) throw new Error(await res.text());
+                    await new Promise(r => setTimeout(r, 1000 * (i+1)));
+                }
+
                 const data = await res.json();
                 const recipe = JSON.parse(data.candidates[0].content.parts[0].text);
                 
@@ -2140,10 +2296,19 @@
                 const kEl = document.getElementById('input-kcal'); if(kEl && recipe.kcal) kEl.value = recipe.kcal;
                 
                 window.showToast("AI 已構思完畢！✨");
-            } catch (e) { window.customAlert("AI 暫時休息中 (請檢查 Key 或 VPN)"); }
-            finally { if(loading) loading.classList.add('hidden'); }
+            } catch (e) { 
+                let friendlyMsg = "未能連接 AI 大廚！";
+                if(e.message && (e.message.includes("leaked") || e.message.includes("API key not valid"))) {
+                    friendlyMsg += "\n你輸入嘅 API 金鑰無效，或者已被 Google 停用。";
+                } else if(e.message && e.message.includes("location is not supported")) {
+                    friendlyMsg += "\n請確保你已開啟 VPN，並設定為全局模式 (Global)。";
+                } else if(!apiKey) {
+                    friendlyMsg += "\n由於公用配額已滿，請去「設定」輸入你自己嘅 API 金鑰。";
+                }
+                window.customAlert(friendlyMsg); 
+            }
+            finally { if(loading) { loading.classList.add('hidden'); loading.classList.remove('flex'); } }
         }
-        window.generateAI = generateAI;
 
         async function shareRecipe(dishId, flavorId) {
             const dish = db.find(d => d.id === dishId);
@@ -2157,9 +2322,11 @@
         }
         window.shareRecipe = shareRecipe;
 
-        window.saveRecord = async function() {
-            const fileInput = document.getElementById('rec-img');
-            const noteInput = document.getElementById('rec-note');
+        window.saveRecord = async function(btnEl) {
+            const parentContext = btnEl ? btnEl.closest('.bg-gray-50') || document : document;
+            const fileInput = parentContext.querySelector('#rec-img');
+            const noteInput = parentContext.querySelector('#rec-note');
+            
             const files = fileInput && fileInput.files ? Array.from(fileInput.files) : [];
             const note = noteInput ? noteInput.value : '';
             
@@ -2314,13 +2481,19 @@
             
             window.setRating('edit-rating', flavor.rating || 4);
             const modal = document.getElementById('edit-modal');
-            if(modal) modal.classList.remove('hidden');
+            if(modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
         }
         window.openEditModal = openEditModal;
 
         function closeEditModal() { 
             const modal = document.getElementById('edit-modal');
-            if(modal) modal.classList.add('hidden'); 
+            if(modal) {
+                modal.classList.add('hidden'); 
+                modal.classList.remove('flex');
+            }
         }
         window.closeEditModal = closeEditModal;
 
@@ -2341,6 +2514,7 @@
             await window.syncToCloud(dish);
             window.closeEditModal();
             window.showToast("修改已儲存 💾");
+            window.renderPost(currentDishId, currentFlavorId);
         }
         window.saveEdit = saveEdit;
 
