@@ -4,7 +4,7 @@
 
         // --- 1. Firebase 初始化 ---
         const firebaseConfig = {
-          apiKey: "REMOVED_FIREBASE_API_KEY",
+          apiKey: "AIzaSyAEmsDD6_Y1sfX7lIcordEpmrr0uMA_nEM",
           authDomain: "cooking-papa-51c66.firebaseapp.com",
           projectId: "cooking-papa-51c66",
           storageBucket: "cooking-papa-51c66.firebasestorage.app",
