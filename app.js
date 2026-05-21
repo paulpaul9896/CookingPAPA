@@ -1,5 +1,5 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- 1. Firebase 初始化 ---
@@ -237,24 +237,14 @@
         };
 
         // --- 2. 帳號與登入邏輯 ---
-        window.handleAuth = async function(type) {
-            const email = document.getElementById('auth-email').value.trim();
-            const password = document.getElementById('auth-password').value;
-            if(!email || !password) return window.customAlert("請輸入電郵同密碼！");
-            if(password.length < 6) return window.customAlert("密碼最少需要 6 個字元。");
-
+        window.handleGoogleSignIn = async function() {
+            const provider = new GoogleAuthProvider();
             try {
-                if(type === 'signup') {
-                    await createUserWithEmailAndPassword(auth, email, password);
-                    window.showToast("註冊成功！🎉");
-                } else {
-                    await signInWithEmailAndPassword(auth, email, password);
-                    window.showToast("已登入！👋");
-                }
+                await signInWithPopup(auth, provider);
+                window.showToast("已登入！👋");
             } catch(e) {
-                if (e.code === 'auth/operation-not-allowed') window.customAlert("⚠️ Firebase 設定錯誤：\n請前往 Firebase 後台開啟「Email/Password」登入。");
-                else if (e.code === 'auth/email-already-in-use') window.customAlert("此電郵已被註冊，請直接登入。");
-                else if (e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') window.customAlert("電郵或密碼錯誤。");
+                if (e.code === 'auth/popup-closed-by-user') return;
+                else if (e.code === 'auth/operation-not-allowed') window.customAlert("⚠️ Firebase 設定錯誤：\n請前往 Firebase 後台開啟「Google」登入。");
                 else window.customAlert("登入失敗：" + e.message);
             }
         };
@@ -264,25 +254,6 @@
             window.showToast("已登出，資料將恢復為本地暫存");
         };
 
-        window.handleChangePassword = async function() {
-            if (!currentUser || currentUser.isAnonymous) return window.customAlert("請先登入！");
-            const newPwdEl = document.getElementById('new-password-input');
-            const newPwd = newPwdEl ? newPwdEl.value : '';
-            
-            if (newPwd.length < 6) return window.customAlert("新密碼最少需要 6 個字元。");
-            
-            try {
-                await updatePassword(currentUser, newPwd);
-                if (newPwdEl) newPwdEl.value = '';
-                window.showToast("密碼已成功更新！✅");
-            } catch (error) {
-                if (error.code === 'auth/requires-recent-login') {
-                    window.customAlert("基於安全理由，請登出並重新登入後，再嘗試更改密碼。");
-                } else {
-                    window.customAlert("更改密碼失敗：" + error.message);
-                }
-            }
-        };
 
         onAuthStateChanged(auth, async (user) => {
             currentUser = user;
@@ -297,7 +268,7 @@
                 if(userInfoEl) userInfoEl.classList.remove('hidden'); 
                 if(loginFormEl) loginFormEl.classList.add('hidden');
                 if(userEmailEl) userEmailEl.innerText = user.email;
-                if(displayNameEl) displayNameEl.innerText = (user.email.split('@')[0]) + " 大廚";
+                if(displayNameEl) displayNameEl.innerText = (user.displayName || user.email.split('@')[0]) + " 大廚";
             } else {
                 if(userInfoEl) userInfoEl.classList.add('hidden'); 
                 if(loginFormEl) loginFormEl.classList.remove('hidden');
