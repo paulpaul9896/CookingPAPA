@@ -1,21 +1,578 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/logo.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cooking PAPA</title>
+    
+    <!-- 📱 手機主畫面 (PWA) 設定 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Cooking PAPA">
-    <link rel="apple-touch-icon" href="/logo.png">
+    <link rel="icon" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
     <meta name="theme-color" content="#fafafa">
+    
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Noto+Sans+HK:wght@400;700&display=swap" rel="stylesheet">
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+    
+    <!-- Tailwind & Icons & SortableJS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    
+    <style>
+        body { 
+            background-color: #fafafa; 
+            -webkit-tap-highlight-color: transparent; 
+            font-family: 'Noto Sans HK', sans-serif;
+            margin: 0; padding: 0;
+            overflow-x: hidden;
+        }
+        .view-section { display: none; animation: fadeIn 0.2s ease-out; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .ig-title { font-family: 'Dancing Script', cursive; font-size: 1.6rem; }
+        ::-webkit-scrollbar { display: none; }
+        
+        .scroll-container { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        button:active { transform: scale(0.96); opacity: 0.8; }
+        
+        .grid-img-container { position: relative; width: 100%; padding-top: 100%; overflow: hidden; background-color: #f3f4f6; }
+        .grid-img-container img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+    </style>
+</head>
+<body class="text-gray-900 min-h-screen pb-24">
+
+    <!-- Toast 通知系統 -->
+    <div id="toast-notification" style="position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-20px);background:rgba(0,0,0,0.85);color:#fff;padding:10px 20px;border-radius:12px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:all 0.3s ease;pointer-events:none;white-space:nowrap;box-shadow:0 10px 25px rgba(0,0,0,0.2)"></div>
+
+    <!-- 自家製彈窗 -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/60 z-[100] hidden flex-col items-center justify-center p-4 text-left">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center">
+            <h3 id="custom-modal-title" class="text-lg font-bold mb-2">提示</h3>
+            <p id="custom-modal-msg" class="text-sm text-gray-600 mb-6 whitespace-pre-line px-2"></p>
+            <input type="text" id="custom-modal-input" class="hidden w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 mb-4 text-sm">
+            <div class="flex gap-3">
+                <button id="custom-modal-cancel" class="hidden flex-1 py-3 bg-gray-100 rounded-2xl font-bold text-gray-600 transition">取消</button>
+                <button id="custom-modal-confirm" class="flex-1 py-3 bg-blue-500 rounded-2xl font-bold text-white shadow-lg transition">確定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 卡路里參考建議視窗 -->
+    <div id="calorie-ref-modal" class="fixed inset-0 bg-black/60 z-[100] hidden flex-col items-center justify-center p-4 text-left">
+        <div class="absolute inset-0" onclick="closeCalorieRefModal()"></div>
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative z-10 flex flex-col max-h-[85vh]">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 shrink-0"></div>
+            <h3 class="text-lg font-bold mb-4 text-center shrink-0 flex items-center justify-center gap-2 text-gray-900">
+                <i data-lucide="info" class="w-5 h-5 text-red-500"></i> 每日攝取量建議
+            </h3>
+            <div class="flex-1 overflow-y-auto space-y-3 text-sm text-gray-700 scroll-container pr-2">
+                <div class="bg-red-50 p-4 rounded-xl border border-red-100">
+                    <p class="font-bold text-red-700 mb-2 border-b border-red-200 pb-1">👦👧 青年 (18-29歲)</p>
+                    <div class="flex justify-between"><span class="font-bold">男性：</span><span>約 2400 kcal</span></div>
+                    <div class="flex justify-between mt-1"><span class="font-bold">女性：</span><span>約 1900 kcal</span></div>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <p class="font-bold text-blue-700 mb-2 border-b border-blue-200 pb-1">👨👩 成年 (30-59歲)</p>
+                    <div class="flex justify-between"><span class="font-bold">男性：</span><span>約 2350 kcal</span></div>
+                    <div class="flex justify-between mt-1"><span class="font-bold">女性：</span><span>約 1850 kcal</span></div>
+                </div>
+                <div class="bg-green-50 p-4 rounded-xl border border-green-100">
+                    <p class="font-bold text-green-700 mb-2 border-b border-green-200 pb-1">👴👵 老年 (60歲以上)</p>
+                    <div class="flex justify-between"><span class="font-bold">男性：</span><span>約 2100 kcal</span></div>
+                    <div class="flex justify-between mt-1"><span class="font-bold">女性：</span><span>約 1650 kcal</span></div>
+                </div>
+                <p class="text-[10px] text-gray-400 mt-2 leading-relaxed">* 數據僅供參考，實際需求會因個人身高、體重、活動量及新陳代謝而有所不同。</p>
+            </div>
+            <button onclick="closeCalorieRefModal()" class="w-full py-3.5 bg-gray-100 rounded-2xl font-bold text-gray-600 transition mt-4 shrink-0 hover:bg-gray-200">關閉</button>
+        </div>
+    </div>
+
+    <!-- 編輯卡路里視窗 -->
+    <div id="calorie-edit-modal" class="fixed inset-0 bg-black/60 z-[100] hidden flex-col items-center justify-center p-4 text-left">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center relative">
+            <h3 class="text-lg font-bold mb-4 text-gray-900">修改卡路里記錄</h3>
+            <input type="hidden" id="edit-cal-id">
+            <div class="space-y-3 mb-6">
+                <input type="text" id="edit-cal-name" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-red-400 text-sm" placeholder="食物名稱">
+                <div class="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 focus-within:border-red-400 transition-all h-12">
+                    <input type="number" id="edit-cal-kcal" class="w-full h-full bg-transparent outline-none text-sm text-center min-w-0" placeholder="卡路里數值">
+                    <span class="text-gray-500 text-sm font-bold ml-1 shrink-0">kcal</span>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="closeEditCalorieModal()" class="flex-1 py-3 bg-gray-100 rounded-2xl font-bold text-gray-600 transition hover:bg-gray-200">取消</button>
+                <button onclick="saveCalorieEdit()" class="flex-1 py-3 bg-red-500 rounded-2xl font-bold text-white shadow-lg transition hover:bg-red-600">確定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 選擇食譜匯出分享視窗 -->
+    <div id="share-modal" class="fixed inset-0 bg-black/60 z-[80] hidden flex-col items-center justify-end sm:justify-center">
+        <div class="absolute inset-0" onclick="closeShareModal()"></div>
+        <div class="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl relative z-10 flex flex-col max-h-[85vh]">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden shrink-0"></div>
+            <h3 class="text-lg font-bold mb-4 text-center shrink-0 flex items-center justify-center gap-2">
+                <i data-lucide="share-2" class="w-5 h-5 text-blue-500"></i> 選擇要匯出嘅食譜
+            </h3>
+            <p class="text-xs text-gray-500 mb-4 text-center shrink-0">點擊食譜後，系統會自動複製圖文並茂嘅文字，方便你貼上 WhatsApp 或 IG 分享畀朋友！</p>
+            <div id="share-recipe-list" class="flex-1 overflow-y-auto pr-2 space-y-2 scroll-container text-left pb-4"></div>
+            <button onclick="closeShareModal()" class="w-full py-3.5 bg-gray-100 rounded-2xl font-bold text-gray-600 transition mt-2 shrink-0 hover:bg-gray-200">取消</button>
+        </div>
+    </div>
+
+    <!-- 選擇食譜放入餐單視窗 -->
+    <div id="planner-modal" class="fixed inset-0 bg-black/60 z-[80] hidden flex-col items-center justify-end sm:justify-center">
+        <div class="absolute inset-0" onclick="closePlannerModal()"></div>
+        <div class="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl relative z-10 flex flex-col max-h-[85vh]">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden shrink-0"></div>
+            <h3 class="text-lg font-bold mb-4 text-center shrink-0">加入餐單項目</h3>
+            
+            <div class="flex gap-2 mb-5 shrink-0 h-12 w-full">
+                <input type="text" id="planner-manual-input" placeholder="手寫菜式 / 餐廳..." class="flex-1 min-w-0 px-4 h-full bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20">
+                <button onclick="addManualPlanner()" class="shrink-0 px-5 h-full bg-blue-500 text-white rounded-xl text-sm font-bold shadow-md active:scale-95 transition flex items-center justify-center">加入</button>
+            </div>
+            
+            <p class="text-[11px] font-bold text-gray-400 uppercase mb-3 shrink-0 tracking-wider">或從食譜庫選擇</p>
+            
+            <div id="planner-recipe-list" class="flex-1 overflow-y-auto pr-2 space-y-2 scroll-container text-left pb-4"></div>
+            <button onclick="closePlannerModal()" class="w-full py-3.5 bg-gray-100 rounded-2xl font-bold text-gray-600 transition mt-2 shrink-0 hover:bg-gray-200">取消</button>
+        </div>
+    </div>
+
+    <!-- 編輯貼文視窗 -->
+    <div id="edit-modal" class="fixed inset-0 bg-black/60 z-[60] hidden flex flex-col items-center justify-end sm:justify-center">
+        <div class="absolute inset-0" onclick="closeEditModal()"></div>
+        <div class="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl relative z-10 flex flex-col max-h-[90vh]">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden shrink-0"></div>
+            <h3 class="text-lg font-bold mb-4 text-center shrink-0">編輯食譜貼文</h3>
+            
+            <div class="flex-1 overflow-y-auto pr-2 space-y-5 pb-2 scroll-container text-left">
+                <label class="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100 cursor-pointer">
+                    <input type="checkbox" id="edit-is-planning" class="w-5 h-5 text-blue-500 rounded border-gray-300 accent-blue-500">
+                    <div class="flex-1"><p class="text-[12px] font-bold text-gray-700">設為「準備挑戰」項目 ⏳</p></div>
+                </label>
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">口味及風格</label>
+                        <input type="text" id="edit-flavor" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white text-sm">
+                        <!-- 動態渲染標籤 -->
+                        <div id="flavor-tags-edit" class="flex flex-wrap gap-1.5 mt-2 ml-1"></div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">份量 / 吋尺</label>
+                        <input type="text" id="edit-serving" placeholder="如: 2人" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:bg-white text-sm">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1.5 ml-1">時間(分)</label>
+                        <input type="number" id="edit-cooktime" placeholder="分鐘" class="w-full px-3 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1.5 ml-1">卡路里</label>
+                        <div class="flex bg-gray-50 rounded-xl border border-gray-100 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-500/10 transition-all overflow-hidden h-[46px]">
+                            <input type="number" id="edit-kcal" placeholder="kcal" class="w-full h-full px-3 bg-transparent outline-none text-sm min-w-0">
+                            <button type="button" onclick="estimateRecipeKcal('edit')" class="px-2 text-red-400 hover:text-red-500 flex items-center justify-center shrink-0 h-full" title="AI 估算"><i data-lucide="sparkles" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-400 uppercase mb-2 ml-1">評分</label>
+                    <input type="hidden" id="edit-rating">
+                    <div class="grid grid-cols-2 gap-2 text-[10px]">
+                        <button type="button" onclick="setRating('edit-rating', 1)" id="btn-rating-edit-rating-1" class="py-2.5 rounded-xl border bg-white font-bold">🤢 中伏</button>
+                        <button type="button" onclick="setRating('edit-rating', 2)" id="btn-rating-edit-rating-2" class="py-2.5 rounded-xl border bg-white font-bold">🤐 試一次</button>
+                        <button type="button" onclick="setRating('edit-rating', 3)" id="btn-rating-edit-rating-3" class="py-2.5 rounded-xl border bg-white font-bold">🙂 得閒整</button>
+                        <button type="button" onclick="setRating('edit-rating', 4)" id="btn-rating-edit-rating-4" class="py-2.5 rounded-xl border bg-white font-bold">🤤 要著兩條褲</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">材料</label>
+                    <textarea id="edit-ingredients" rows="4" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm resize-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">步驟</label>
+                    <textarea id="edit-steps" rows="5" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-sm resize-none"></textarea>
+                </div>
+            </div>
+            <div class="flex gap-3 pt-4 border-t border-gray-50 shrink-0 mt-2 pb-6">
+                <button onclick="closeEditModal()" class="flex-1 py-3.5 bg-gray-100 rounded-2xl font-bold text-gray-600 transition">取消</button>
+                <button onclick="saveEdit()" class="flex-1 py-3.5 bg-blue-500 text-white rounded-2xl font-bold shadow-lg shadow-blue-500/30">儲存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI 載入中 -->
+    <div id="ai-loading" class="fixed inset-0 bg-black/70 z-[100] hidden flex-col items-center justify-center p-6">
+        <div class="bg-white p-8 rounded-[2.5rem] flex flex-col items-center shadow-2xl text-center">
+            <i data-lucide="sparkles" class="w-10 h-10 text-blue-500 animate-bounce mb-4"></i>
+            <p class="text-sm font-bold text-gray-800">AI 大廚正在運作中...</p>
+        </div>
+    </div>
+
+    <!-- 頂部標題欄 -->
+    <header class="bg-white/90 backdrop-blur-md border-b border-gray-100 sticky top-0 z-40 px-4 py-3 flex justify-between items-center max-w-2xl mx-auto w-full">
+        <div class="flex items-center gap-1 cursor-pointer" onclick="navigate('home')">
+            <h1 class="ig-title text-gray-900 select-none">Cooking PAPA</h1>
+            <i data-lucide="chevron-down" class="w-4 h-4 mt-1"></i>
+        </div>
+        <div class="flex items-center gap-5">
+            <button onclick="navigate('search')" class="hover:text-blue-500 transition-colors"><i data-lucide="search" class="w-6 h-6"></i></button>
+            <button onclick="navigate('planner')" class="hover:text-blue-500 transition-colors"><i data-lucide="calendar-days" class="w-6 h-6"></i></button>
+            <button onclick="navigate('calorie')" class="hover:text-blue-500 transition-colors"><i data-lucide="flame" class="w-6 h-6"></i></button>
+        </div>
+    </header>
+
+    <div class="max-w-2xl mx-auto bg-white min-h-[90vh] shadow-sm">
+        
+        <!-- 視圖 1：首頁 (個人檔案) -->
+        <main id="view-home" class="view-section active text-left">
+            <div class="px-5 py-8 flex items-center gap-6 sm:gap-12">
+                <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full p-1 bg-gradient-to-tr from-yellow-400 via-orange-500 to-fuchsia-600 flex-shrink-0 cursor-pointer shadow-md" onclick="document.getElementById('avatar-upload').click()">
+                    <div class="w-full h-full rounded-full bg-white p-0.5">
+                        <img id="home-avatar-img" src="" class="w-full h-full rounded-full object-cover bg-orange-50">
+                    </div>
+                </div>
+                <input type="file" id="avatar-upload" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)">
+                
+                <div class="flex-1 flex justify-around text-center">
+                    <div class="flex flex-col"><span class="font-bold text-lg" id="stat-dishes">0</span><span class="text-[10px] text-gray-400 font-bold uppercase">菜式</span></div>
+                    <div class="flex flex-col"><span class="font-bold text-lg" id="stat-flavors">0</span><span class="text-[10px] text-gray-400 font-bold uppercase">口味</span></div>
+                    <div class="flex flex-col"><span class="font-bold text-lg" id="stat-records">0</span><span class="text-[10px] text-gray-400 font-bold uppercase">記錄</span></div>
+                </div>
+            </div>
+            
+            <div class="px-6 pb-6 text-left">
+                <h2 id="display-name" class="font-bold text-sm tracking-tight text-gray-900">爸爸大廚 cooking_papa</h2>
+                <p class="text-[13px] text-gray-600 mt-1 whitespace-pre-line leading-relaxed">紀錄為屋企人煮嘅每一餐😋🍽️</p>
+                <div class="mt-5 flex gap-3 w-full">
+                    <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-black font-bold text-[12px] py-2.5 rounded-xl transition" onclick="navigate('profile')">設定與備份</button>
+                    <!-- 修改為分享食譜功能 -->
+                    <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-black font-bold text-[12px] py-2.5 rounded-xl transition" onclick="openShareModal()">匯出分享食譜</button>
+                </div>
+            </div>
+
+            <!-- Tab 工具列 -->
+            <div class="flex border-t border-b border-gray-100 mt-2 bg-white sticky top-[58px] z-30">
+                <div id="tab-btn-grid" onclick="switchHomeTab('grid')" class="flex-1 flex justify-center py-3.5 border-t-2 border-black -mt-[2px] text-gray-900 cursor-pointer transition-colors"><i data-lucide="grid" class="w-5 h-5"></i></div>
+                <div id="tab-btn-search" onclick="switchHomeTab('search')" class="flex-1 flex justify-center py-3.5 border-t-2 border-transparent -mt-[2px] text-gray-400 cursor-pointer transition-colors"><i data-lucide="search" class="w-5 h-5"></i></div>
+                <div id="tab-btn-favorites" onclick="switchHomeTab('favorites')" class="flex-1 flex justify-center py-3.5 border-t-2 border-transparent -mt-[2px] text-gray-400 cursor-pointer transition-colors"><i data-lucide="heart" class="w-5 h-5"></i></div>
+            </div>
+
+            <!-- 首頁子分頁內容 -->
+            <div id="home-content-grid" class="block pb-10">
+                <div id="dishes-grid" class="grid grid-cols-3 gap-0.5 bg-gray-100"></div>
+            </div>
+
+            <div id="home-content-search" class="hidden pb-10">
+                <div class="px-5 py-4 border-b border-gray-50 bg-white">
+                    <div class="relative flex-1 h-10 w-full">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                        <input type="text" id="search-input" oninput="performSearch()" class="w-full h-full bg-gray-100 rounded-2xl py-2 pl-10 pr-4 outline-none text-sm transition-all focus:bg-gray-200/50" placeholder="搜尋菜式、口味或風格...">
+                    </div>
+                    <div class="mt-3 flex gap-2">
+                        <button id="filter-planning-btn" onclick="toggleSearchFilterPlanning()" class="px-3 py-1.5 bg-gray-50 rounded-full text-xs font-bold text-gray-500 transition-colors flex items-center gap-1 border border-gray-200">
+                            <i data-lucide="hourglass" class="w-3 h-3"></i> 只顯示「準備挑戰」
+                        </button>
+                    </div>
+                </div>
+                <div id="search-results" class="grid grid-cols-3 gap-0.5 bg-gray-100"></div>
+            </div>
+
+            <div id="home-content-favorites" class="hidden pb-10">
+                <div class="p-6 border-b border-gray-50 flex items-center gap-2">
+                    <i data-lucide="heart" class="w-5 h-5 text-red-500 fill-red-500"></i>
+                    <h2 class="font-bold text-lg text-gray-900">我的收藏 ❤️</h2>
+                </div>
+                <div id="favorites-grid" class="grid grid-cols-3 gap-0.5 bg-gray-100"></div>
+            </div>
+        </main>
+
+        <!-- 獨立視圖：雪櫃清垃圾 -->
+        <main id="view-fridge" class="view-section bg-white min-h-[90vh] pb-12">
+            <div class="p-6">
+                <h3 class="font-bold text-2xl mb-2 flex items-center gap-2 text-gray-900"><i data-lucide="refrigerator" class="w-6 h-6 text-blue-500"></i> 雪櫃清垃圾</h3>
+                <p class="text-xs text-gray-500 mb-6">輸入或影低你雪櫃淨低嘅食材，AI 會提供食譜建議！</p>
+                
+                <div class="border-2 border-dashed border-gray-200 rounded-2xl p-4 text-center bg-white mb-3 relative overflow-hidden transition-all hover:border-blue-300">
+                    <input type="file" accept="image/*" class="fridge-image-upload absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onchange="previewFridgeImage(this)">
+                    <div class="fridge-image-preview hidden absolute inset-0 w-full h-full bg-cover bg-center z-10"></div>
+                    <i data-lucide="camera" class="w-6 h-6 text-blue-300 mx-auto mb-1 relative z-0"></i>
+                    <p class="text-[10px] font-bold text-gray-400 relative z-0">影低雪櫃食材 (可選配文字)</p>
+                </div>
+
+                <textarea class="fridge-input-text w-full bg-gray-50 p-4 rounded-2xl border border-gray-100 text-sm outline-none focus:border-blue-400 mb-4 transition-all" rows="3" placeholder="例如：半個椰菜、兩隻雞蛋... (可註明想煮中式/西式等風格)"></textarea>
+                
+                <button onclick="aiFridgeSearch(this)" class="w-full py-3.5 bg-blue-500 text-white rounded-2xl font-bold shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 active:scale-95 transition-all"><i data-lucide="sparkles" class="w-4 h-4"></i> AI 提供 3 個建議</button>
+                
+                <div class="fridge-results-container hidden mt-6 border-t border-gray-100 pt-6">
+                    <p class="text-sm font-bold mb-3 text-gray-800">請揀選你想儲存嘅食譜 (可多選)：</p>
+                    <div class="fridge-results space-y-3 mb-4"></div>
+                    
+                    <!-- 重新製作按鈕 -->
+                    <div class="flex gap-2 mt-4">
+                        <button onclick="clearFridgeResults(this)" class="shrink-0 px-3 sm:px-4 py-3.5 bg-gray-100 text-gray-700 rounded-2xl font-bold shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all hover:bg-gray-200 text-[13px]">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i> 放棄
+                        </button>
+                        <button onclick="aiFridgeSearch(this)" class="shrink-0 px-3 sm:px-4 py-3.5 bg-blue-50 text-blue-600 rounded-2xl font-bold shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all hover:bg-blue-100 text-[13px]">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i> 重做
+                        </button>
+                        <button onclick="saveFridgeRecipes()" class="flex-1 py-3.5 bg-orange-500 text-white rounded-2xl font-bold shadow-lg shadow-orange-500/30 flex items-center justify-center gap-1.5 active:scale-95 transition-all text-[13px]">
+                            儲存選中
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 獨立視圖：購物清單 -->
+        <main id="view-grocery" class="view-section bg-white min-h-[90vh] pb-12">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-bold text-2xl flex items-center gap-2 text-gray-900"><i data-lucide="shopping-cart" class="w-6 h-6 text-orange-500"></i> 購物清單</h3>
+                </div>
+                
+                <div class="flex gap-2 mb-4 h-12 w-full">
+                    <input type="text" id="grocery-manual-input" placeholder="新增購買項目 (如: 洗潔精)" class="flex-1 min-w-0 px-4 h-full bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-500/20">
+                    <button onclick="addCustomGrocery()" class="shrink-0 px-5 h-full bg-orange-500 text-white rounded-xl text-sm font-bold shadow-md active:scale-95 transition flex items-center justify-center whitespace-nowrap">加入</button>
+                </div>
+
+                <div class="flex gap-2 mb-5">
+                    <button id="grocery-tab-recipe" onclick="renderGroceryList('recipe')" class="flex-1 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold transition">按食譜分類</button>
+                    <button id="grocery-tab-flat" onclick="renderGroceryList('flat')" class="flex-1 py-2 bg-gray-50 text-gray-600 rounded-xl text-xs font-bold transition">合併清單 (可排序)</button>
+                </div>
+                <div id="grocery-list-container"></div>
+            </div>
+        </main>
+
+        <!-- 獨立視圖：卡路里記帳 -->
+        <main id="view-calorie" class="view-section bg-white min-h-[90vh] pb-12">
+            <div class="p-6">
+                <!-- 標題與參考按鈕 -->
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-2xl flex items-center gap-2 text-gray-900"><i data-lucide="flame" class="w-6 h-6 text-red-500"></i> 卡路里記帳</h3>
+                    <button onclick="openCalorieRefModal()" class="text-xs bg-red-50 text-red-500 px-3 py-2 rounded-xl font-bold flex items-center gap-1 hover:bg-red-100 transition shadow-sm"><i data-lucide="info" class="w-3.5 h-3.5"></i> 攝取建議</button>
+                </div>
+
+                <div class="bg-white p-5 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <button onclick="changeCalMonth(-1)" class="p-2 hover:bg-gray-50 rounded-full transition"><i data-lucide="chevron-left" class="w-5 h-5 text-gray-500"></i></button>
+                        <div class="text-center">
+                            <span id="cal-month-display" class="font-bold text-lg text-gray-800">月曆載入中...</span>
+                            <div class="text-[10px] text-gray-400 mt-1 flex items-center justify-center gap-1">
+                                每日上限: <input type="number" id="cal-limit-input" onchange="saveCalLimit()" class="w-12 text-center bg-gray-50 border border-gray-200 rounded font-bold text-gray-600" value="2000"> kcal
+                            </div>
+                        </div>
+                        <button onclick="changeCalMonth(1)" class="p-2 hover:bg-gray-50 rounded-full transition"><i data-lucide="chevron-right" class="w-5 h-5 text-gray-500"></i></button>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center text-[11px] text-gray-400 font-bold mb-2">
+                        <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+                    </div>
+                    <div id="cal-grid" class="grid grid-cols-7 gap-1.5"></div>
+                </div>
+
+                <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100 mb-6">
+                    <p class="text-xs font-bold text-gray-600 mb-3 flex items-center gap-1.5">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> 新增 <span id="cal-selected-date-text" class="text-red-500"></span> 記錄
+                        <input type="hidden" id="calorie-date">
+                    </p>
+                    <div class="border-2 border-dashed border-gray-200 rounded-2xl p-5 text-center bg-white mb-3 relative overflow-hidden transition-all hover:border-red-300">
+                        <input type="file" id="calorie-image" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onchange="previewCalorieImage(this)">
+                        <div id="calorie-image-preview" class="hidden absolute inset-0 w-full h-full bg-cover bg-center z-10"></div>
+                        <i data-lucide="camera" class="w-6 h-6 text-red-300 mx-auto mb-1 relative z-0"></i>
+                        <p class="text-[10px] font-bold text-gray-400 relative z-0">上載食物相片 (選填)</p>
+                    </div>
+                    <div class="flex gap-2 mb-3 h-12 w-full">
+                        <input type="text" id="calorie-text" class="flex-1 min-w-0 bg-white px-4 h-full rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400 transition-all" placeholder="食物名稱 (例如: 雞胸肉)">
+                        <div class="flex items-center bg-white border border-gray-200 rounded-xl px-3 focus-within:border-red-400 transition-all w-28 shrink-0 h-full">
+                            <input type="number" id="calorie-weight" class="w-full h-full text-sm outline-none bg-transparent text-center min-w-0" placeholder="重量">
+                            <span class="text-gray-500 text-sm font-bold ml-1 shrink-0">g</span>
+                        </div>
+                    </div>
+                    <button onclick="aiCalculateCalorie()" class="w-full py-3.5 bg-red-500 text-white rounded-xl font-bold shadow-lg shadow-red-500/20 flex items-center justify-center gap-2 active:scale-95 transition-all"><i data-lucide="activity" class="w-4 h-4"></i> 計算並記錄</button>
+                </div>
+
+                <h4 class="font-bold text-sm mb-4 border-t border-gray-100 pt-6 text-gray-800 flex justify-between items-end">
+                    <span>當日記錄</span>
+                    <span id="cal-daily-total" class="text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded-md text-xs">0 kcal</span>
+                </h4>
+                <div id="calorie-history-container" class="space-y-3"></div>
+            </div>
+        </main>
+
+        <!-- 獨立視圖：餐單日曆 -->
+        <main id="view-planner" class="view-section bg-white min-h-[90vh] pb-12">
+            <div class="p-6">
+                <h3 class="font-bold text-2xl mb-2 flex items-center gap-2 text-gray-900"><i data-lucide="calendar-days" class="w-6 h-6 text-purple-500"></i> 餐單日曆</h3>
+                <p class="text-xs text-gray-500 mb-6">點擊日期安排每日菜式，買餸煮飯更有預算！</p>
+                
+                <div class="bg-white p-5 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <button onclick="changePlannerMonth(-1)" class="p-2 hover:bg-gray-50 rounded-full transition"><i data-lucide="chevron-left" class="w-5 h-5 text-gray-500"></i></button>
+                        <span id="planner-month-display" class="font-bold text-lg text-gray-800">載入中...</span>
+                        <button onclick="changePlannerMonth(1)" class="p-2 hover:bg-gray-50 rounded-full transition"><i data-lucide="chevron-right" class="w-5 h-5 text-gray-500"></i></button>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center text-[11px] text-gray-400 font-bold mb-2">
+                        <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+                    </div>
+                    <div id="planner-grid" class="grid grid-cols-7 gap-1.5"></div>
+                </div>
+
+                <h4 class="font-bold text-sm mb-4 border-t border-gray-100 pt-6 text-gray-800 flex justify-between items-end">
+                    <span><span id="planner-selected-date-text" class="text-purple-500"></span> 餐單安排</span>
+                </h4>
+                <div id="planner-daily-container" class="space-y-3"></div>
+            </div>
+        </main>
+
+        <!-- 視圖 2：食譜貼文詳情 -->
+        <main id="view-recipe" class="view-section text-left">
+            <div id="posts-container" class="pb-12 text-left"></div>
+        </main>
+
+        <!-- 視圖 3：新增食譜 -->
+        <main id="view-add" class="view-section p-6 bg-white min-h-[70vh] text-left">
+            <div class="flex items-center justify-between mb-8 pb-3 border-b border-gray-100">
+                <button onclick="navigate('home')" class="p-1"><i data-lucide="x" class="w-6 h-6"></i></button>
+                <h2 class="font-bold text-lg text-gray-900">新增食譜</h2>
+                <button form="recipe-form" type="submit" class="text-blue-500 font-bold text-lg">發佈</button>
+            </div>
+            
+            <form id="recipe-form" onsubmit="event.preventDefault(); window.saveNewRecipe && window.saveNewRecipe(event);" class="space-y-6 text-left">
+                <label class="flex items-center gap-3 bg-orange-50/50 p-3.5 rounded-2xl border border-orange-100 cursor-pointer">
+                    <input type="checkbox" id="input-is-planning" class="w-5 h-5 text-orange-500 rounded border-orange-300 accent-orange-500">
+                    <div class="flex-1">
+                        <p class="text-[13px] font-bold text-orange-700">加入「準備挑戰」清單 ⏳</p>
+                        <p class="text-[10px] text-orange-500 mt-0.5">勾選後，上載首次製作記錄即自動解鎖成就</p>
+                    </div>
+                </label>
+
+                <div class="flex gap-5">
+                    <div class="w-20 h-20 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-center text-gray-300 flex-shrink-0">
+                        <i data-lucide="camera" class="w-8 h-8"></i>
+                    </div>
+                    <div class="flex-1 space-y-3">
+                        <input type="text" id="input-dish" required class="w-full text-base py-1.5 border-b border-gray-100 outline-none focus:border-blue-400 transition-colors" placeholder="菜式名稱">
+                        <input type="text" id="input-flavor" required class="w-full text-sm py-1.5 border-b border-gray-100 outline-none focus:border-blue-400 transition-colors" placeholder="口味及風格">
+                        
+                        <!-- 動態渲染標籤 -->
+                        <div id="flavor-tags-add" class="flex flex-wrap gap-1.5 mt-2"></div>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1">份量 / 吋尺</label>
+                    <input type="text" id="input-serving" class="w-full text-sm py-2.5 px-3 bg-gray-50 rounded-xl border border-transparent outline-none focus:bg-white focus:border-blue-200 transition-colors" placeholder="如: 2人 或 6吋">
+                </div>
+
+                <button type="button" onclick="window.generateAI && window.generateAI()" class="w-full bg-blue-500 text-white text-sm font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i> AI 智能生成食譜
+                </button>
+                
+                <!-- 2欄位 (時間, 卡路里) -->
+                <div class="grid grid-cols-2 gap-3 text-left">
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1">時間(分)</label>
+                        <input type="number" id="input-cooktime" class="w-full text-sm py-2.5 px-3 bg-gray-50 rounded-xl border border-transparent outline-none focus:bg-white focus:border-blue-200 transition-colors" placeholder="分鐘">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase ml-1">卡路里</label>
+                        <div class="flex bg-gray-50 rounded-xl border border-transparent focus-within:bg-white focus-within:border-blue-200 transition-colors overflow-hidden">
+                            <input type="number" id="input-kcal" class="w-full text-sm py-2.5 px-3 bg-transparent outline-none min-w-0" placeholder="kcal">
+                            <button type="button" onclick="window.estimateRecipeKcal && window.estimateRecipeKcal('input')" class="px-2 text-red-400 hover:text-red-500 flex items-center justify-center shrink-0" title="AI估算"><i data-lucide="sparkles" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-1">評分推薦 (煮後)</label>
+                    <input type="hidden" id="input-rating" value="4">
+                    <div class="grid grid-cols-2 gap-2 text-[11px]">
+                        <button type="button" onclick="window.setRating && window.setRating('input-rating', 1)" id="btn-rating-input-rating-1" class="py-3 rounded-xl border bg-white font-bold transition-all">🤢 中伏</button>
+                        <button type="button" onclick="window.setRating && window.setRating('input-rating', 2)" id="btn-rating-input-rating-2" class="py-3 rounded-xl border bg-white font-bold transition-all">🤐 試一次</button>
+                        <button type="button" onclick="window.setRating && window.setRating('input-rating', 3)" id="btn-rating-input-rating-3" class="py-3 rounded-xl border bg-white font-bold transition-all">🙂 得閒整</button>
+                        <button type="button" onclick="window.setRating && window.setRating('input-rating', 4)" id="btn-rating-input-rating-4" class="py-3 rounded-xl border border-blue-500 bg-blue-500 text-white font-bold transition-all">🤤 要著兩條褲</button>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <input type="text" id="input-tags" class="w-full text-sm py-3 border-b border-gray-100 outline-none focus:border-blue-400" placeholder="🏷️ 標籤 (用逗號分隔)">
+                    <textarea id="input-ingredients" required rows="4" class="w-full text-sm py-2 border-b border-gray-100 outline-none resize-none focus:border-blue-400" placeholder="🛒 材料清單..."></textarea>
+                    <textarea id="input-steps" required rows="6" class="w-full text-sm py-2 border-b border-gray-100 outline-none resize-none focus:border-blue-400" placeholder="🍳 烹飪步驟..."></textarea>
+                </div>
+            </form>
+        </main>
+
+        <!-- 視圖 4：設定頁面 (含帳號登入) -->
+        <main id="view-profile" class="view-section p-8 bg-white min-h-[70vh] text-left">
+            <h2 class="font-bold text-2xl mb-8 text-gray-900">帳號與設定</h2>
+            
+            <div class="space-y-8">
+                <div id="auth-section" class="bg-gray-50 rounded-3xl p-6 border border-gray-100 shadow-sm">
+                    <h3 class="font-bold text-sm mb-4 flex items-center gap-2 text-gray-700 font-bold"><i data-lucide="user" class="w-5 h-5 text-blue-500"></i> 帳號同步狀態</h3>
+                    
+                    <div id="user-info" class="hidden space-y-4 text-left">
+                        <p class="text-xs text-gray-600">已登入：<span id="user-email" class="font-bold text-blue-600"></span></p>
+                        <p class="text-[10px] text-gray-400 leading-relaxed">您的食譜已與此帳號同步。更換裝置後只需登入即可找回所有食譜。</p>
+                        <!-- 最後同步時間顯示 -->
+                        <p id="sync-time-display" class="text-[11px] text-blue-500 font-bold mt-1">🔄 最後同步時間：未同步</p>
+                        
+                        <div class="pt-3 border-t border-gray-200 mt-2">
+                            <p class="text-[11px] text-gray-500 mb-2 font-bold">修改密碼</p>
+                            <div class="flex gap-2 mb-4 h-12 w-full">
+                                <input type="password" id="new-password-input" placeholder="新密碼 (最少 6 位)" class="flex-1 min-w-0 px-4 h-full bg-white border border-gray-200 rounded-xl outline-none text-sm focus:ring-2 focus:ring-blue-500/20">
+                                <button onclick="window.handleChangePassword && window.handleChangePassword()" class="shrink-0 w-20 h-full bg-gray-900 text-white rounded-xl text-sm font-bold transition active:scale-95 flex items-center justify-center">更新</button>
+                            </div>
+                            <button onclick="window.handleLogout && window.handleLogout()" class="w-full py-3.5 bg-white border border-red-200 text-red-500 rounded-xl text-sm font-bold transition active:scale-95 hover:bg-red-50">登出帳號</button>
+                        </div>
+                    </div>
+
+                    <div id="login-form" class="space-y-3 text-left">
+                        <p class="text-[11px] text-gray-400 mb-2">註冊/登入後，食譜將永久備份至你的私人帳號。</p>
+                        <input type="email" id="auth-email" placeholder="電郵地址 (Email)" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none text-sm">
+                        <input type="password" id="auth-password" placeholder="密碼 (最少 6 位)" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none text-sm">
+                        <div class="flex gap-2">
+                            <button onclick="window.handleAuth && window.handleAuth('login')" class="flex-1 py-3 bg-gray-900 text-white rounded-xl text-xs font-bold transition">登入</button>
+                            <button onclick="window.handleAuth && window.handleAuth('signup')" class="flex-1 py-3 bg-blue-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-blue-500/30">註冊</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 rounded-3xl p-6 border border-gray-100 shadow-sm text-left">
+                    <h3 class="font-bold text-sm mb-3 flex items-center gap-2 text-gray-700 font-bold"><i data-lucide="cloud" class="w-5 h-5 text-blue-500"></i> AI 大廚 API 金鑰</h3>
+                    <input type="password" id="setting-api-key" class="w-full px-4 py-3 bg-white border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/10 mb-4 transition-all" placeholder="輸入 Gemini API Key">
+                    <button onclick="window.saveApiKey && window.saveApiKey()" class="w-full py-3 bg-gray-900 text-white rounded-2xl text-xs font-bold shadow-xl active:scale-95 transition">儲存 API 設定</button>
+                </div>
+
+                <div class="text-center pt-12">
+                    <p class="text-[10px] text-gray-300 font-bold tracking-[0.3em] uppercase">COOKING PAPA v2.19.1 🚀</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 底部導航欄 -->
+    <nav class="fixed bottom-0 w-full bg-white/90 backdrop-blur-lg border-t border-gray-100 grid grid-cols-5 items-center z-50 pb-8 pt-3 max-w-2xl left-1/2 -translate-x-1/2">
+        <button id="nav-btn-home" onclick="navigate('home')" class="flex justify-center transition-colors h-full"><i data-lucide="home" class="w-6 h-6"></i></button>
+        <button id="nav-btn-fridge" onclick="navigate('fridge')" class="flex justify-center transition-colors h-full"><i data-lucide="refrigerator" class="w-6 h-6"></i></button>
+        <button id="nav-btn-add" onclick="navigate('add')" class="flex justify-center transition-colors h-full"><i data-lucide="plus-square" class="w-6 h-6"></i></button>
+        <button id="nav-btn-grocery" onclick="navigate('grocery')" class="flex justify-center transition-colors h-full"><i data-lucide="shopping-cart" class="w-6 h-6"></i></button>
+        <button id="nav-btn-profile" onclick="navigate('profile')" class="flex justify-center h-full items-center">
+             <div class="w-7 h-7 rounded-full border border-gray-200 overflow-hidden ring-2 ring-transparent transition-all avatar-ring">
+                <img id="nav-avatar-img" src="" class="w-full h-full object-cover">
+             </div>
+        </button>
+    </nav>
+
+
+    <script type="module" src="app.js"></script>
+</body>
 </html>
