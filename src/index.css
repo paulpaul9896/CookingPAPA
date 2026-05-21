@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #fafafa;
+  -webkit-tap-highlight-color: transparent;
+  font-family: 'Noto Sans HK', sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+.ig-title {
+  font-family: 'Dancing Script', cursive;
+  font-size: 1.6rem;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-container {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+button:active {
+  transform: scale(0.96);
+  opacity: 0.8;
+}
+
+.grid-img-container {
+  position: relative;
+  width: 100%;
+  padding-top: 100%;
+  overflow: hidden;
+  background-color: #f3f4f6;
+}
+
+.grid-img-container img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.view-fade {
+  animation: fadeIn 0.2s ease-out;
+}
