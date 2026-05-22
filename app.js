@@ -1,6 +1,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         // --- 1. Firebase 初始化 ---
         const firebaseConfig = {
@@ -15,6 +16,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const dbFirestore = getFirestore(app);
+        const storage = getStorage(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'cooking-papa-app';
         
         let currentUser = null;
@@ -527,7 +529,18 @@
         // --- 4. 數據操作 ---
         window.syncToCloud = async function(data) {
             if (!currentUser) return;
-            await setDoc(doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'recipes', data.id), data);
+            try {
+                await setDoc(doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'recipes', data.id), data);
+            } catch(e) {
+                console.error('syncToCloud failed:', e);
+                throw e;
+            }
+        };
+
+        window.uploadImageToStorage = async function(base64Data, path) {
+            const storageRef = ref(storage, path);
+            await uploadString(storageRef, base64Data, 'data_url');
+            return await getDownloadURL(storageRef);
         };
 
         window.deleteFromCloud = async function(id) {
@@ -1960,32 +1973,42 @@
             let challengeCompleted = false;
             if(flavor.isPlanning) { flavor.isPlanning = false; challengeCompleted = true; }
             
+            const recordId = 'r' + Date.now();
+
             if (files.length > 0) {
-                let processed = 0;
-                let imagesArray = [];
-                for (let i = 0; i < files.length; i++) {
-                    window.resizeImage(files[i], (imgData) => {
-                        imagesArray.push(imgData);
-                        processed++;
-                        if (processed === files.length) {
-                            flavor.records.push({ id: 'r'+Date.now(), date: new Date().toLocaleDateString(), images: imagesArray, note: note });
-                            finishSave();
-                        }
-                    });
+                window.showToast("上傳中，請稍候…");
+                try {
+                    const base64Array = await Promise.all(files.map(f => new Promise(res => window.resizeImage(f, res))));
+                    let imageUrls;
+                    if (currentUser) {
+                        imageUrls = await Promise.all(base64Array.map((b64, i) =>
+                            window.uploadImageToStorage(b64, `users/${currentUser.uid}/recipes/${currentDishId}/${currentFlavorId}/${recordId}_${i}.jpg`)
+                        ));
+                    } else {
+                        imageUrls = base64Array;
+                    }
+                    flavor.records.push({ id: recordId, date: new Date().toLocaleDateString(), images: imageUrls, note: note });
+                    await finishSave();
+                } catch(e) {
+                    console.error('Upload failed:', e);
+                    window.customAlert('圖片上傳失敗，請檢查網絡後重試。');
                 }
             } else {
-                flavor.records.push({ id: 'r'+Date.now(), date: new Date().toLocaleDateString(), images: null, note: note });
-                finishSave();
+                flavor.records.push({ id: recordId, date: new Date().toLocaleDateString(), images: null, note: note });
+                await finishSave();
             }
 
             async function finishSave() {
-                await window.syncToCloud(dish);
-                if(noteInput) noteInput.value = '';
-                if(fileInput) fileInput.value = '';
-                
-                if (challengeCompleted) window.showToast("🎉 挑戰完成！記錄已上傳");
-                else window.showToast("記錄已上傳 📸");
-                window.renderPost(currentDishId, currentFlavorId);
+                try {
+                    await window.syncToCloud(dish);
+                    if(noteInput) noteInput.value = '';
+                    if(fileInput) fileInput.value = '';
+                    if (challengeCompleted) window.showToast("🎉 挑戰完成！記錄已上傳");
+                    else window.showToast("記錄已上傳 📸");
+                    window.renderPost(currentDishId, currentFlavorId);
+                } catch(e) {
+                    window.customAlert('儲存失敗，請檢查網絡後重試。');
+                }
             }
         };
 
