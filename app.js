@@ -1288,56 +1288,84 @@
             if (!food) return;
             const weightEl = document.getElementById('calorie-weight');
             const weight = weightEl ? parseFloat(weightEl.value) : 0;
-            const kcal = weight > 0 ? Math.round(food.kcal * weight / 100) : food.kcal;
+            const ratio = weight > 0 ? weight / 100 : 1;
+            const kcal = weight > 0 ? Math.round(food.kcal * ratio) : food.kcal;
+            const protein = Math.round((food.protein || 0) * ratio);
             const name = weight > 0 ? `${food.name} (${weight}g)` : food.name;
-            await window._saveCalorieEntry({ name, kcal, desc: `每${food.serving} 約 ${food.kcal} kcal`, mealType: window.currentMealType });
+            await window._saveCalorieEntry({ name, kcal, protein, desc: `每${food.serving}: ${food.kcal} kcal · 蛋白質 ${food.protein}g`, mealType: window.currentMealType });
             const textEl = document.getElementById('calorie-text');
             if (textEl) textEl.value = '';
             if (weightEl) weightEl.value = '';
             const container = document.getElementById('food-search-results');
             if (container) { container.classList.add('hidden'); container.innerHTML = ''; }
-            window.showToast(`✅ 已記錄：${name} · ${kcal} kcal`);
+            window.showToast(`✅ 已記錄：${name} · ${kcal} kcal · 蛋白質 ${protein}g`);
         };
 
         // --- Save calorie entry to Firestore & update recent foods ---
-        window._saveCalorieEntry = async function({ name, kcal, desc, mealType }) {
+        window._saveCalorieEntry = async function({ name, kcal, protein, desc, mealType }) {
             if (!currentUser) { window.customAlert('請先登入以儲存記錄！'); return; }
             const dateInput = window.calSelectedDate || new Date().toISOString().split('T')[0];
             const docRef = doc(collection(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'calories'));
-            await setDoc(docRef, { name, kcal, desc: desc || '', dateStr: dateInput, timestamp: Date.now(), mealType: mealType || 'snack' });
+            const data = { name, kcal, desc: desc || '', dateStr: dateInput, timestamp: Date.now(), mealType: mealType || 'snack' };
+            if (protein != null && !isNaN(protein)) data.protein = protein;
+            await setDoc(docRef, data);
             // Update recent foods in localStorage
             let recent = JSON.parse(localStorage.getItem('recentFoods') || '[]');
             recent = recent.filter(r => r.name !== name);
-            recent.unshift({ name, kcal, mealType: mealType || 'snack' });
-            if (recent.length > 10) recent = recent.slice(0, 10);
+            recent.unshift({ name, kcal, protein: protein || 0, mealType: mealType || 'snack' });
+            if (recent.length > 12) recent = recent.slice(0, 12);
             localStorage.setItem('recentFoods', JSON.stringify(recent));
             if (window.renderRecentFoods) window.renderRecentFoods();
         };
 
-        // --- Render recently eaten chips ---
+        // --- Render recently eaten (collapsible list) ---
         window.renderRecentFoods = function() {
             const bar = document.getElementById('recent-foods-bar');
             if (!bar) return;
             const recent = JSON.parse(localStorage.getItem('recentFoods') || '[]');
             if (recent.length === 0) { bar.innerHTML = ''; return; }
+            const isOpen = bar.dataset.open === 'true';
             bar.innerHTML = `
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">最近食過</p>
-                <div class="flex flex-wrap gap-1.5">
-                    ${recent.slice(0, 8).map(r => `
-                        <button onclick="window.quickLogFood('${encodeURIComponent(JSON.stringify(r))}')"
-                            class="bg-white border border-gray-200 rounded-full px-3 py-1 text-xs font-bold text-gray-600 hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors active:scale-95 flex items-center gap-1">
-                            ${r.name} <span class="text-red-400 text-[10px]">${r.kcal}</span>
-                        </button>
+                <button onclick="window.toggleRecentFoods()" class="w-full flex items-center justify-between px-3 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.99]">
+                    <span class="text-xs font-bold text-gray-600 flex items-center gap-1.5">
+                        <i data-lucide="history" class="w-3.5 h-3.5 text-gray-400"></i>
+                        最近食過 <span class="bg-gray-100 text-gray-500 rounded-full px-1.5 py-0.5 text-[10px]">${recent.length}</span>
+                    </span>
+                    <i data-lucide="${isOpen ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4 text-gray-400"></i>
+                </button>
+                <div id="recent-foods-list" class="${isOpen ? '' : 'hidden'} mt-1 bg-white border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-50 shadow-sm">
+                    ${recent.map(r => `
+                        <div class="flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 transition-colors">
+                            <div class="flex-1 min-w-0 pr-2">
+                                <p class="text-sm font-bold text-gray-800 truncate">${r.name}</p>
+                                <p class="text-[10px] text-gray-400">
+                                    🔥 ${r.kcal} kcal${r.protein ? ` · 💪 ${r.protein}g 蛋白質` : ''}
+                                </p>
+                            </div>
+                            <button onclick="window.quickLogFood('${encodeURIComponent(JSON.stringify(r))}')"
+                                class="shrink-0 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-sm active:scale-90 transition-transform hover:bg-red-600">
+                                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
                     `).join('')}
                 </div>
             `;
+            lucide.createIcons();
+        };
+
+        window.toggleRecentFoods = function() {
+            const bar = document.getElementById('recent-foods-bar');
+            if (!bar) return;
+            bar.dataset.open = bar.dataset.open === 'true' ? 'false' : 'true';
+            window.renderRecentFoods();
         };
 
         // --- Quick re-log from recent foods ---
         window.quickLogFood = async function(encodedFood) {
             const food = JSON.parse(decodeURIComponent(encodedFood));
-            await window._saveCalorieEntry({ name: food.name, kcal: food.kcal, desc: '', mealType: window.currentMealType });
-            window.showToast(`✅ 已快速記錄：${food.name} · ${food.kcal} kcal`);
+            await window._saveCalorieEntry({ name: food.name, kcal: food.kcal, protein: food.protein || 0, desc: '', mealType: window.currentMealType });
+            const proteinTxt = food.protein ? ` · 💪 ${food.protein}g` : '';
+            window.showToast(`✅ 已記錄：${food.name} · ${food.kcal} kcal${proteinTxt}`);
         };
 
         window.renderCalorieCalendar = function() {
@@ -1460,7 +1488,7 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         contents: [{ parts }],
-                        systemInstruction: { parts: [{ text: `你是一位營養師。只准輸出純 JSON：{"name":"食物名","kcal":350,"desc":"簡短說明"}` }]},
+                        systemInstruction: { parts: [{ text: `你是一位營養師。只准輸出純 JSON：{"name":"食物名","kcal":350,"protein":25,"desc":"簡短說明"}` }]},
                         generationConfig: { responseMimeType: "application/json" }
                     })
                 });
@@ -1469,8 +1497,9 @@
                 const data = await res.json();
                 const result = JSON.parse(data.candidates[0].content.parts[0].text);
                 
-                await window._saveCalorieEntry({ name: result.name, kcal: result.kcal, desc: result.desc, mealType: window.currentMealType });
-                window.showToast(`🔥 ${result.name}: 約 ${result.kcal} kcal!`);
+                await window._saveCalorieEntry({ name: result.name, kcal: result.kcal, protein: result.protein || 0, desc: result.desc, mealType: window.currentMealType });
+                const proteinTxt = result.protein ? ` · 💪 ${result.protein}g` : '';
+                window.showToast(`🔥 ${result.name}: ${result.kcal} kcal${proteinTxt}`);
                 
                 if(textEl) textEl.value = '';
                 if(weightEl) weightEl.value = '';
@@ -1497,9 +1526,10 @@
                 return d === window.calSelectedDate;
             });
             
-            let total = 0;
-            dayItems.forEach(i => total += (i.kcal || 0));
+            let total = 0, totalProtein = 0;
+            dayItems.forEach(i => { total += (i.kcal || 0); totalProtein += (i.protein || 0); });
             document.querySelectorAll('#cal-daily-total').forEach(el => el.innerText = total);
+            document.querySelectorAll('#cal-protein-total').forEach(el => el.innerText = totalProtein);
             
             if (dayItems.length === 0) {
                 containers.forEach(c => c.innerHTML = '<p class="text-xs text-gray-400 text-center py-8 border-2 border-dashed border-gray-100 rounded-2xl">呢日暫時無飲食記錄<br><span class="text-[10px]">係上方搜尋或用 AI 估算食物</span></p>');
@@ -1521,11 +1551,12 @@
                 const items = dayItems.filter(i => (i.mealType || 'snack') === key).sort((a,b) => (a.timestamp||0)-(b.timestamp||0));
                 if (items.length === 0) return;
                 const mealTotal = items.reduce((s, i) => s + (i.kcal || 0), 0);
+                const mealProtein = items.reduce((s, i) => s + (i.protein || 0), 0);
                 html += `
                     <div class="rounded-2xl overflow-hidden border ${accentBorder[accent]}">
                         <div class="flex justify-between items-center px-4 py-2.5 ${accentBg[accent]}">
                             <span class="text-xs font-bold ${accentText[accent]}">${label}</span>
-                            <span class="text-xs font-bold ${accentText[accent]} opacity-80">🔥 ${mealTotal} kcal</span>
+                            <span class="text-xs font-bold ${accentText[accent]} opacity-80">🔥 ${mealTotal} kcal${mealProtein > 0 ? ` · 💪 ${mealProtein}g` : ''}</span>
                         </div>
                         <div class="divide-y divide-gray-50">
                             ${items.map(item => `
@@ -1535,7 +1566,10 @@
                                         ${item.desc ? `<p class="text-[10px] text-gray-400 mt-0.5">${item.desc}</p>` : ''}
                                     </div>
                                     <div class="flex items-center gap-2 shrink-0">
-                                        <span class="text-red-500 font-bold text-sm bg-red-50 px-2 py-1 rounded-lg">🔥 ${item.kcal}</span>
+                                        <div class="flex flex-col items-end gap-0.5">
+                                            <span class="text-red-500 font-bold text-xs bg-red-50 px-2 py-0.5 rounded-lg">🔥 ${item.kcal}</span>
+                                            ${item.protein ? `<span class="text-blue-400 font-bold text-[10px] bg-blue-50 px-2 py-0.5 rounded-lg">💪 ${item.protein}g</span>` : ''}
+                                        </div>
                                         <button onclick="window.openEditCalorieModal('${item.id}')" class="text-gray-300 hover:text-blue-500 transition p-1"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
                                         <button onclick="window.deleteCalorie('${item.id}')" class="text-gray-300 hover:text-red-500 transition p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                     </div>
@@ -1555,10 +1589,12 @@
             const idEl = document.getElementById('edit-cal-id');
             const nameEl = document.getElementById('edit-cal-name');
             const kcalEl = document.getElementById('edit-cal-kcal');
+            const proteinEl = document.getElementById('edit-cal-protein');
             const mtEl = document.getElementById('edit-cal-mealtype');
             if (idEl) idEl.value = item.id;
             if (nameEl) nameEl.value = item.name;
             if (kcalEl) kcalEl.value = item.kcal;
+            if (proteinEl) proteinEl.value = item.protein || '';
             if (mtEl) mtEl.value = item.mealType || 'snack';
             
             const modal = document.getElementById('calorie-edit-modal');
@@ -1580,6 +1616,8 @@
             const id = document.getElementById('edit-cal-id').value;
             const name = document.getElementById('edit-cal-name').value.trim();
             const kcal = parseInt(document.getElementById('edit-cal-kcal').value);
+            const proteinVal = document.getElementById('edit-cal-protein')?.value;
+            const protein = proteinVal !== '' && proteinVal != null ? parseInt(proteinVal) : null;
             const mealType = document.getElementById('edit-cal-mealtype')?.value || 'snack';
             
             if(!name || isNaN(kcal)) return window.customAlert("請輸入有效名稱及卡路里！");
@@ -1589,6 +1627,7 @@
                 item.name = name;
                 item.kcal = kcal;
                 item.mealType = mealType;
+                if (protein !== null && !isNaN(protein)) item.protein = protein; else delete item.protein;
                 const docRef = doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'calories', id);
                 await setDoc(docRef, item);
                 window.closeEditCalorieModal();
