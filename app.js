@@ -228,12 +228,12 @@
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     let w = img.width, h = img.height;
-                    const MAX = 400;
+                    const MAX = 800;
                     if(w > h) { if(w > MAX) { h = Math.round(h * MAX/w); w = MAX; } }
                     else       { if(h > MAX) { w = Math.round(w * MAX/h); h = MAX; } }
                     canvas.width = w; canvas.height = h;
                     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    cb(canvas.toDataURL('image/jpeg', 0.45));
+                    cb(canvas.toDataURL('image/jpeg', 0.75));
                 };
                 img.src = e.target.result;
             };
@@ -1985,17 +1985,17 @@
             }
 
             async function finishSave() {
+                if(noteInput) noteInput.value = '';
+                if(fileInput) fileInput.value = '';
+                window.renderPost(currentDishId, currentFlavorId);
+                if (challengeCompleted) window.showToast("🎉 挑戰完成！記錄已上傳");
+                else window.showToast("記錄已上傳 📸");
                 try {
                     await window.syncToCloud(dish);
-                    if(noteInput) noteInput.value = '';
-                    if(fileInput) fileInput.value = '';
-                    if (challengeCompleted) window.showToast("🎉 挑戰完成！記錄已上傳");
-                    else window.showToast("記錄已上傳 📸");
-                    window.renderPost(currentDishId, currentFlavorId);
                 } catch(e) {
                     console.error('Save failed:', e);
                     flavor.records.pop();
-                    window.customAlert('儲存失敗！相片可能過大。建議每次只上載1張相片，或減少相片數量後重試。');
+                    window.customAlert('儲存失敗，請檢查網絡後重試。若一次上載多張相片，可試下減少數量。');
                     window.renderPost(currentDishId, currentFlavorId);
                 }
             }
