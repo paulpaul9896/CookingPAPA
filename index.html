@@ -103,6 +103,12 @@
                     <input type="number" id="edit-cal-kcal" class="w-full h-full bg-transparent outline-none text-sm text-center min-w-0" placeholder="卡路里數值">
                     <span class="text-gray-500 text-sm font-bold ml-1 shrink-0">kcal</span>
                 </div>
+                <select id="edit-cal-mealtype" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-red-400 text-sm text-gray-700">
+                    <option value="breakfast">🌅 早餐</option>
+                    <option value="lunch">☀️ 午餐</option>
+                    <option value="dinner">🌙 晚餐</option>
+                    <option value="snack">🍎 小食/其他</option>
+                </select>
             </div>
             <div class="flex gap-3">
                 <button onclick="closeEditCalorieModal()" class="flex-1 py-3 bg-gray-100 rounded-2xl font-bold text-gray-600 transition hover:bg-gray-200">取消</button>
@@ -227,7 +233,7 @@
         <div class="flex items-center gap-5">
             <button onclick="navigate('search')" class="hover:text-blue-500 transition-colors"><i data-lucide="search" class="w-6 h-6"></i></button>
             <button onclick="navigate('planner')" class="hover:text-blue-500 transition-colors"><i data-lucide="calendar-days" class="w-6 h-6"></i></button>
-            <button onclick="navigate('calorie')" class="hover:text-blue-500 transition-colors"><i data-lucide="flame" class="w-6 h-6"></i></button>
+            <button onclick="navigate('fridge')" class="hover:text-blue-500 transition-colors"><i data-lucide="refrigerator" class="w-6 h-6"></i></button>
         </div>
     </header>
 
@@ -356,55 +362,87 @@
         <!-- 獨立視圖：卡路里記帳 -->
         <main id="view-calorie" class="view-section bg-white min-h-[90vh] pb-12">
             <div class="p-6">
-                <!-- 標題與參考按鈕 -->
-                <div class="flex justify-between items-center mb-6">
+                <!-- Header -->
+                <div class="flex justify-between items-center mb-5">
                     <h3 class="font-bold text-2xl flex items-center gap-2 text-gray-900"><i data-lucide="flame" class="w-6 h-6 text-red-500"></i> 卡路里記帳</h3>
                     <button onclick="openCalorieRefModal()" class="text-xs bg-red-50 text-red-500 px-3 py-2 rounded-xl font-bold flex items-center gap-1 hover:bg-red-100 transition shadow-sm"><i data-lucide="info" class="w-3.5 h-3.5"></i> 攝取建議</button>
                 </div>
 
-                <div class="bg-white p-5 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 mb-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <button onclick="changeCalMonth(-1)" class="p-2 hover:bg-gray-50 rounded-full transition"><i data-lucide="chevron-left" class="w-5 h-5 text-gray-500"></i></button>
-                        <div class="text-center">
-                            <span id="cal-month-display" class="font-bold text-lg text-gray-800">月曆載入中...</span>
-                            <div class="text-[10px] text-gray-400 mt-1 flex items-center justify-center gap-1">
-                                每日上限: <input type="number" id="cal-limit-input" onchange="saveCalLimit()" class="w-12 text-center bg-gray-50 border border-gray-200 rounded font-bold text-gray-600" value="2000"> kcal
-                            </div>
+                <!-- Daily Summary Bar -->
+                <div class="bg-gradient-to-r from-red-50 to-orange-50 rounded-2xl p-4 mb-5 border border-red-100">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs font-bold text-gray-600">今日 <span id="cal-selected-date-text" class="text-red-500"></span></span>
+                        <span class="text-[11px] text-gray-400 font-bold flex items-center gap-1">上限 <input type="number" id="cal-limit-input" onchange="saveCalLimit()" class="w-14 text-center bg-white border border-gray-200 rounded-lg font-bold text-gray-600 text-[11px] px-1 py-0.5"> kcal</span>
+                    </div>
+                    <div class="flex items-baseline gap-1.5 mb-2">
+                        <span id="cal-daily-total" class="text-3xl font-bold text-red-500">0</span>
+                        <span class="text-sm text-gray-400">kcal</span>
+                        <span id="cal-remaining-text" class="text-xs text-gray-400 ml-auto"></span>
+                    </div>
+                    <div class="w-full bg-white/80 rounded-full h-2 overflow-hidden">
+                        <div id="cal-progress-bar" class="h-2 rounded-full bg-gradient-to-r from-red-400 to-orange-400 transition-all duration-500" style="width:0%"></div>
+                    </div>
+                </div>
+
+                <!-- Log Food Section -->
+                <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 mb-5">
+                    <!-- Meal type tabs -->
+                    <div class="flex gap-1.5 mb-4 overflow-x-auto pb-0.5 scroll-container">
+                        <button onclick="window.setMealType('breakfast')" id="meal-tab-breakfast" class="meal-tab-btn flex-1 min-w-fit px-3 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap bg-orange-500 text-white shadow-sm active:scale-95">🌅 早餐</button>
+                        <button onclick="window.setMealType('lunch')" id="meal-tab-lunch" class="meal-tab-btn flex-1 min-w-fit px-3 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap bg-white text-gray-500 border border-gray-200 active:scale-95">☀️ 午餐</button>
+                        <button onclick="window.setMealType('dinner')" id="meal-tab-dinner" class="meal-tab-btn flex-1 min-w-fit px-3 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap bg-white text-gray-500 border border-gray-200 active:scale-95">🌙 晚餐</button>
+                        <button onclick="window.setMealType('snack')" id="meal-tab-snack" class="meal-tab-btn flex-1 min-w-fit px-3 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap bg-white text-gray-500 border border-gray-200 active:scale-95">🍎 小食</button>
+                    </div>
+
+                    <!-- Search bar -->
+                    <div class="relative mb-2">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10"></i>
+                        <input type="text" id="calorie-text" oninput="window.onFoodSearch(this.value)" autocomplete="off"
+                            class="w-full bg-white pl-9 pr-4 h-12 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400 transition-all"
+                            placeholder="搜尋食物 (譚仔米線、菠蘿油、雞胸肉...)">
+                    </div>
+                    <!-- Search results -->
+                    <div id="food-search-results" class="hidden bg-white rounded-xl border border-gray-200 shadow-lg mb-3 max-h-52 overflow-y-auto scroll-container divide-y divide-gray-50"></div>
+
+                    <!-- Recently eaten chips -->
+                    <div id="recent-foods-bar" class="mb-3"></div>
+
+                    <!-- Weight + AI button row -->
+                    <div class="flex gap-2 h-11 mb-3">
+                        <div class="flex items-center bg-white border border-gray-200 rounded-xl px-3 focus-within:border-red-400 transition-all w-28 shrink-0 h-full">
+                            <input type="number" id="calorie-weight" class="w-full h-full text-sm outline-none bg-transparent text-center min-w-0" placeholder="重量">
+                            <span class="text-gray-500 text-xs font-bold ml-0.5 shrink-0">g</span>
                         </div>
+                        <button onclick="aiCalculateCalorie()" class="flex-1 h-full bg-red-500 text-white rounded-xl font-bold shadow-md shadow-red-500/20 flex items-center justify-center gap-1.5 active:scale-95 transition-all text-xs"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i> AI 估算並記錄</button>
+                    </div>
+
+                    <!-- Photo upload -->
+                    <div class="border-2 border-dashed border-gray-200 rounded-xl p-3 text-center bg-white relative overflow-hidden hover:border-red-300 transition-all">
+                        <input type="file" id="calorie-image" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onchange="previewCalorieImage(this)">
+                        <div id="calorie-image-preview" class="hidden absolute inset-0 w-full h-full bg-cover bg-center z-10"></div>
+                        <div class="flex items-center justify-center gap-2 relative z-0">
+                            <i data-lucide="camera" class="w-4 h-4 text-red-300"></i>
+                            <p class="text-[11px] font-bold text-gray-400">上載相片讓 AI 辨識卡路里 (選填)</p>
+                        </div>
+                    </div>
+                    <input type="hidden" id="calorie-date">
+                </div>
+
+                <!-- Calendar -->
+                <div class="bg-white p-4 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 mb-5">
+                    <div class="flex justify-between items-center mb-3">
+                        <button onclick="changeCalMonth(-1)" class="p-2 hover:bg-gray-50 rounded-full transition"><i data-lucide="chevron-left" class="w-5 h-5 text-gray-500"></i></button>
+                        <span id="cal-month-display" class="font-bold text-base text-gray-800">月曆載入中...</span>
                         <button onclick="changeCalMonth(1)" class="p-2 hover:bg-gray-50 rounded-full transition"><i data-lucide="chevron-right" class="w-5 h-5 text-gray-500"></i></button>
                     </div>
                     <div class="grid grid-cols-7 gap-1 text-center text-[11px] text-gray-400 font-bold mb-2">
                         <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
                     </div>
-                    <div id="cal-grid" class="grid grid-cols-7 gap-1.5"></div>
+                    <div id="cal-grid" class="grid grid-cols-7 gap-1"></div>
                 </div>
 
-                <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100 mb-6">
-                    <p class="text-xs font-bold text-gray-600 mb-3 flex items-center gap-1.5">
-                        <i data-lucide="plus-circle" class="w-4 h-4"></i> 新增 <span id="cal-selected-date-text" class="text-red-500"></span> 記錄
-                        <input type="hidden" id="calorie-date">
-                    </p>
-                    <div class="border-2 border-dashed border-gray-200 rounded-2xl p-5 text-center bg-white mb-3 relative overflow-hidden transition-all hover:border-red-300">
-                        <input type="file" id="calorie-image" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onchange="previewCalorieImage(this)">
-                        <div id="calorie-image-preview" class="hidden absolute inset-0 w-full h-full bg-cover bg-center z-10"></div>
-                        <i data-lucide="camera" class="w-6 h-6 text-red-300 mx-auto mb-1 relative z-0"></i>
-                        <p class="text-[10px] font-bold text-gray-400 relative z-0">上載食物相片 (選填)</p>
-                    </div>
-                    <div class="flex gap-2 mb-3 h-12 w-full">
-                        <input type="text" id="calorie-text" class="flex-1 min-w-0 bg-white px-4 h-full rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400 transition-all" placeholder="食物名稱 (例如: 雞胸肉)">
-                        <div class="flex items-center bg-white border border-gray-200 rounded-xl px-3 focus-within:border-red-400 transition-all w-28 shrink-0 h-full">
-                            <input type="number" id="calorie-weight" class="w-full h-full text-sm outline-none bg-transparent text-center min-w-0" placeholder="重量">
-                            <span class="text-gray-500 text-sm font-bold ml-1 shrink-0">g</span>
-                        </div>
-                    </div>
-                    <button onclick="aiCalculateCalorie()" class="w-full py-3.5 bg-red-500 text-white rounded-xl font-bold shadow-lg shadow-red-500/20 flex items-center justify-center gap-2 active:scale-95 transition-all"><i data-lucide="activity" class="w-4 h-4"></i> 計算並記錄</button>
-                </div>
-
-                <h4 class="font-bold text-sm mb-4 border-t border-gray-100 pt-6 text-gray-800 flex justify-between items-end">
-                    <span>當日記錄</span>
-                    <span id="cal-daily-total" class="text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded-md text-xs">0 kcal</span>
-                </h4>
-                <div id="calorie-history-container" class="space-y-3"></div>
+                <!-- Daily log grouped by meal type -->
+                <div id="calorie-history-container" class="space-y-4"></div>
             </div>
         </main>
 
@@ -555,7 +593,7 @@
     <!-- 底部導航欄 -->
     <nav class="fixed bottom-0 w-full bg-white/90 backdrop-blur-lg border-t border-gray-100 grid grid-cols-5 items-center z-50 pb-8 pt-3 max-w-2xl left-1/2 -translate-x-1/2">
         <button id="nav-btn-home" onclick="navigate('home')" class="flex justify-center transition-colors h-full"><i data-lucide="home" class="w-6 h-6"></i></button>
-        <button id="nav-btn-fridge" onclick="navigate('fridge')" class="flex justify-center transition-colors h-full"><i data-lucide="refrigerator" class="w-6 h-6"></i></button>
+        <button id="nav-btn-calorie" onclick="navigate('calorie')" class="flex justify-center transition-colors h-full"><i data-lucide="flame" class="w-6 h-6"></i></button>
         <button id="nav-btn-add" onclick="navigate('add')" class="flex justify-center transition-colors h-full"><i data-lucide="plus-square" class="w-6 h-6"></i></button>
         <button id="nav-btn-grocery" onclick="navigate('grocery')" class="flex justify-center transition-colors h-full"><i data-lucide="shopping-cart" class="w-6 h-6"></i></button>
         <button id="nav-btn-profile" onclick="navigate('profile')" class="flex justify-center h-full items-center">

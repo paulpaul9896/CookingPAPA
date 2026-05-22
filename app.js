@@ -19,7 +19,61 @@
         
         let currentUser = null;
         let db = []; 
-        let calorieDb = []; 
+        let calorieDb = [];
+        window.currentMealType = 'breakfast';
+
+        const HK_FOOD_DB = [
+            { id:'hk1',  name:'港式奶茶 (細)',        kcal:90,  protein:3,  carbs:8,  fat:5,  serving:'240ml' },
+            { id:'hk2',  name:'港式奶茶 (大)',        kcal:140, protein:4,  carbs:12, fat:7,  serving:'360ml' },
+            { id:'hk3',  name:'鴛鴦 (細)',            kcal:95,  protein:3,  carbs:9,  fat:5,  serving:'240ml' },
+            { id:'hk4',  name:'熱檸茶',               kcal:50,  protein:0,  carbs:13, fat:0,  serving:'240ml' },
+            { id:'hk5',  name:'凍檸茶',               kcal:65,  protein:0,  carbs:17, fat:0,  serving:'360ml' },
+            { id:'hk6',  name:'菠蘿油',               kcal:320, protein:7,  carbs:42, fat:14, serving:'1個' },
+            { id:'hk7',  name:'西多士',               kcal:450, protein:12, carbs:48, fat:24, serving:'1份' },
+            { id:'hk8',  name:'牛油多士',             kcal:185, protein:4,  carbs:24, fat:9,  serving:'2片' },
+            { id:'hk9',  name:'火腿蛋通粉',           kcal:380, protein:18, carbs:52, fat:10, serving:'1碗' },
+            { id:'hk10', name:'公司三文治',           kcal:360, protein:15, carbs:40, fat:14, serving:'1份' },
+            { id:'hk11', name:'叉燒飯',               kcal:520, protein:22, carbs:68, fat:16, serving:'1碟' },
+            { id:'hk12', name:'燒鴨飯',               kcal:580, protein:28, carbs:62, fat:20, serving:'1碟' },
+            { id:'hk13', name:'白飯 (1碗)',           kcal:210, protein:4,  carbs:46, fat:1,  serving:'150g' },
+            { id:'hk14', name:'雞胸肉 (煮熟)',        kcal:165, protein:31, carbs:0,  fat:4,  serving:'100g' },
+            { id:'hk15', name:'炒菜心',               kcal:85,  protein:3,  carbs:8,  fat:5,  serving:'100g' },
+            { id:'hk16', name:'譚仔過橋米線 (1號辣)',kcal:450, protein:18, carbs:65, fat:12, serving:'1碗' },
+            { id:'hk17', name:'譚仔過橋米線 (3號辣)',kcal:455, protein:18, carbs:65, fat:13, serving:'1碗' },
+            { id:'hk18', name:'譚仔魚蛋米線',        kcal:420, protein:15, carbs:68, fat:10, serving:'1碗' },
+            { id:'hk19', name:'三哥米線 (原味)',      kcal:390, protein:14, carbs:62, fat:9,  serving:'1碗' },
+            { id:'hk20', name:'大家樂燒雞飯',         kcal:680, protein:35, carbs:72, fat:22, serving:'1碟' },
+            { id:'hk21', name:'大快活豬扒飯',         kcal:720, protein:32, carbs:75, fat:28, serving:'1碟' },
+            { id:'hk22', name:'大家樂例湯',           kcal:80,  protein:5,  carbs:10, fat:2,  serving:'1碗' },
+            { id:'hk23', name:'麥當勞巨無霸',         kcal:563, protein:26, carbs:45, fat:30, serving:'1個' },
+            { id:'hk24', name:'麥當勞麥辣雞腿包',    kcal:440, protein:25, carbs:42, fat:19, serving:'1個' },
+            { id:'hk25', name:'麥當勞薯條 (中)',      kcal:337, protein:4,  carbs:44, fat:16, serving:'1份' },
+            { id:'hk26', name:'麥當勞麥樂雞 (6件)',   kcal:286, protein:16, carbs:17, fat:17, serving:'6件' },
+            { id:'hk27', name:'蝦餃 (3件)',           kcal:170, protein:10, carbs:20, fat:5,  serving:'3件' },
+            { id:'hk28', name:'叉燒包 (1個)',         kcal:185, protein:7,  carbs:30, fat:5,  serving:'1個' },
+            { id:'hk29', name:'腸粉 (蝦)',            kcal:200, protein:10, carbs:28, fat:6,  serving:'1份' },
+            { id:'hk30', name:'蘿蔔糕 (2件)',         kcal:180, protein:4,  carbs:32, fat:4,  serving:'2件' },
+            { id:'hk31', name:'魚蛋 (5粒)',           kcal:90,  protein:8,  carbs:8,  fat:2,  serving:'5粒' },
+            { id:'hk32', name:'碗仔翅',               kcal:150, protein:8,  carbs:20, fat:4,  serving:'1碗' },
+            { id:'hk33', name:'雞蛋仔',               kcal:350, protein:8,  carbs:52, fat:12, serving:'1份' },
+            { id:'hk34', name:'格仔餅',               kcal:280, protein:7,  carbs:38, fat:12, serving:'1個' },
+            { id:'hk35', name:'雞蛋 (1隻)',           kcal:78,  protein:6,  carbs:1,  fat:5,  serving:'1隻' },
+            { id:'hk36', name:'豬扒 (煎)',            kcal:220, protein:26, carbs:0,  fat:13, serving:'100g' },
+            { id:'hk37', name:'三文魚 (煎)',          kcal:195, protein:22, carbs:0,  fat:12, serving:'100g' },
+            { id:'hk38', name:'西蘭花 (煮熟)',        kcal:35,  protein:3,  carbs:5,  fat:0,  serving:'100g' },
+            { id:'hk39', name:'蕃茄 (1個)',           kcal:22,  protein:1,  carbs:5,  fat:0,  serving:'120g' },
+            { id:'hk40', name:'可樂 (細罐330ml)',     kcal:139, protein:0,  carbs:35, fat:0,  serving:'330ml' },
+            { id:'hk41', name:'維他奶 (250ml)',       kcal:105, protein:5,  carbs:14, fat:3,  serving:'250ml' },
+            { id:'hk42', name:'黑芝麻糊',             kcal:220, protein:6,  carbs:32, fat:9,  serving:'1碗' },
+            { id:'hk43', name:'楊枝甘露',             kcal:320, protein:4,  carbs:52, fat:12, serving:'1碗' },
+            { id:'hk44', name:'叉燒撈麵',             kcal:490, protein:22, carbs:62, fat:16, serving:'1碗' },
+            { id:'hk45', name:'雲吞麵',               kcal:380, protein:18, carbs:52, fat:10, serving:'1碗' },
+            { id:'hk46', name:'牛腩麵',               kcal:520, protein:28, carbs:55, fat:18, serving:'1碗' },
+            { id:'hk47', name:'即食麵 (出前一丁)',    kcal:440, protein:10, carbs:58, fat:18, serving:'1包' },
+            { id:'hk48', name:'豆腐花',               kcal:80,  protein:6,  carbs:10, fat:2,  serving:'1碗' },
+            { id:'hk49', name:'芒果糯米糍 (1個)',     kcal:180, protein:2,  carbs:32, fat:5,  serving:'1個' },
+            { id:'hk50', name:'糖水湯圓 (6粒)',       kcal:210, protein:3,  carbs:40, fat:5,  serving:'1碗' },
+        ];
         let plannerDb = {};
         let customGroceryDb = [];
         
@@ -330,7 +384,7 @@
             const targetView = document.getElementById('view-' + viewId);
             if(targetView) targetView.classList.add('active');
             
-            const navIds = ['home', 'fridge', 'add', 'grocery', 'profile'];
+            const navIds = ['home', 'calorie', 'add', 'grocery', 'profile'];
             navIds.forEach(id => {
                 const btn = document.getElementById('nav-btn-' + id);
                 if (!btn) return;
@@ -355,7 +409,11 @@
                 if(window.renderGroceryList) window.renderGroceryList();
             }
             else if (viewId === 'calorie') {
-                if(window.renderCalorieCalendar) window.renderCalorieCalendar(); 
+                const h = new Date().getHours();
+                const autoType = h >= 5 && h < 10 ? 'breakfast' : h >= 10 && h < 14 ? 'lunch' : h >= 18 && h < 22 ? 'dinner' : 'snack';
+                if(window.setMealType) window.setMealType(autoType);
+                if(window.renderCalorieCalendar) window.renderCalorieCalendar();
+                if(window.renderRecentFoods) window.renderRecentFoods();
             }
             else if (viewId === 'planner') {
                 if(window.renderPlanner) window.renderPlanner();
@@ -1182,6 +1240,106 @@
             if(m) { m.classList.add('hidden'); m.classList.remove('flex'); }
         };
 
+        // --- Meal type tabs ---
+        window.setMealType = function(type) {
+            window.currentMealType = type;
+            const cfg = { breakfast:'orange', lunch:'yellow', dinner:'purple', snack:'green' };
+            const labels = { breakfast:'🌅 早餐', lunch:'☀️ 午餐', dinner:'🌙 晚餐', snack:'🍎 小食' };
+            const colors = {
+                breakfast: 'bg-orange-500 text-white shadow-sm border-transparent',
+                lunch:     'bg-yellow-400 text-white shadow-sm border-transparent',
+                dinner:    'bg-indigo-500 text-white shadow-sm border-transparent',
+                snack:     'bg-green-500 text-white shadow-sm border-transparent',
+            };
+            ['breakfast','lunch','dinner','snack'].forEach(t => {
+                const btn = document.getElementById('meal-tab-' + t);
+                if (!btn) return;
+                if (t === type) {
+                    btn.className = `meal-tab-btn flex-1 min-w-fit px-3 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap active:scale-95 ${colors[t]}`;
+                } else {
+                    btn.className = 'meal-tab-btn flex-1 min-w-fit px-3 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap bg-white text-gray-500 border border-gray-200 active:scale-95';
+                }
+            });
+        };
+
+        // --- Smart food search ---
+        window.onFoodSearch = function(query) {
+            const container = document.getElementById('food-search-results');
+            if (!container) return;
+            const q = query.trim().toLowerCase();
+            if (!q) { container.classList.add('hidden'); container.innerHTML = ''; return; }
+            const matches = HK_FOOD_DB.filter(f => f.name.toLowerCase().includes(q)).slice(0, 8);
+            if (matches.length === 0) { container.classList.add('hidden'); return; }
+            container.innerHTML = matches.map(f => `
+                <div onclick="window.directLogFood('${f.id}')" class="flex justify-between items-center px-4 py-3 hover:bg-red-50 cursor-pointer transition-colors active:bg-red-100">
+                    <div>
+                        <p class="text-sm font-bold text-gray-800">${f.name}</p>
+                        <p class="text-[10px] text-gray-400">${f.serving} · P ${f.protein}g · C ${f.carbs}g · F ${f.fat}g</p>
+                    </div>
+                    <span class="text-red-500 font-bold text-sm bg-red-50 px-2 py-1 rounded-lg shrink-0 ml-3">🔥 ${f.kcal}</span>
+                </div>
+            `).join('');
+            container.classList.remove('hidden');
+        };
+
+        // --- Direct log from DB (no AI needed) ---
+        window.directLogFood = async function(foodId) {
+            const food = HK_FOOD_DB.find(f => f.id === foodId);
+            if (!food) return;
+            const weightEl = document.getElementById('calorie-weight');
+            const weight = weightEl ? parseFloat(weightEl.value) : 0;
+            const kcal = weight > 0 ? Math.round(food.kcal * weight / 100) : food.kcal;
+            const name = weight > 0 ? `${food.name} (${weight}g)` : food.name;
+            await window._saveCalorieEntry({ name, kcal, desc: `每${food.serving} 約 ${food.kcal} kcal`, mealType: window.currentMealType });
+            const textEl = document.getElementById('calorie-text');
+            if (textEl) textEl.value = '';
+            if (weightEl) weightEl.value = '';
+            const container = document.getElementById('food-search-results');
+            if (container) { container.classList.add('hidden'); container.innerHTML = ''; }
+            window.showToast(`✅ 已記錄：${name} · ${kcal} kcal`);
+        };
+
+        // --- Save calorie entry to Firestore & update recent foods ---
+        window._saveCalorieEntry = async function({ name, kcal, desc, mealType }) {
+            if (!currentUser) { window.customAlert('請先登入以儲存記錄！'); return; }
+            const dateInput = window.calSelectedDate || new Date().toISOString().split('T')[0];
+            const docRef = doc(collection(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'calories'));
+            await setDoc(docRef, { name, kcal, desc: desc || '', dateStr: dateInput, timestamp: Date.now(), mealType: mealType || 'snack' });
+            // Update recent foods in localStorage
+            let recent = JSON.parse(localStorage.getItem('recentFoods') || '[]');
+            recent = recent.filter(r => r.name !== name);
+            recent.unshift({ name, kcal, mealType: mealType || 'snack' });
+            if (recent.length > 10) recent = recent.slice(0, 10);
+            localStorage.setItem('recentFoods', JSON.stringify(recent));
+            if (window.renderRecentFoods) window.renderRecentFoods();
+        };
+
+        // --- Render recently eaten chips ---
+        window.renderRecentFoods = function() {
+            const bar = document.getElementById('recent-foods-bar');
+            if (!bar) return;
+            const recent = JSON.parse(localStorage.getItem('recentFoods') || '[]');
+            if (recent.length === 0) { bar.innerHTML = ''; return; }
+            bar.innerHTML = `
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">最近食過</p>
+                <div class="flex flex-wrap gap-1.5">
+                    ${recent.slice(0, 8).map(r => `
+                        <button onclick="window.quickLogFood('${encodeURIComponent(JSON.stringify(r))}')"
+                            class="bg-white border border-gray-200 rounded-full px-3 py-1 text-xs font-bold text-gray-600 hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors active:scale-95 flex items-center gap-1">
+                            ${r.name} <span class="text-red-400 text-[10px]">${r.kcal}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+        };
+
+        // --- Quick re-log from recent foods ---
+        window.quickLogFood = async function(encodedFood) {
+            const food = JSON.parse(decodeURIComponent(encodedFood));
+            await window._saveCalorieEntry({ name: food.name, kcal: food.kcal, desc: '', mealType: window.currentMealType });
+            window.showToast(`✅ 已快速記錄：${food.name} · ${food.kcal} kcal`);
+        };
+
         window.renderCalorieCalendar = function() {
             const year = window.calDate.getFullYear();
             const month = window.calDate.getMonth();
@@ -1231,6 +1389,16 @@
             document.querySelectorAll('#calorie-date').forEach(el => el.value = window.calSelectedDate);
             
             if(window.renderCalorieHistory) window.renderCalorieHistory();
+            // Update progress bar
+            const todayStr = new Date().toISOString().split('T')[0];
+            const todayTotal = dailySums[todayStr] || 0;
+            const todayLimit = limit;
+            const pct = Math.min(100, Math.round(todayTotal / todayLimit * 100));
+            const bar = document.getElementById('cal-progress-bar');
+            if (bar) { bar.style.width = pct + '%'; bar.className = `h-2 rounded-full transition-all duration-500 ${pct >= 100 ? 'bg-red-500' : 'bg-gradient-to-r from-red-400 to-orange-400'}`; }
+            const remaining = todayLimit - todayTotal;
+            const remEl = document.getElementById('cal-remaining-text');
+            if (remEl) remEl.innerText = remaining >= 0 ? `還剩 ${remaining} kcal` : `超出 ${Math.abs(remaining)} kcal`;
         };
 
         window.selectCalDate = function(dateStr) {
@@ -1301,10 +1469,7 @@
                 const data = await res.json();
                 const result = JSON.parse(data.candidates[0].content.parts[0].text);
                 
-                if (currentUser) {
-                    const docRef = doc(collection(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'calories'));
-                    await setDoc(docRef, { name: result.name, kcal: result.kcal, desc: result.desc, dateStr: dateInput, timestamp: Date.now() });
-                }
+                await window._saveCalorieEntry({ name: result.name, kcal: result.kcal, desc: result.desc, mealType: window.currentMealType });
                 window.showToast(`🔥 ${result.name}: 約 ${result.kcal} kcal!`);
                 
                 if(textEl) textEl.value = '';
@@ -1334,33 +1499,54 @@
             
             let total = 0;
             dayItems.forEach(i => total += (i.kcal || 0));
-            document.querySelectorAll('#cal-daily-total').forEach(el => el.innerText = `${total} kcal`);
+            document.querySelectorAll('#cal-daily-total').forEach(el => el.innerText = total);
             
             if (dayItems.length === 0) {
-                containers.forEach(c => c.innerHTML = '<p class="text-xs text-gray-400 text-center py-6 border-2 border-dashed border-gray-100 rounded-2xl">呢日暫時無飲食記錄</p>');
+                containers.forEach(c => c.innerHTML = '<p class="text-xs text-gray-400 text-center py-8 border-2 border-dashed border-gray-100 rounded-2xl">呢日暫時無飲食記錄<br><span class="text-[10px]">係上方搜尋或用 AI 估算食物</span></p>');
                 return;
             }
             
+            const mealCfg = [
+                { key: 'breakfast', label: '🌅 早餐', accent: 'orange' },
+                { key: 'lunch',     label: '☀️ 午餐', accent: 'yellow' },
+                { key: 'dinner',    label: '🌙 晚餐', accent: 'indigo' },
+                { key: 'snack',     label: '🍎 小食/其他', accent: 'green' },
+            ];
+            const accentBg   = { orange:'bg-orange-50', yellow:'bg-yellow-50', indigo:'bg-indigo-50', green:'bg-green-50' };
+            const accentText = { orange:'text-orange-600', yellow:'text-yellow-600', indigo:'text-indigo-600', green:'text-green-600' };
+            const accentBorder = { orange:'border-orange-100', yellow:'border-yellow-100', indigo:'border-indigo-100', green:'border-green-100' };
+            
             let html = '';
-            dayItems.sort((a,b) => b.timestamp - a.timestamp).forEach(item => {
+            mealCfg.forEach(({ key, label, accent }) => {
+                const items = dayItems.filter(i => (i.mealType || 'snack') === key).sort((a,b) => (a.timestamp||0)-(b.timestamp||0));
+                if (items.length === 0) return;
+                const mealTotal = items.reduce((s, i) => s + (i.kcal || 0), 0);
                 html += `
-                    <div class="bg-white p-4 rounded-2xl border border-gray-100 flex justify-between items-center shadow-sm hover:border-red-100 transition">
-                        <div class="flex-1 pr-2 text-left">
-                            <p class="font-bold text-sm text-gray-800">${item.name}</p>
-                            <p class="text-[10px] text-gray-400 mt-1">${item.desc || ''}</p>
+                    <div class="rounded-2xl overflow-hidden border ${accentBorder[accent]}">
+                        <div class="flex justify-between items-center px-4 py-2.5 ${accentBg[accent]}">
+                            <span class="text-xs font-bold ${accentText[accent]}">${label}</span>
+                            <span class="text-xs font-bold ${accentText[accent]} opacity-80">🔥 ${mealTotal} kcal</span>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-red-500 font-bold text-base bg-red-50 px-2 py-1 rounded-lg">🔥 ${item.kcal}</span>
-                            <button onclick="window.openEditCalorieModal('${item.id}')" class="text-gray-300 hover:text-blue-500 transition p-1"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                            <button onclick="window.deleteCalorie('${item.id}')" class="text-gray-300 hover:text-red-500 transition p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <div class="divide-y divide-gray-50">
+                            ${items.map(item => `
+                                <div class="bg-white px-4 py-3 flex justify-between items-center">
+                                    <div class="flex-1 pr-2">
+                                        <p class="font-bold text-sm text-gray-800">${item.name}</p>
+                                        ${item.desc ? `<p class="text-[10px] text-gray-400 mt-0.5">${item.desc}</p>` : ''}
+                                    </div>
+                                    <div class="flex items-center gap-2 shrink-0">
+                                        <span class="text-red-500 font-bold text-sm bg-red-50 px-2 py-1 rounded-lg">🔥 ${item.kcal}</span>
+                                        <button onclick="window.openEditCalorieModal('${item.id}')" class="text-gray-300 hover:text-blue-500 transition p-1"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                                        <button onclick="window.deleteCalorie('${item.id}')" class="text-gray-300 hover:text-red-500 transition p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
                 `;
             });
-            containers.forEach(c => {
-                c.innerHTML = html;
-                lucide.createIcons();
-            });
+            
+            containers.forEach(c => { c.innerHTML = html; lucide.createIcons(); });
         };
 
         window.openEditCalorieModal = function(id) {
@@ -1369,9 +1555,11 @@
             const idEl = document.getElementById('edit-cal-id');
             const nameEl = document.getElementById('edit-cal-name');
             const kcalEl = document.getElementById('edit-cal-kcal');
+            const mtEl = document.getElementById('edit-cal-mealtype');
             if (idEl) idEl.value = item.id;
             if (nameEl) nameEl.value = item.name;
             if (kcalEl) kcalEl.value = item.kcal;
+            if (mtEl) mtEl.value = item.mealType || 'snack';
             
             const modal = document.getElementById('calorie-edit-modal');
             if (modal) {
@@ -1392,6 +1580,7 @@
             const id = document.getElementById('edit-cal-id').value;
             const name = document.getElementById('edit-cal-name').value.trim();
             const kcal = parseInt(document.getElementById('edit-cal-kcal').value);
+            const mealType = document.getElementById('edit-cal-mealtype')?.value || 'snack';
             
             if(!name || isNaN(kcal)) return window.customAlert("請輸入有效名稱及卡路里！");
             
@@ -1399,6 +1588,7 @@
             if(item && currentUser) {
                 item.name = name;
                 item.kcal = kcal;
+                item.mealType = mealType;
                 const docRef = doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'calories', id);
                 await setDoc(docRef, item);
                 window.closeEditCalorieModal();
