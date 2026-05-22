@@ -2130,10 +2130,10 @@
             const ratEl = document.getElementById('edit-rating'); if(ratEl) flavor.rating = parseInt(ratEl.value);
             const kcalEl = document.getElementById('edit-kcal'); if(kcalEl) flavor.kcal = kcalEl.value.trim();
             
-            await window.syncToCloud(dish);
             window.closeEditModal();
-            window.showToast("修改已儲存 💾");
             window.renderPost(currentDishId, currentFlavorId);
+            window.showToast("修改已儲存 💾");
+            await window.syncToCloud(dish);
         };
 
         window.saveApiKey = function() { 
