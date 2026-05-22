@@ -1872,15 +1872,18 @@
             
             const apiKey = (localStorage.getItem('geminiApiKey') || "").trim();
             
+            if (!apiKey) {
+                if(loading) { loading.classList.add('hidden'); loading.classList.remove('flex'); }
+                return window.customAlert("請先去「設定」輸入你自己嘅 Gemini API 金鑰。\n\n可前往 Google AI Studio (aistudio.google.com) 免費申請。");
+            }
+
             // 防呆：錯誤使用 Firebase 金鑰
             if (apiKey === firebaseConfig.apiKey) {
                 if(loading) { loading.classList.add('hidden'); loading.classList.remove('flex'); }
                 return window.customAlert("⚠️ 錯誤：你輸入咗 Firebase 嘅金鑰！\n\nFirebase 同 Gemini AI 係兩套獨立系統，請前往 Google AI Studio 申請一條全新嘅 Gemini API 金鑰。");
             }
             
-            // 自動切換模型
-            const modelName = apiKey ? "gemini-1.5-flash" : "gemini-2.5-flash-preview-09-2025";
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
             
             try {
                 let promptTxt = `請用廣東話提供「${name}」詳細食譜。`;
@@ -1916,12 +1919,15 @@
                 window.showToast("AI 已構思完畢！✨");
             } catch (e) { 
                 let friendlyMsg = "未能連接 AI 大廚！";
-                if(e.message && (e.message.includes("leaked") || e.message.includes("API key not valid"))) {
+                const errText = e.message || "";
+                if(errText.includes("leaked") || errText.includes("API key not valid")) {
                     friendlyMsg += "\n你輸入嘅 API 金鑰無效，或者已被 Google 停用。";
-                } else if(e.message && e.message.includes("location is not supported")) {
+                } else if(errText.includes("location is not supported")) {
                     friendlyMsg += "\n請確保你已開啟 VPN，並設定為全局模式 (Global)。";
-                } else if(!apiKey) {
-                    friendlyMsg += "\n由於公用配額已滿，請去「設定」輸入你自己嘅 API 金鑰。";
+                } else if(errText.includes("not found") || errText.includes("NOT_FOUND")) {
+                    friendlyMsg += "\nAI 模型已更新，請刷新頁面再試。";
+                } else if(errText.includes("quota") || errText.includes("RESOURCE_EXHAUSTED")) {
+                    friendlyMsg += "\nAPI 配額已用完，請稍後再試或檢查 Google AI Studio 配額。";
                 }
                 window.customAlert(friendlyMsg); 
             }

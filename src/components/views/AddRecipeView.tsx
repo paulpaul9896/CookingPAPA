@@ -29,6 +29,10 @@ export default function AddRecipeView() {
   const handleGenerateAI = async () => {
     if (!dishName.trim()) { showCustomAlert('請先輸入菜名！'); return; }
     const apiKey = (localStorage.getItem('geminiApiKey') || '').trim();
+    if (!apiKey) {
+      showCustomAlert('請先去「設定」輸入你自己嘅 Gemini API 金鑰。\n\n可前往 Google AI Studio (aistudio.google.com) 免費申請。');
+      return;
+    }
     if (apiKey === firebaseConfig_apiKey) {
       showCustomAlert('⚠️ 錯誤：你輸入咗 Firebase 嘅金鑰！\n\nFirebase 同 Gemini AI 係兩套獨立系統，請前往 Google AI Studio 申請一條全新嘅 Gemini API 金鑰。');
       return;
@@ -44,9 +48,11 @@ export default function AddRecipeView() {
       showToast('AI 已構思完畢！✨');
     } catch (e: any) {
       let msg = '未能連接 AI 大廚！';
-      if (e.message?.includes('leaked') || e.message?.includes('API key not valid')) msg += '\n你輸入嘅 API 金鑰無效，或者已被 Google 停用。';
-      else if (e.message?.includes('location is not supported')) msg += '\n請確保你已開啟 VPN，並設定為全局模式 (Global)。';
-      else if (!apiKey) msg += '\n由於公用配額已滿，請去「設定」輸入你自己嘅 API 金鑰。';
+      const errText = e.message || '';
+      if (errText.includes('leaked') || errText.includes('API key not valid')) msg += '\n你輸入嘅 API 金鑰無效，或者已被 Google 停用。';
+      else if (errText.includes('location is not supported')) msg += '\n請確保你已開啟 VPN，並設定為全局模式 (Global)。';
+      else if (errText.includes('not found') || errText.includes('NOT_FOUND')) msg += '\nAI 模型已更新，請刷新頁面再試。';
+      else if (errText.includes('quota') || errText.includes('RESOURCE_EXHAUSTED')) msg += '\nAPI 配額已用完，請稍後再試或檢查 Google AI Studio 配額。';
       showCustomAlert(msg);
     }
     finally { setIsAiLoading(false); }

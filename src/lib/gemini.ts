@@ -28,7 +28,8 @@ export async function generateRecipe(
   style: string,
   serving: string,
 ): Promise<{ flavor: string; ingredients: string; steps: string; tags: string[]; kcal: number }> {
-  const modelName = apiKey ? 'gemini-1.5-flash' : 'gemini-2.5-flash-preview-09-2025';
+  if (!apiKey) throw new Error('MISSING_API_KEY');
+  const modelName = 'gemini-2.5-flash';
   let promptTxt = `請用廣東話提供「${name}」詳細食譜。`;
   if (style) promptTxt += `風格：${style}。`;
   if (serving) promptTxt += `份量要求：${serving}。`;
