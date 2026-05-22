@@ -1334,7 +1334,7 @@
                     <i data-lucide="${isOpen ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4 text-gray-400"></i>
                 </button>
                 <div id="recent-foods-list" class="${isOpen ? '' : 'hidden'} mt-1 bg-white border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-50 shadow-sm">
-                    ${recent.map(r => `
+                    ${recent.map((r, idx) => `
                         <div class="flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 transition-colors">
                             <div class="flex-1 min-w-0 pr-2">
                                 <p class="text-sm font-bold text-gray-800 truncate">${r.name}</p>
@@ -1342,10 +1342,16 @@
                                     🔥 ${r.kcal} kcal${r.protein ? ` · 💪 ${r.protein}g 蛋白質` : ''}
                                 </p>
                             </div>
-                            <button onclick="window.quickLogFood('${encodeURIComponent(JSON.stringify(r))}')"
-                                class="shrink-0 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-sm active:scale-90 transition-transform hover:bg-red-600">
-                                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                            </button>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <button onclick="window.quickLogFood('${encodeURIComponent(JSON.stringify(r))}')"
+                                    class="w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-sm active:scale-90 transition-transform hover:bg-red-600">
+                                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <button onclick="window.deleteRecentFood(${idx})"
+                                    class="w-7 h-7 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center active:scale-90 transition-transform hover:bg-red-50 hover:text-red-400">
+                                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
                         </div>
                     `).join('')}
                 </div>
@@ -1357,6 +1363,15 @@
             const bar = document.getElementById('recent-foods-bar');
             if (!bar) return;
             bar.dataset.open = bar.dataset.open === 'true' ? 'false' : 'true';
+            window.renderRecentFoods();
+        };
+
+        window.deleteRecentFood = function(idx) {
+            let recent = JSON.parse(localStorage.getItem('recentFoods') || '[]');
+            recent.splice(idx, 1);
+            localStorage.setItem('recentFoods', JSON.stringify(recent));
+            const bar = document.getElementById('recent-foods-bar');
+            if (bar) bar.dataset.open = 'true';
             window.renderRecentFoods();
         };
 
