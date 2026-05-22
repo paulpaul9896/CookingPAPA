@@ -580,14 +580,13 @@
                 grid.innerHTML = '<div class="col-span-3 py-24 text-center text-gray-300 text-xs">尚無食譜</div>'; 
                 return; 
             }
-            posts.reverse().forEach(p => {
-                grid.innerHTML += `
-                    <div class="grid-img-container cursor-pointer" onclick="navigate('recipe', '${p.dishId}', '${p.flavorId}')">
-                        <img src="${p.img}">
-                        ${p.isPlanningActive ? '<div class="absolute top-2 left-2 bg-orange-500/90 backdrop-blur-sm text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">⏳ 挑戰</div>' : ''}
-                    </div>
-                `;
-            });
+            posts.sort((a, b) => b.flavorId.localeCompare(a.flavorId));
+            grid.innerHTML = posts.map(p => `
+                <div class="grid-img-container cursor-pointer" onclick="navigate('recipe', '${p.dishId}', '${p.flavorId}')">
+                    <img src="${p.img}">
+                    ${p.isPlanningActive ? '<div class="absolute top-2 left-2 bg-orange-500/90 backdrop-blur-sm text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">⏳ 挑戰</div>' : ''}
+                </div>
+            `).join('');
         };
 
         // --- 份量動態縮放器 ---
