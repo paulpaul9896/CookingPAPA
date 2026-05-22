@@ -2084,6 +2084,7 @@
             const flavor = dish?.flavors.find(f => f.id === currentFlavorId);
             if(!flavor) return;
             
+            const dnEl = document.getElementById('edit-dish-name'); if(dnEl) dnEl.value = dish.name;
             const fEl = document.getElementById('edit-flavor'); if(fEl) fEl.value = flavor.name;
             const sEl = document.getElementById('edit-serving'); if(sEl) sEl.value = flavor.serving || '';
             const cEl = document.getElementById('edit-cooktime'); if(cEl) cEl.value = flavor.cooktime || '';
@@ -2113,6 +2114,7 @@
             const flavor = dish?.flavors.find(f => f.id === currentFlavorId);
             if(!flavor) return;
             
+            const dnEl = document.getElementById('edit-dish-name'); if(dnEl && dnEl.value.trim()) dish.name = dnEl.value.trim();
             const fEl = document.getElementById('edit-flavor'); if(fEl) flavor.name = fEl.value;
             const sEl = document.getElementById('edit-serving'); if(sEl) flavor.serving = sEl.value;
             const cEl = document.getElementById('edit-cooktime'); if(cEl) flavor.cooktime = cEl.value;
