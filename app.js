@@ -1,7 +1,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         // --- 1. Firebase 初始化 ---
         const firebaseConfig = {
@@ -16,7 +15,6 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const dbFirestore = getFirestore(app);
-        const storage = getStorage(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'cooking-papa-app';
         
         let currentUser = null;
@@ -230,10 +228,12 @@
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     let w = img.width, h = img.height;
-                    if(w > h) { if(w > 800) { h *= 800/w; w = 800; } } else { if(h > 800) { w *= 800/h; h = 800; } }
+                    const MAX = 400;
+                    if(w > h) { if(w > MAX) { h = Math.round(h * MAX/w); w = MAX; } }
+                    else       { if(h > MAX) { w = Math.round(w * MAX/h); h = MAX; } }
                     canvas.width = w; canvas.height = h;
-                    canvas.getContext('2d').drawImage(img, 0,0,w,h);
-                    cb(canvas.toDataURL('image/jpeg', 0.75));
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    cb(canvas.toDataURL('image/jpeg', 0.45));
                 };
                 img.src = e.target.result;
             };
@@ -535,12 +535,6 @@
                 console.error('syncToCloud failed:', e);
                 throw e;
             }
-        };
-
-        window.uploadImageToStorage = async function(base64Data, path) {
-            const storageRef = ref(storage, path);
-            await uploadString(storageRef, base64Data, 'data_url');
-            return await getDownloadURL(storageRef);
         };
 
         window.deleteFromCloud = async function(id) {
@@ -1976,22 +1970,14 @@
             const recordId = 'r' + Date.now();
 
             if (files.length > 0) {
-                window.showToast("上傳中，請稍候…");
+                window.showToast("處理圖片中…");
                 try {
-                    const base64Array = await Promise.all(files.map(f => new Promise(res => window.resizeImage(f, res))));
-                    let imageUrls;
-                    if (currentUser) {
-                        imageUrls = await Promise.all(base64Array.map((b64, i) =>
-                            window.uploadImageToStorage(b64, `users/${currentUser.uid}/recipes/${currentDishId}/${currentFlavorId}/${recordId}_${i}.jpg`)
-                        ));
-                    } else {
-                        imageUrls = base64Array;
-                    }
-                    flavor.records.push({ id: recordId, date: new Date().toLocaleDateString(), images: imageUrls, note: note });
+                    const imagesArray = await Promise.all(Array.from(files).map(f => new Promise(res => window.resizeImage(f, res))));
+                    flavor.records.push({ id: recordId, date: new Date().toLocaleDateString(), images: imagesArray, note: note });
                     await finishSave();
                 } catch(e) {
-                    console.error('Upload failed:', e);
-                    window.customAlert('圖片上傳失敗，請檢查網絡後重試。');
+                    console.error('Image processing failed:', e);
+                    window.customAlert('圖片處理失敗，請重試。');
                 }
             } else {
                 flavor.records.push({ id: recordId, date: new Date().toLocaleDateString(), images: null, note: note });
@@ -2007,7 +1993,10 @@
                     else window.showToast("記錄已上傳 📸");
                     window.renderPost(currentDishId, currentFlavorId);
                 } catch(e) {
-                    window.customAlert('儲存失敗，請檢查網絡後重試。');
+                    console.error('Save failed:', e);
+                    flavor.records.pop();
+                    window.customAlert('儲存失敗！相片可能過大。建議每次只上載1張相片，或減少相片數量後重試。');
+                    window.renderPost(currentDishId, currentFlavorId);
                 }
             }
         };
