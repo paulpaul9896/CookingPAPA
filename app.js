@@ -80,9 +80,12 @@
         let currentDishId = null;
         let currentFlavorId = null;
         let unsubscribeSnapshot = null;
+        let unsubscribeRecords = null;
         let unsubscribeCalorie = null;
         let unsubscribePlanner = null;
         let unsubscribeCustomGrocery = null;
+        let recordsDb = {};
+        const DEFAULT_RECIPE_IMG = 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?auto=format&fit=crop&w=800&q=80';
 
         // 安全地讀取 localStorage 嘅輔助函數，防止解析出錯導致停止執行
         const safeGetItem = (key, fallback) => {
@@ -335,7 +338,18 @@
             if (unsubscribeSnapshot) unsubscribeSnapshot();
             unsubscribeSnapshot = onSnapshot(collection(dbFirestore, 'artifacts', appId, 'users', user.uid, 'recipes'), (snap) => {
                 db = []; snap.forEach(d => db.push({ id: d.id, ...d.data() }));
+                mergeRecordsIntoDb();
                 window.updateSyncTime();
+                window.refreshCurrentView();
+                migrateEmbeddedRecordImages();
+            });
+
+            // 製作記錄相片（獨立文件，避免食譜文件超過 1MB）
+            if (unsubscribeRecords) unsubscribeRecords();
+            unsubscribeRecords = onSnapshot(collection(dbFirestore, 'artifacts', appId, 'users', user.uid, 'record-images'), (snap) => {
+                recordsDb = {};
+                snap.forEach(d => { recordsDb[d.id] = { id: d.id, ...d.data() }; });
+                mergeRecordsIntoDb();
                 window.refreshCurrentView();
             });
 
@@ -495,12 +509,7 @@
                 if (window.searchFilterPlanning && !isPlanningActive) return;
 
                 if (!keyword || d.name.toLowerCase().includes(keyword) || f.name.toLowerCase().includes(keyword)) {
-                    let img = isPlanningActive ? planningBgImg : 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?auto=format&fit=crop&w=800&q=80';
-                    if (f.coverImage) {
-                        img = f.coverImage;
-                    } else if (f.records && f.records.length > 0) {
-                        img = (f.records[0].images && f.records[0].images.length > 0) ? f.records[0].images[0] : (f.records[0].image || img);
-                    }
+                    const img = window.getFlavorDisplayImage(f, isPlanningActive);
                     res.push({ dishId: d.id, flavorId: f.id, img, isPlanningActive });
                 }
             }));
@@ -527,18 +536,137 @@
         }
 
         // --- 4. 數據操作 ---
-        window.syncToCloud = async function(data) {
-            if (!currentUser) return;
+        function getRecordImagesCollection() {
+            return collection(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'record-images');
+        }
+
+        function getRecordImages(record) {
+            if (!record) return [];
+            if (record.images && record.images.length) return record.images;
+            if (record.image) return [record.image];
+            return [];
+        }
+
+        function mergeRecordsIntoDb() {
+            db.forEach(dish => {
+                (dish.flavors || []).forEach(flavor => {
+                    (flavor.records || []).forEach(meta => {
+                        const full = recordsDb[meta.id];
+                        if (full) {
+                            meta.images = full.images || null;
+                            if (full.note !== undefined) meta.note = full.note;
+                            if (full.date) meta.date = full.date;
+                        }
+                    });
+                    if (flavor.coverRecordId && recordsDb[flavor.coverRecordId]) {
+                        const imgs = getRecordImages(recordsDb[flavor.coverRecordId]);
+                        if (imgs.length) flavor.coverImage = imgs[flavor.coverImageIdx || 0];
+                    }
+                });
+            });
+        }
+
+        function stripDishForCloud(dish) {
+            const copy = JSON.parse(JSON.stringify(dish));
+            (copy.flavors || []).forEach(f => {
+                delete f.coverImage;
+                (f.records || []).forEach(r => {
+                    delete r.images;
+                    delete r.image;
+                });
+            });
+            return copy;
+        }
+
+        window.getFlavorDisplayImage = function(flavor, isPlanningActive) {
+            if (isPlanningActive) return planningBgImg;
+            if (flavor.coverRecordId && recordsDb[flavor.coverRecordId]) {
+                const imgs = getRecordImages(recordsDb[flavor.coverRecordId]);
+                if (imgs.length) return imgs[flavor.coverImageIdx || 0];
+            }
+            if (flavor.coverImage) return flavor.coverImage;
+            const firstRecord = (flavor.records || [])[0];
+            const imgs = getRecordImages(firstRecord);
+            return imgs[0] || DEFAULT_RECIPE_IMG;
+        };
+
+        let migrationRunning = false;
+        async function migrateEmbeddedRecordImages() {
+            if (!currentUser || migrationRunning) return;
+            migrationRunning = true;
             try {
-                await setDoc(doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'recipes', data.id), data);
+                for (const dish of db) {
+                    let dishChanged = false;
+                    for (const f of dish.flavors || []) {
+                        for (const r of f.records || []) {
+                            if ((r.images || r.image) && !recordsDb[r.id]) {
+                                await window.syncRecordToCloud(r, dish.id, f.id);
+                                dishChanged = true;
+                            }
+                        }
+                        if (f.coverImage && f.coverImage.startsWith('data:')) {
+                            for (const r of f.records || []) {
+                                const imgs = getRecordImages(recordsDb[r.id] || r);
+                                const idx = imgs.indexOf(f.coverImage);
+                                if (idx >= 0) {
+                                    f.coverRecordId = r.id;
+                                    f.coverImageIdx = idx;
+                                    delete f.coverImage;
+                                    dishChanged = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (dishChanged) await window.syncToCloud(dish);
+                }
+            } catch(e) {
+                console.error('Migration failed:', e);
+            } finally {
+                migrationRunning = false;
+            }
+        }
+
+        window.syncToCloud = async function(data) {
+            if (!currentUser) throw new Error('NOT_LOGGED_IN');
+            try {
+                await setDoc(doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'recipes', data.id), stripDishForCloud(data));
             } catch(e) {
                 console.error('syncToCloud failed:', e);
                 throw e;
             }
         };
 
+        window.syncRecordToCloud = async function(record, dishId, flavorId) {
+            if (!currentUser) throw new Error('NOT_LOGGED_IN');
+            const payload = {
+                id: record.id,
+                dishId,
+                flavorId,
+                date: record.date,
+                note: record.note || '',
+                images: record.images || null,
+            };
+            await setDoc(doc(getRecordImagesCollection(), record.id), payload);
+            recordsDb[record.id] = payload;
+        };
+
+        window.deleteRecordFromCloud = async function(recordId) {
+            if (!currentUser) return;
+            await deleteDoc(doc(getRecordImagesCollection(), recordId));
+            delete recordsDb[recordId];
+        };
+
         window.deleteFromCloud = async function(id) {
             if (!currentUser) return;
+            const dish = db.find(d => d.id === id);
+            if (dish) {
+                for (const f of dish.flavors || []) {
+                    for (const r of f.records || []) {
+                        await window.deleteRecordFromCloud(r.id);
+                    }
+                }
+            }
             await deleteDoc(doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'recipes', id));
         };
 
@@ -568,12 +696,7 @@
             let posts = [];
             db.forEach(d => (d.flavors||[]).forEach(f => {
                 const isPlanningActive = f.isPlanning && (!f.records || f.records.length === 0);
-                let img = isPlanningActive ? planningBgImg : 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?auto=format&fit=crop&w=800&q=80';
-                if (f.coverImage) {
-                    img = f.coverImage;
-                } else if (f.records && f.records.length > 0) {
-                    img = (f.records[0].images && f.records[0].images.length > 0) ? f.records[0].images[0] : (f.records[0].image || img);
-                }
+                const img = window.getFlavorDisplayImage(f, isPlanningActive);
                 posts.push({ dishId: d.id, flavorId: f.id, img, isPlanningActive });
             }));
             
@@ -620,11 +743,25 @@
             const dish = db.find(d => d.id === currentDishId);
             const flavor = dish?.flavors.find(f => f.id === currentFlavorId);
             if(!dish || !flavor) return;
-            
-            flavor.coverImage = imgUrl;
-            await window.syncToCloud(dish);
-            window.showToast("已設定為代表照 ⭐");
+
+            for (const r of flavor.records || []) {
+                const imgs = getRecordImages(r);
+                const idx = imgs.indexOf(imgUrl);
+                if (idx >= 0) {
+                    flavor.coverRecordId = r.id;
+                    flavor.coverImageIdx = idx;
+                    flavor.coverImage = imgUrl;
+                    break;
+                }
+            }
+
             window.renderPost(currentDishId, currentFlavorId);
+            window.showToast("已設定為代表照 ⭐");
+            try {
+                await window.syncToCloud(dish);
+            } catch(e) {
+                window.customAlert('代表照儲存失敗，請重試。');
+            }
         };
 
         window.renderPost = function(dishId, flavorId) {
@@ -634,13 +771,7 @@
             if (!flavor) return;
             
             const isPlanningActive = flavor.isPlanning && (!flavor.records || flavor.records.length === 0);
-            let img = isPlanningActive ? planningBgImg : 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?auto=format&fit=crop&w=800&q=80';
-            
-            if (flavor.coverImage) {
-                img = flavor.coverImage;
-            } else if (flavor.records && flavor.records.length > 0) {
-                img = (flavor.records[0].images && flavor.records[0].images.length > 0) ? flavor.records[0].images[0] : (flavor.records[0].image || img);
-            }
+            let img = window.getFlavorDisplayImage(flavor, isPlanningActive);
             
             const ratingTexts = { 1: "🤢 中伏", 2: "🤐 試一次", 3: "🙂 得閒整", 4: "🤤 要著兩條褲" };
             
@@ -717,10 +848,10 @@
                         <div class="space-y-4">
                             ${(flavor.records || []).map(r => {
                                 let imgsHtml = '';
-                                let imagesList = r.images || (r.image ? [r.image] : []);
+                                let imagesList = getRecordImages(r);
                                 if (imagesList.length > 0) {
                                     if (imagesList.length === 1) {
-                                        const isCover = (flavor.coverImage === imagesList[0]);
+                                        const isCover = flavor.coverRecordId === r.id && (flavor.coverImageIdx || 0) === 0;
                                         imgsHtml = `<div class="relative mt-3 group">
                                             <img src="${imagesList[0]}" class="w-full max-h-56 object-cover rounded-xl border border-gray-100">
                                             <button onclick="setCoverImage('${imagesList[0]}')" class="absolute top-2 left-2 p-1.5 bg-white/90 rounded-full shadow-sm backdrop-blur-sm transition-colors ${isCover ? 'text-yellow-500' : 'text-gray-400 hover:text-yellow-500'} z-10" title="設為代表照">
@@ -729,8 +860,8 @@
                                         </div>`;
                                     } else {
                                         let gridCols = imagesList.length === 2 ? 'grid-cols-2' : 'grid-cols-3';
-                                        imgsHtml = `<div class="grid ${gridCols} gap-1.5 mt-3">` + imagesList.map((img) => {
-                                            const isCover = (flavor.coverImage === img);
+                                        imgsHtml = `<div class="grid ${gridCols} gap-1.5 mt-3">` + imagesList.map((img, imgIdx) => {
+                                            const isCover = flavor.coverRecordId === r.id && (flavor.coverImageIdx || 0) === imgIdx;
                                             return `
                                             <div class="relative aspect-square group">
                                                 <img src="${img}" class="w-full h-full object-cover rounded-xl border border-gray-100">
@@ -801,12 +932,7 @@
             db.forEach(d => (d.flavors||[]).forEach(f => {
                 if (f.isFavorite) {
                     const isPlanningActive = f.isPlanning && (!f.records || f.records.length === 0);
-                    let img = isPlanningActive ? planningBgImg : 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?auto=format&fit=crop&w=800&q=80';
-                    if (f.coverImage) {
-                        img = f.coverImage;
-                    } else if (f.records && f.records.length > 0) {
-                        img = (f.records[0].images && f.records[0].images.length > 0) ? f.records[0].images[0] : (f.records[0].image || img);
-                    }
+                    const img = window.getFlavorDisplayImage(f, isPlanningActive);
                     favs.push({ dishId: d.id, flavorId: f.id, img });
                 }
             }));
@@ -1952,7 +2078,7 @@
         };
 
         window.saveRecord = async function(btnEl) {
-            const parentContext = btnEl ? btnEl.closest('.bg-gray-50') || document : document;
+            const parentContext = btnEl ? (btnEl.closest('.border-dashed') || btnEl.parentElement) : document;
             const fileInput = parentContext.querySelector('#rec-img');
             const noteInput = parentContext.querySelector('#rec-note');
             
@@ -1962,42 +2088,44 @@
             const dish = db.find(d => d.id === currentDishId);
             const flavor = dish?.flavors.find(f => f.id === currentFlavorId);
             if(!dish || !flavor) return;
+            if (!currentUser) return window.customAlert('請先登入以儲存記錄！');
             
             flavor.records = flavor.records || [];
             let challengeCompleted = false;
             if(flavor.isPlanning) { flavor.isPlanning = false; challengeCompleted = true; }
             
             const recordId = 'r' + Date.now();
+            let record = { id: recordId, date: new Date().toLocaleDateString(), note: note, images: null };
 
             if (files.length > 0) {
                 window.showToast("處理圖片中…");
                 try {
-                    const imagesArray = await Promise.all(Array.from(files).map(f => new Promise(res => window.resizeImage(f, res))));
-                    flavor.records.push({ id: recordId, date: new Date().toLocaleDateString(), images: imagesArray, note: note });
-                    await finishSave();
+                    const imagesArray = await Promise.all(files.map(f => new Promise(res => window.resizeImage(f, res))));
+                    record.images = imagesArray;
                 } catch(e) {
                     console.error('Image processing failed:', e);
-                    window.customAlert('圖片處理失敗，請重試。');
+                    return window.customAlert('圖片處理失敗，請重試。');
                 }
-            } else {
-                flavor.records.push({ id: recordId, date: new Date().toLocaleDateString(), images: null, note: note });
-                await finishSave();
             }
 
-            async function finishSave() {
-                if(noteInput) noteInput.value = '';
-                if(fileInput) fileInput.value = '';
+            flavor.records.push(record);
+            recordsDb[recordId] = { ...record, dishId: dish.id, flavorId: flavor.id };
+
+            if(noteInput) noteInput.value = '';
+            if(fileInput) fileInput.value = '';
+            window.renderPost(currentDishId, currentFlavorId);
+            if (challengeCompleted) window.showToast("🎉 挑戰完成！記錄已上傳");
+            else window.showToast("記錄已上傳 📸");
+
+            try {
+                await window.syncRecordToCloud(record, dish.id, flavor.id);
+                await window.syncToCloud(dish);
+            } catch(e) {
+                console.error('Save failed:', e);
+                flavor.records = flavor.records.filter(r => r.id !== recordId);
+                delete recordsDb[recordId];
+                window.customAlert('儲存失敗，請檢查網絡後重試。');
                 window.renderPost(currentDishId, currentFlavorId);
-                if (challengeCompleted) window.showToast("🎉 挑戰完成！記錄已上傳");
-                else window.showToast("記錄已上傳 📸");
-                try {
-                    await window.syncToCloud(dish);
-                } catch(e) {
-                    console.error('Save failed:', e);
-                    flavor.records.pop();
-                    window.customAlert('儲存失敗，請檢查網絡後重試。若一次上載多張相片，可試下減少數量。');
-                    window.renderPost(currentDishId, currentFlavorId);
-                }
             }
         };
 
@@ -2011,9 +2139,16 @@
             window.customPrompt("修改記錄心得：", "輸入心得...", async (newNote) => {
                 if (newNote !== null) {
                     record.note = newNote;
-                    await window.syncToCloud(dish);
+                    if (recordsDb[id]) recordsDb[id].note = newNote;
                     window.renderPost(currentDishId, currentFlavorId);
                     window.showToast("記錄心得已更新 ✅");
+                    try {
+                        const fullRecord = recordsDb[id] || record;
+                        await window.syncRecordToCloud(fullRecord, dish.id, flavor.id);
+                        await window.syncToCloud(dish);
+                    } catch(e) {
+                        window.customAlert('儲存失敗，請重試。');
+                    }
                 }
             }, record.note);
         };
@@ -2023,10 +2158,20 @@
                 const dish = db.find(d => d.id === currentDishId);
                 const flavor = dish?.flavors.find(f => f.id === currentFlavorId);
                 if(!flavor) return;
+                if (flavor.coverRecordId === id) {
+                    delete flavor.coverRecordId;
+                    delete flavor.coverImageIdx;
+                    delete flavor.coverImage;
+                }
                 flavor.records = flavor.records.filter(r => r.id !== id);
-                await window.syncToCloud(dish);
-                window.showToast("記錄已刪除");
                 window.renderPost(currentDishId, currentFlavorId);
+                window.showToast("記錄已刪除");
+                try {
+                    await window.deleteRecordFromCloud(id);
+                    await window.syncToCloud(dish);
+                } catch(e) {
+                    window.customAlert('刪除失敗，請重試。');
+                }
             });
         };
 
@@ -2034,14 +2179,22 @@
             window.customConfirm("確定要永久刪除呢個食譜？此動作無法還原。", async () => {
                 const dish = db.find(d => d.id === currentDishId);
                 if(!dish) return;
+                const removedFlavor = dish.flavors.find(f => f.id === currentFlavorId);
                 dish.flavors = dish.flavors.filter(f => f.id !== currentFlavorId);
-                if(dish.flavors.length === 0) {
-                    await window.deleteFromCloud(currentDishId);
-                } else {
-                    await window.syncToCloud(dish);
+                try {
+                    for (const r of removedFlavor?.records || []) {
+                        await window.deleteRecordFromCloud(r.id);
+                    }
+                    if(dish.flavors.length === 0) {
+                        await window.deleteFromCloud(currentDishId);
+                    } else {
+                        await window.syncToCloud(dish);
+                    }
+                    window.navigate('home');
+                    window.showToast("食譜已刪除 🗑️");
+                } catch(e) {
+                    window.customAlert('刪除失敗，請重試。');
                 }
-                window.navigate('home');
-                window.showToast("食譜已刪除 🗑️");
             });
         };
 
