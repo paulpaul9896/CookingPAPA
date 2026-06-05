@@ -567,12 +567,11 @@
             <div class="space-y-8">
                 <div id="auth-section" class="bg-gray-50 rounded-3xl p-6 border border-gray-100 shadow-sm">
                     <h3 class="font-bold text-sm mb-4 flex items-center gap-2 text-gray-700 font-bold"><i data-lucide="user" class="w-5 h-5 text-blue-500"></i> 帳號同步狀態</h3>
+                    <p id="sync-time-display" class="text-[11px] text-blue-500 font-bold mb-4">🔄 最後同步時間：未同步</p>
                     
                     <div id="user-info" class="hidden space-y-4 text-left">
                         <p class="text-xs text-gray-600">已登入：<span id="user-email" class="font-bold text-blue-600"></span></p>
                         <p class="text-[10px] text-gray-400 leading-relaxed">您的食譜已與此帳號同步。更換裝置後只需登入即可找回所有食譜。</p>
-                        <!-- 最後同步時間顯示 -->
-                        <p id="sync-time-display" class="text-[11px] text-blue-500 font-bold mt-1">🔄 最後同步時間：未同步</p>
                         
                         <div class="pt-3 border-t border-gray-200 mt-2">
                             <button onclick="window.handleLogout && window.handleLogout()" class="w-full py-3.5 bg-white border border-red-200 text-red-500 rounded-xl text-sm font-bold transition active:scale-95 hover:bg-red-50">登出帳號</button>

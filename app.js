@@ -287,13 +287,20 @@
             });
         };
 
-        window.updateSyncTime = function() {
+        window.setSyncStatus = function(status, detail) {
             const el = document.getElementById('sync-time-display');
-            if(el) {
+            if (!el) return;
+            if (status === 'pending') {
+                el.innerText = '🔄 正在同步...';
+            } else if (status === 'error') {
+                el.innerText = `❌ 同步失敗${detail ? '：' + detail : ''}`;
+            } else {
                 const now = new Date();
-                el.innerText = `🔄 最後同步時間：${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+                const label = currentUser && !currentUser.isAnonymous ? '最後同步時間' : '雲端已連接';
+                el.innerText = `🔄 ${label}：${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
             }
         };
+        window.updateSyncTime = function() { window.setSyncStatus('ok'); };
 
         // --- 2. 帳號與登入邏輯 ---
         window.handleGoogleSignIn = async function() {
@@ -341,24 +348,48 @@
                 if(displayNameEl) displayNameEl.innerText = "爸爸大廚 cooking_papa";
             }
 
+            window.setSyncStatus('pending');
+
             // Recipes 監聽
             if (unsubscribeSnapshot) unsubscribeSnapshot();
-            unsubscribeSnapshot = onSnapshot(collection(dbFirestore, 'artifacts', appId, 'users', user.uid, 'recipes'), (snap) => {
-                db = []; snap.forEach(d => db.push({ id: d.id, ...d.data() }));
-                mergeRecordsIntoDb();
-                window.updateSyncTime();
-                window.refreshCurrentView();
-                migrateEmbeddedRecordImages();
-            });
+            unsubscribeSnapshot = onSnapshot(
+                collection(dbFirestore, 'artifacts', appId, 'users', user.uid, 'recipes'),
+                (snap) => {
+                    try {
+                        db = []; snap.forEach(d => db.push({ id: d.id, ...d.data() }));
+                        mergeRecordsIntoDb();
+                        window.updateSyncTime();
+                        window.refreshCurrentView();
+                        migrateEmbeddedRecordImages();
+                    } catch(e) {
+                        console.error('Recipes snapshot handler failed:', e);
+                        window.setSyncStatus('error', '資料處理失敗');
+                    }
+                },
+                (err) => {
+                    console.error('Recipes listener error:', err);
+                    window.setSyncStatus('error', '無法讀取雲端食譜');
+                }
+            );
 
             // 製作記錄相片（獨立文件，避免食譜文件超過 1MB）
             if (unsubscribeRecords) unsubscribeRecords();
-            unsubscribeRecords = onSnapshot(collection(dbFirestore, 'artifacts', appId, 'users', user.uid, 'record-images'), (snap) => {
-                recordsDb = {};
-                snap.forEach(d => { recordsDb[d.id] = { id: d.id, ...d.data() }; });
-                mergeRecordsIntoDb();
-                window.refreshCurrentView();
-            });
+            unsubscribeRecords = onSnapshot(
+                collection(dbFirestore, 'artifacts', appId, 'users', user.uid, 'record-images'),
+                (snap) => {
+                    try {
+                        recordsDb = {};
+                        snap.forEach(d => { recordsDb[d.id] = { id: d.id, ...d.data() }; });
+                        mergeRecordsIntoDb();
+                        window.refreshCurrentView();
+                    } catch(e) {
+                        console.error('Record-images snapshot handler failed:', e);
+                    }
+                },
+                (err) => {
+                    console.error('Record-images listener error:', err);
+                }
+            );
 
             // Calories 監聽
             if (unsubscribeCalorie) unsubscribeCalorie();
@@ -555,8 +586,10 @@
         }
 
         function mergeRecordsIntoDb() {
+            try {
             db.forEach(dish => {
                 (dish.flavors || []).forEach(flavor => {
+                    if (!Array.isArray(flavor.records)) flavor.records = [];
                     flavor.records = flavor.records || [];
                     (flavor.records || []).forEach(meta => {
                         const full = recordsDb[meta.id];
@@ -584,6 +617,9 @@
                     }
                 });
             });
+            } catch(e) {
+                console.error('mergeRecordsIntoDb failed:', e);
+            }
         }
 
         function stripDishForCloud(dish) {
