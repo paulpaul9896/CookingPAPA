@@ -326,16 +326,20 @@
             try {
                 const user = auth.currentUser;
                 if (user && user.isAnonymous) {
-                    await linkWithPopup(user, provider);
+                    try {
+                        await linkWithPopup(user, provider);
+                    } catch (linkErr) {
+                        if (linkErr.code === 'auth/credential-already-in-use' || linkErr.code === 'auth/email-already-in-use') {
+                            await signInWithPopup(auth, provider);
+                        } else throw linkErr;
+                    }
                 } else {
                     await signInWithPopup(auth, provider);
                 }
                 window.showToast("已登入！👋");
             } catch(e) {
                 if (e.code === 'auth/popup-closed-by-user') return;
-                else if (e.code === 'auth/credential-already-in-use') {
-                    window.customAlert("此 Google 帳號之前已用過，同你而家匿名帳號嘅資料係分開嘅。\n\n如要保留現有食譜，請唔好登入，繼續用匿名模式。");
-                } else if (e.code === 'auth/operation-not-allowed') window.customAlert("⚠️ Firebase 設定錯誤：\n請前往 Firebase 後台開啟「Google」登入。");
+                else if (e.code === 'auth/operation-not-allowed') window.customAlert("⚠️ Firebase 設定錯誤：\n請前往 Firebase 後台開啟「Google」登入。");
                 else window.customAlert("登入失敗：" + e.message);
             }
         };
