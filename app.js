@@ -1,5 +1,5 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithPopup, linkWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithPopup, linkWithPopup, GoogleAuthProvider, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- 1. Firebase 初始化 ---
@@ -14,6 +14,7 @@
         };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        setPersistence(auth, browserLocalPersistence);
         const dbFirestore = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'cooking-papa-app';
         
@@ -302,6 +303,23 @@
         };
         window.updateSyncTime = function() { window.setSyncStatus('ok'); };
 
+        window.updateDataDiagnostic = function() {
+            const el = document.getElementById('data-diagnostic');
+            if (!el || !currentUser) return;
+            let recordMeta = 0;
+            db.forEach(d => (d.flavors || []).forEach(f => recordMeta += (f.records || []).length));
+            const imageCount = Object.keys(recordsDb).length;
+            const mode = currentUser.isAnonymous ? '匿名模式' : `Google：${currentUser.email || ''}`;
+            let html = `📊 雲端資料：食譜 ${db.length} 個｜製作記錄 ${recordMeta} 條｜相片 ${imageCount} 組<br><span class="text-gray-400">帳號狀態：${mode}</span>`;
+            const lastEmail = localStorage.getItem('cookingPapaLastEmail');
+            if (currentUser.isAnonymous && lastEmail) {
+                html += `<br><span class="text-orange-600 font-bold">⚠️ 你之前用 ${lastEmail} 登入過，請重新按下方 Google 登入找回食譜！</span>`;
+            } else if (!currentUser.isAnonymous && db.length === 0 && recordMeta === 0) {
+                html += `<br><span class="text-orange-600 font-bold">⚠️ 此 Google 帳號雲端冇資料。請確認用返同一個 Gmail 登入。</span>`;
+            }
+            el.innerHTML = html;
+        };
+
         // --- 2. 帳號與登入邏輯 ---
         window.handleGoogleSignIn = async function() {
             const provider = new GoogleAuthProvider();
@@ -338,6 +356,7 @@
             const displayNameEl = document.getElementById('display-name');
 
             if (!user.isAnonymous) {
+                if (user.email) localStorage.setItem('cookingPapaLastEmail', user.email);
                 if(userInfoEl) userInfoEl.classList.remove('hidden'); 
                 if(loginFormEl) loginFormEl.classList.add('hidden');
                 if(userEmailEl) userEmailEl.innerText = user.email;
@@ -346,7 +365,16 @@
                 if(userInfoEl) userInfoEl.classList.add('hidden'); 
                 if(loginFormEl) loginFormEl.classList.remove('hidden');
                 if(displayNameEl) displayNameEl.innerText = "爸爸大廚 cooking_papa";
+                const hintEl = document.getElementById('last-login-hint');
+                const lastEmail = localStorage.getItem('cookingPapaLastEmail');
+                if (hintEl) {
+                    hintEl.innerText = lastEmail
+                        ? `⚠️ 你之前用 ${lastEmail} 登入並儲存食譜。請重新登入同一個 Google 帳號！`
+                        : '';
+                    hintEl.classList.toggle('hidden', !lastEmail);
+                }
             }
+            window.updateDataDiagnostic();
 
             window.setSyncStatus('pending');
 
@@ -359,6 +387,7 @@
                         db = []; snap.forEach(d => db.push({ id: d.id, ...d.data() }));
                         mergeRecordsIntoDb();
                         window.updateSyncTime();
+                        window.updateDataDiagnostic();
                         window.refreshCurrentView();
                         migrateEmbeddedRecordImages();
                     } catch(e) {
@@ -381,6 +410,7 @@
                         recordsDb = {};
                         snap.forEach(d => { recordsDb[d.id] = { id: d.id, ...d.data() }; });
                         mergeRecordsIntoDb();
+                        window.updateDataDiagnostic();
                         window.refreshCurrentView();
                     } catch(e) {
                         console.error('Record-images snapshot handler failed:', e);
@@ -388,6 +418,8 @@
                 },
                 (err) => {
                     console.error('Record-images listener error:', err);
+                    const diag = document.getElementById('data-diagnostic');
+                    if (diag) diag.innerHTML += '<br><span class="text-red-500 font-bold">❌ 相片記錄讀取失敗，請檢查 Firestore 規則是否包含 record-images</span>';
                 }
             );
 
