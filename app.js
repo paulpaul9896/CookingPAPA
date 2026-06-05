@@ -1,5 +1,5 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithPopup, linkWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- 1. Firebase 初始化 ---
@@ -299,11 +299,18 @@
         window.handleGoogleSignIn = async function() {
             const provider = new GoogleAuthProvider();
             try {
-                await signInWithPopup(auth, provider);
+                const user = auth.currentUser;
+                if (user && user.isAnonymous) {
+                    await linkWithPopup(user, provider);
+                } else {
+                    await signInWithPopup(auth, provider);
+                }
                 window.showToast("已登入！👋");
             } catch(e) {
                 if (e.code === 'auth/popup-closed-by-user') return;
-                else if (e.code === 'auth/operation-not-allowed') window.customAlert("⚠️ Firebase 設定錯誤：\n請前往 Firebase 後台開啟「Google」登入。");
+                else if (e.code === 'auth/credential-already-in-use') {
+                    window.customAlert("此 Google 帳號之前已用過，同你而家匿名帳號嘅資料係分開嘅。\n\n如要保留現有食譜，請唔好登入，繼續用匿名模式。");
+                } else if (e.code === 'auth/operation-not-allowed') window.customAlert("⚠️ Firebase 設定錯誤：\n請前往 Firebase 後台開啟「Google」登入。");
                 else window.customAlert("登入失敗：" + e.message);
             }
         };
@@ -550,6 +557,7 @@
         function mergeRecordsIntoDb() {
             db.forEach(dish => {
                 (dish.flavors || []).forEach(flavor => {
+                    flavor.records = flavor.records || [];
                     (flavor.records || []).forEach(meta => {
                         const full = recordsDb[meta.id];
                         if (full) {
@@ -558,6 +566,18 @@
                             if (full.date) meta.date = full.date;
                         }
                     });
+                    Object.values(recordsDb).forEach(full => {
+                        if (full.dishId !== dish.id || full.flavorId !== flavor.id) return;
+                        let meta = flavor.records.find(r => r.id === full.id);
+                        if (!meta) {
+                            meta = { id: full.id, date: full.date || '', note: full.note || '' };
+                            flavor.records.push(meta);
+                        }
+                        meta.images = full.images || null;
+                        if (full.note !== undefined) meta.note = full.note;
+                        if (full.date) meta.date = full.date;
+                    });
+                    flavor.records.sort((a, b) => b.id.localeCompare(a.id));
                     if (flavor.coverRecordId && recordsDb[flavor.coverRecordId]) {
                         const imgs = getRecordImages(recordsDb[flavor.coverRecordId]);
                         if (imgs.length) flavor.coverImage = imgs[flavor.coverImageIdx || 0];
@@ -597,11 +617,17 @@
             try {
                 for (const dish of db) {
                     let dishChanged = false;
+                    let allMigrated = true;
                     for (const f of dish.flavors || []) {
                         for (const r of f.records || []) {
                             if ((r.images || r.image) && !recordsDb[r.id]) {
-                                await window.syncRecordToCloud(r, dish.id, f.id);
-                                dishChanged = true;
+                                try {
+                                    await window.syncRecordToCloud(r, dish.id, f.id);
+                                    dishChanged = true;
+                                } catch(e) {
+                                    console.error('Record migration failed:', r.id, e);
+                                    allMigrated = false;
+                                }
                             }
                         }
                         if (f.coverImage && f.coverImage.startsWith('data:')) {
@@ -618,7 +644,7 @@
                             }
                         }
                     }
-                    if (dishChanged) await window.syncToCloud(dish);
+                    if (dishChanged && allMigrated) await window.syncToCloud(dish);
                 }
             } catch(e) {
                 console.error('Migration failed:', e);
