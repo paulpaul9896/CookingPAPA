@@ -590,6 +590,18 @@
                 </div>
 
                 <div class="bg-gray-50 rounded-3xl p-6 border border-gray-100 shadow-sm text-left">
+                    <h3 class="font-bold text-sm mb-3 flex items-center gap-2 text-gray-700 font-bold"><i data-lucide="hard-drive" class="w-5 h-5 text-blue-500"></i> 資料備份</h3>
+                    <p class="text-[10px] text-gray-400 mb-4 leading-relaxed">下載完整 .json 備份（包括食譜、製作記錄相片、卡路里等）。還原時會合併上傳至你目前登入嘅帳號。</p>
+                    <button onclick="window.exportBackup && window.exportBackup()" class="w-full py-3.5 bg-blue-500 text-white rounded-2xl text-xs font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition mb-3 flex items-center justify-center gap-2">
+                        <i data-lucide="download" class="w-4 h-4"></i> 下載備份 (.json)
+                    </button>
+                    <label class="w-full py-3.5 bg-white border border-gray-200 text-gray-700 rounded-2xl text-xs font-bold active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer hover:bg-gray-50">
+                        <i data-lucide="upload" class="w-4 h-4"></i> 上傳還原備份 (.json)
+                        <input type="file" id="backup-file-input" accept=".json,application/json" class="hidden" onchange="window.importBackup && window.importBackup(this)">
+                    </label>
+                </div>
+
+                <div class="bg-gray-50 rounded-3xl p-6 border border-gray-100 shadow-sm text-left">
                     <h3 class="font-bold text-sm mb-3 flex items-center gap-2 text-gray-700 font-bold"><i data-lucide="cloud" class="w-5 h-5 text-blue-500"></i> AI 大廚 API 金鑰</h3>
                     <input type="password" id="setting-api-key" class="w-full px-4 py-3 bg-white border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/10 mb-4 transition-all" placeholder="輸入 Gemini API Key">
                     <button onclick="window.saveApiKey && window.saveApiKey()" class="w-full py-3 bg-gray-900 text-white rounded-2xl text-xs font-bold shadow-xl active:scale-95 transition">儲存 API 設定</button>

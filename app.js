@@ -2398,6 +2398,157 @@
             await window.syncToCloud(dish);
         };
 
+        function buildBackupPayload() {
+            const recipes = JSON.parse(JSON.stringify(db));
+            recipes.forEach(dish => {
+                (dish.flavors || []).forEach(flavor => {
+                    (flavor.records || []).forEach(meta => {
+                        const full = recordsDb[meta.id];
+                        if (full) {
+                            meta.images = full.images || null;
+                            if (full.note !== undefined) meta.note = full.note;
+                            if (full.date) meta.date = full.date;
+                        }
+                    });
+                });
+            });
+            return {
+                version: 1,
+                app: 'CookingPAPA',
+                exportedAt: new Date().toISOString(),
+                email: currentUser && !currentUser.isAnonymous ? currentUser.email : null,
+                recipes,
+                recordImages: Object.values(recordsDb),
+                calories: calorieDb,
+                planner: plannerDb,
+                customGrocery: customGroceryDb,
+                local: {
+                    flavorTags: window.flavorTags,
+                    avatar: window.userAvatar,
+                    groceryChecked,
+                    groceryDeleted,
+                    groceryOrder,
+                    calorieLimit: localStorage.getItem('calorieLimit') || '2000',
+                    recentFoods: safeGetItem('recentFoods', []),
+                }
+            };
+        }
+
+        window.exportBackup = function() {
+            const payload = buildBackupPayload();
+            const count = payload.recipes.length;
+            const recordCount = payload.recordImages.length;
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `CookingPAPA-backup-${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            window.showToast(`備份已下載 💾（${count} 個食譜、${recordCount} 組相片記錄）`);
+        };
+
+        async function restoreBackupToCloud(data) {
+            if (!currentUser) throw new Error('NOT_LOGGED_IN');
+            let recipeCount = 0, recordCount = 0, calorieCount = 0;
+            const seenRecords = new Set();
+
+            for (const dish of data.recipes || []) {
+                for (const flavor of dish.flavors || []) {
+                    for (const record of flavor.records || []) {
+                        if (!record.id || seenRecords.has(record.id)) continue;
+                        if (record.images || record.image) {
+                            await window.syncRecordToCloud(record, dish.id, flavor.id);
+                            seenRecords.add(record.id);
+                            recordCount++;
+                        }
+                    }
+                }
+                await window.syncToCloud(dish);
+                recipeCount++;
+            }
+
+            for (const rec of data.recordImages || []) {
+                if (!rec.id || seenRecords.has(rec.id) || !rec.dishId || !rec.flavorId) continue;
+                await window.syncRecordToCloud(rec, rec.dishId, rec.flavorId);
+                seenRecords.add(rec.id);
+                recordCount++;
+            }
+
+            for (const item of data.calories || []) {
+                const calId = item.id || ('c' + Date.now() + Math.random().toString(36).slice(2, 6));
+                await setDoc(doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'calories', calId), { ...item, id: calId });
+                calorieCount++;
+            }
+
+            if (data.planner) {
+                await setDoc(doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'planner'), data.planner);
+            }
+            if (data.customGrocery) {
+                await setDoc(doc(dbFirestore, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'grocery'), { items: data.customGrocery });
+            }
+
+            if (data.local) {
+                const L = data.local;
+                if (L.flavorTags) {
+                    window.flavorTags = L.flavorTags;
+                    localStorage.setItem('cookingPapaFlavorTags', JSON.stringify(L.flavorTags));
+                    if (window.renderFlavorTags) window.renderFlavorTags();
+                }
+                if (L.avatar) {
+                    window.userAvatar = L.avatar;
+                    localStorage.setItem('cookingPapaAvatar', L.avatar);
+                    updateAvatarDisplays();
+                }
+                if (L.groceryChecked) { groceryChecked = L.groceryChecked; localStorage.setItem('groceryChecked', JSON.stringify(groceryChecked)); }
+                if (L.groceryDeleted) { groceryDeleted = L.groceryDeleted; localStorage.setItem('groceryDeleted', JSON.stringify(groceryDeleted)); }
+                if (L.groceryOrder) { groceryOrder = L.groceryOrder; localStorage.setItem('groceryOrder', JSON.stringify(groceryOrder)); }
+                if (L.calorieLimit) localStorage.setItem('calorieLimit', L.calorieLimit);
+                if (L.recentFoods) localStorage.setItem('recentFoods', JSON.stringify(L.recentFoods));
+            }
+
+            return { recipeCount, recordCount, calorieCount };
+        }
+
+        window.importBackup = function(input) {
+            const file = input && input.files ? input.files[0] : null;
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                let data;
+                try {
+                    data = JSON.parse(e.target.result);
+                    if (!data || (!data.recipes && !data.recordImages)) throw new Error('格式不正確');
+                } catch(err) {
+                    window.customAlert('備份檔案無效，請確認係 Cooking PAPA 嘅 .json 檔。');
+                    input.value = '';
+                    return;
+                }
+
+                const summary = `${(data.recipes || []).length} 個食譜、${(data.recordImages || []).length} 組相片記錄、${(data.calories || []).length} 條卡路里記錄`;
+                window.customConfirm(`確定要還原此備份嗎？\n\n內容：${summary}\n\n資料會上傳至你目前登入嘅帳號（相同 ID 會被覆蓋）。`, async () => {
+                    if (!currentUser) {
+                        window.customAlert('請先登入 Google 帳號，再還原備份至雲端。');
+                        input.value = '';
+                        return;
+                    }
+                    window.showToast('還原中，請稍候…');
+                    try {
+                        const result = await restoreBackupToCloud(data);
+                        window.showToast(`還原完成 ✅（${result.recipeCount} 食譜、${result.recordCount} 記錄、${result.calorieCount} 卡路里）`);
+                    } catch(err) {
+                        console.error('Import failed:', err);
+                        window.customAlert('還原失敗：' + (err.message || '請檢查網絡及 Firestore 規則'));
+                    }
+                    input.value = '';
+                });
+            };
+            reader.readAsText(file);
+        };
+
         window.saveApiKey = function() { 
             const keyEl = document.getElementById('setting-api-key');
             if(keyEl) {
