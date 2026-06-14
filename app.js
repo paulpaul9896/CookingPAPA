@@ -461,13 +461,46 @@
         });
 
         // --- 3. 基礎功能 (導航、手勢、Tab) ---
+        let navStack = [];
+        let isNavigatingBack = false;
+
+        window.goBack = function() {
+            const prev = navStack.pop();
+            isNavigatingBack = true;
+            if (!prev) {
+                window.navigate('home');
+            } else if (prev.view === 'recipe' && prev.dishId) {
+                window.navigate('recipe', prev.dishId, prev.flavorId);
+            } else if (prev.view === 'home') {
+                window.navigate('home');
+                if (prev.homeTab && window.switchHomeTab) {
+                    setTimeout(() => window.switchHomeTab(prev.homeTab), 0);
+                }
+            } else {
+                window.navigate(prev.view);
+            }
+            isNavigatingBack = false;
+        };
+
         window.navigate = function(viewId, dishId = null, flavorId = null) {
+            const activeEl = document.querySelector('.view-section.active');
+            const fromView = activeEl ? activeEl.id.replace('view-', '') : null;
+
             if (viewId === 'search') {
                 viewId = 'home';
                 setTimeout(() => { if (window.switchHomeTab) window.switchHomeTab('search'); }, 0);
             } else if (viewId === 'favorites') {
                 viewId = 'home';
                 setTimeout(() => { if (window.switchHomeTab) window.switchHomeTab('favorites'); }, 0);
+            }
+
+            if (!isNavigatingBack && fromView && fromView !== viewId) {
+                navStack.push({
+                    view: fromView,
+                    homeTab: window.currentHomeTab,
+                    dishId: currentDishId,
+                    flavorId: currentFlavorId
+                });
             }
 
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
@@ -600,14 +633,55 @@
             });
         };
 
-        const viewRecipeEl = document.getElementById('view-recipe');
-        if(viewRecipeEl) {
-            let touchStartX = 0;
-            viewRecipeEl.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
-            viewRecipeEl.addEventListener('touchend', e => {
-                if (e.changedTouches[0].screenX - touchStartX > 130) window.navigate('home');
-            });
+        function initSwipeBack(el, onBack) {
+            if (!el) return;
+            let startX = 0, startY = 0, currentX = 0, swiping = false;
+
+            el.addEventListener('touchstart', e => {
+                if (e.touches.length !== 1) return;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                currentX = 0;
+                swiping = false;
+            }, { passive: true });
+
+            el.addEventListener('touchmove', e => {
+                if (e.touches.length !== 1) return;
+                const dx = e.touches[0].clientX - startX;
+                const dy = e.touches[0].clientY - startY;
+                if (!swiping) {
+                    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) return;
+                    if (dx < 8) return;
+                    swiping = true;
+                    el.classList.add('swiping');
+                }
+                currentX = Math.min(Math.max(0, dx), window.innerWidth * 0.85);
+                el.style.transform = `translateX(${currentX}px)`;
+                el.style.transition = 'none';
+            }, { passive: true });
+
+            el.addEventListener('touchend', () => {
+                if (!swiping) return;
+                el.classList.remove('swiping');
+                el.style.transition = 'transform 0.22s ease-out';
+                if (currentX > 90 || currentX > window.innerWidth * 0.28) {
+                    el.style.transform = `translateX(100%)`;
+                    setTimeout(() => {
+                        el.style.transform = '';
+                        el.style.transition = '';
+                        onBack();
+                    }, 180);
+                } else {
+                    el.style.transform = '';
+                    setTimeout(() => { el.style.transition = ''; }, 220);
+                }
+                swiping = false;
+                currentX = 0;
+            }, { passive: true });
         }
+
+        initSwipeBack(document.getElementById('view-recipe'), () => window.goBack());
+        initSwipeBack(document.getElementById('view-add'), () => window.goBack());
 
         // --- 4. 數據操作 ---
         function getRecordImagesCollection() {
