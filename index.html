@@ -505,12 +505,15 @@
                 </label>
 
                 <div class="flex gap-5">
-                    <div class="w-20 h-20 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-center text-gray-300 flex-shrink-0">
-                        <i data-lucide="camera" class="w-8 h-8"></i>
-                    </div>
+                    <label class="w-20 h-20 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-center text-gray-300 flex-shrink-0 cursor-pointer overflow-hidden relative hover:border-blue-200 transition-colors">
+                        <input type="file" id="input-cover-img" accept="image/*" multiple class="hidden" onchange="window.previewAddCoverImage && window.previewAddCoverImage(this)">
+                        <div id="input-cover-preview" class="absolute inset-0 flex items-center justify-center">
+                            <i data-lucide="camera" class="w-8 h-8"></i>
+                        </div>
+                    </label>
                     <div class="flex-1 space-y-3">
-                        <input type="text" id="input-dish" required class="w-full text-base py-1.5 border-b border-gray-100 outline-none focus:border-blue-400 transition-colors" placeholder="菜式名稱">
-                        <input type="text" id="input-flavor" required class="w-full text-sm py-1.5 border-b border-gray-100 outline-none focus:border-blue-400 transition-colors" placeholder="口味及風格">
+                        <input type="text" id="input-dish" required class="w-full text-base py-1.5 border-b border-gray-100 outline-none focus:border-blue-400 transition-colors" placeholder="菜式名稱（必填）">
+                        <input type="text" id="input-flavor" class="w-full text-sm py-1.5 border-b border-gray-100 outline-none focus:border-blue-400 transition-colors" placeholder="口味及風格（選填，預設：原味）">
                         
                         <!-- 動態渲染標籤 -->
                         <div id="flavor-tags-add" class="flex flex-wrap gap-1.5 mt-2"></div>
@@ -553,9 +556,9 @@
                 </div>
 
                 <div class="space-y-4">
-                    <input type="text" id="input-tags" class="w-full text-sm py-3 border-b border-gray-100 outline-none focus:border-blue-400" placeholder="🏷️ 標籤 (用逗號分隔)">
-                    <textarea id="input-ingredients" required rows="4" class="w-full text-sm py-2 border-b border-gray-100 outline-none resize-none focus:border-blue-400" placeholder="🛒 材料清單..."></textarea>
-                    <textarea id="input-steps" required rows="6" class="w-full text-sm py-2 border-b border-gray-100 outline-none resize-none focus:border-blue-400" placeholder="🍳 烹飪步驟..."></textarea>
+                    <input type="text" id="input-tags" class="w-full text-sm py-3 border-b border-gray-100 outline-none focus:border-blue-400" placeholder="🏷️ 標籤（選填，用逗號分隔）">
+                    <textarea id="input-ingredients" rows="4" class="w-full text-sm py-2 border-b border-gray-100 outline-none resize-none focus:border-blue-400" placeholder="🛒 材料清單（選填，可之後再補）..."></textarea>
+                    <textarea id="input-steps" rows="6" class="w-full text-sm py-2 border-b border-gray-100 outline-none resize-none focus:border-blue-400" placeholder="🍳 烹飪步驟（選填，可之後再補）..."></textarea>
                 </div>
             </form>
         </main>

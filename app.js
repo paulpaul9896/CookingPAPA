@@ -2305,14 +2305,25 @@
             window.renderPost(currentDishId, currentFlavorId);
         };
 
+        window.previewAddCoverImage = function(input) {
+            const preview = document.getElementById('input-cover-preview');
+            if (!preview || !input.files || !input.files.length) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+            };
+            reader.readAsDataURL(input.files[0]);
+        };
+
         window.saveNewRecipe = async function(e) {
             if(e) e.preventDefault();
             const nameEl = document.getElementById('input-dish');
             const flavorEl = document.getElementById('input-flavor');
-            if(!nameEl || !flavorEl) return;
+            if(!nameEl) return;
             
             const name = nameEl.value.trim();
-            const flavor = flavorEl.value.trim();
+            if (!name) return window.customAlert("請至少輸入菜式名稱！");
+            const flavor = (flavorEl && flavorEl.value.trim()) || '原味';
             const planningEl = document.getElementById('input-is-planning');
             const isPlanning = planningEl ? planningEl.checked : false;
             
@@ -2324,27 +2335,62 @@
             const cookEl = document.getElementById('input-cooktime');
             const ratEl = document.getElementById('input-rating');
             const kcalEl = document.getElementById('input-kcal');
+            const tagsEl = document.getElementById('input-tags');
+            const photoInput = document.getElementById('input-cover-img');
+            const photoFiles = photoInput && photoInput.files ? Array.from(photoInput.files) : [];
             
+            const flavorId = 'f' + Date.now();
             const newF = { 
-                id: 'f'+Date.now(), name: flavor, 
+                id: flavorId, name: flavor, 
                 ingredients: ingEl ? ingEl.value : '', 
                 steps: stEl ? stEl.value : '', 
                 serving: srvEl ? srvEl.value : '', 
                 cooktime: cookEl ? cookEl.value : '', 
                 kcal: kcalEl ? kcalEl.value.trim() : '',
+                tags: tagsEl && tagsEl.value ? tagsEl.value.split(',').map(t => t.trim()).filter(Boolean) : [],
                 rating: ratEl ? parseInt(ratEl.value) : 4, 
-                isPlanning: isPlanning, isFavorite: false, records: [] 
+                isPlanning: isPlanning && photoFiles.length === 0, 
+                isFavorite: false, records: [] 
             };
+
+            if (photoFiles.length > 0) {
+                window.showToast("處理相片中…");
+                try {
+                    const imagesArray = await Promise.all(photoFiles.map(f => new Promise(res => window.resizeImage(f, res))));
+                    const recordId = 'r' + Date.now();
+                    newF.records.push({ id: recordId, date: new Date().toLocaleDateString(), note: '', images: imagesArray });
+                    newF.coverRecordId = recordId;
+                    newF.coverImageIdx = 0;
+                    newF.isPlanning = false;
+                } catch(err) {
+                    return window.customAlert('相片處理失敗，請重試。');
+                }
+            }
+
+            let targetDish, targetFlavorId = flavorId;
             if(dish) { 
                 dish.flavors.push(newF); 
-                await window.syncToCloud(dish); 
-                window.navigate('recipe', dish.id, newF.id); 
+                targetDish = dish;
             } else { 
-                const nDish = { id: 'd'+Date.now(), name, flavors: [newF] }; 
-                await window.syncToCloud(nDish); 
-                setTimeout(()=>window.navigate('recipe', nDish.id, newF.id), 500); 
+                targetDish = { id: 'd'+Date.now(), name, flavors: [newF] }; 
             }
-            window.showToast("食譜已發佈！🍳");
+
+            try {
+                if (newF.records.length > 0) {
+                    await window.syncRecordToCloud(newF.records[0], targetDish.id, flavorId);
+                }
+                await window.syncToCloud(targetDish);
+                document.getElementById('recipe-form').reset();
+                const preview = document.getElementById('input-cover-preview');
+                if (preview) preview.innerHTML = '<i data-lucide="camera" class="w-8 h-8"></i>';
+                if (window.setRating) window.setRating('input-rating', 4);
+                lucide.createIcons();
+                window.navigate('recipe', targetDish.id, targetFlavorId);
+                window.showToast("食譜已發佈！🍳");
+            } catch(err) {
+                console.error('Publish failed:', err);
+                window.customAlert('發佈失敗，請檢查網絡後重試。');
+            }
         };
 
         window.openEditModal = function() {
